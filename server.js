@@ -170,15 +170,163 @@ INSTRUCCIONES:
       updated_at: new Date().toISOString()
     }, { onConflict: 'user_id,mes' });
 
+    // Guardar en historial
+    const sesionId = req.body.sesion_id || `sesion_${Date.now()}`;
+    await supabase.from('normaai_conversaciones').insert([
+      { user_id: req.user.id, sesion_id: sesionId, rol: 'user', contenido: mensaje },
+      { user_id: req.user.id, sesion_id: sesionId, rol: 'assistant', contenido: textoRespuesta }
+    ]);
+
     res.json({
       respuesta: textoRespuesta,
       consultas_usadas: consultasUsadas + 1,
-      limite: LIMITE_MENSUAL
+      limite: LIMITE_MENSUAL,
+      sesion_id: sesionId
     });
 
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al procesar consulta' });
+  }
+});
+
+
+// ══════════════════════════════════════════════════════════════
+//  HISTORIAL — Guardar mensaje
+// ══════════════════════════════════════════════════════════════
+app.post('/api/historial/guardar', verificarToken, async (req, res) => {
+  const { sesion_id, rol, contenido, tiene_documento, nombre_documento } = req.body;
+  try {
+    await supabase.from('normaai_conversaciones').insert({
+      user_id: req.user.id,
+      sesion_id,
+      rol,
+      contenido,
+      tiene_documento: tiene_documento || false,
+      nombre_documento: nombre_documento || null,
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al guardar mensaje' });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+//  HISTORIAL — Obtener sesiones del usuario
+// ══════════════════════════════════════════════════════════════
+app.get('/api/historial/sesiones', verificarToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('normaai_conversaciones')
+      .select('sesion_id, created_at, contenido, tiene_documento, nombre_documento')
+      .eq('user_id', req.user.id)
+      .eq('rol', 'user')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Agrupar por sesion_id y obtener primera pregunta
+    const sesiones = {};
+    data.forEach(msg => {
+      if (!sesiones[msg.sesion_id]) {
+        sesiones[msg.sesion_id] = {
+          sesion_id: msg.sesion_id,
+          primera_pregunta: msg.contenido.slice(0, 80),
+          fecha: msg.created_at,
+          tiene_documento: msg.tiene_documento,
+          nombre_documento: msg.nombre_documento,
+        };
+      }
+    });
+
+    res.json(Object.values(sesiones).slice(0, 30));
+  } catch (err) {
+    res.status(500).json({ error: 'Error al cargar historial' });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+//  HISTORIAL — Obtener mensajes de una sesión
+// ══════════════════════════════════════════════════════════════
+app.get('/api/historial/sesion/:sesion_id', verificarToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('normaai_conversaciones')
+      .select('*')
+      .eq('user_id', req.user.id)
+      .eq('sesion_id', req.params.sesion_id)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al cargar sesión' });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+//  DOCUMENTOS — Analizar PDF/Word (NO Excel)
+// ══════════════════════════════════════════════════════════════
+app.post('/api/analizar-documento', verificarToken, async (req, res) => {
+  const { nombre, contenido_texto, sesion_id } = req.body;
+  
+  // Bloquear Excel/CSV explícitamente
+  const ext = nombre?.split('.').pop()?.toLowerCase();
+  if (['xlsx','xls','csv'].includes(ext)) {
+    return res.status(400).json({ 
+      error: 'Los archivos Excel y CSV no están disponibles en el agente. La evaluación de cumplimiento de matrices es un servicio separado. Contacta a Procesus para más información.'
+    });
+  }
+
+  if (!contenido_texto || contenido_texto.length < 50) {
+    return res.status(400).json({ error: 'No se pudo extraer texto del documento.' });
+  }
+
+  try {
+    const respuesta = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2000,
+      system: `Eres NormaAI, especialista en normativa legal chilena. 
+Cuando recibes un documento (procedimiento, instructivo, política, etc.), debes:
+1. Identificar de qué tipo de documento se trata
+2. Revisar si cumple con la normativa chilena aplicable
+3. Señalar artículos o requisitos legales específicos que aplican
+4. Indicar observaciones concretas de mejora
+5. Aclarar siempre: "Esta revisión es orientativa y no reemplaza la evaluación formal de cumplimiento."
+Responde en español, de forma clara y estructurada.`,
+      messages: [{
+        role: 'user',
+        content: `Por favor revisa este documento desde el punto de vista de la normativa legal chilena:
+
+Nombre: ${nombre}
+
+Contenido:
+${contenido_texto.slice(0, 4000)}`
+      }]
+    });
+
+    const textoRespuesta = respuesta.content[0].text;
+
+    // Registrar uso
+    const mesActual = new Date().toISOString().slice(0, 7);
+    const { data: uso } = await supabase
+      .from('normaai_uso_agente')
+      .select('consultas')
+      .eq('user_id', req.user.id)
+      .eq('mes', mesActual)
+      .single();
+
+    await supabase.from('normaai_uso_agente').upsert({
+      user_id: req.user.id,
+      mes: mesActual,
+      consultas: (uso?.consultas || 0) + 1,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id,mes' });
+
+    res.json({ respuesta: textoRespuesta });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al analizar documento' });
   }
 });
 
