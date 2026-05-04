@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NormaAI Legal — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --azul:     #0a1628;
+    --azul-med: #0d2144;
+    --acento:   #1a6cf8;
+    --acento-cl:#3d84fa;
+    --dorado:   #c9a84c;
+    --gris:     #8a96a8;
+    --gris-cl:  #e8ecf2;
+    --blanco:   #ffffff;
+    --sidebar-w: 260px;
+  }
+
+  html, body {
+    height: 100%;
+    font-family: 'DM Sans', sans-serif;
+    background: #0e1520;
+    color: var(--blanco);
+  }
+
+  /* ══ LAYOUT ══ */
+  .layout {
+    display: grid;
+    grid-template-columns: var(--sidebar-w) 1fr;
+    min-height: 100vh;
+  }
+
+  /* ══ SIDEBAR ══ */
+  .sidebar {
+    background: var(--azul);
+    border-right: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 0;
+    position: fixed;
+    width: var(--sidebar-w);
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0 1.5rem 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 1.5rem;
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--acento), var(--acento-cl));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    box-shadow: 0 0 16px rgba(26,108,248,0.35);
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: -0.02em;
+  }
+
+  .logo-sub {
+    font-size: 0.65rem;
+    color: var(--dorado);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .nav-section {
+    padding: 0 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .nav-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #3d4f6a;
+    font-weight: 600;
+    padding: 0 0.75rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    color: #8a96a8;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-decoration: none;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+
+  .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--blanco); }
+  .nav-item.active { background: rgba(26,108,248,0.15); color: var(--acento-cl); }
+  .nav-item.active .nav-icon { color: var(--acento-cl); }
+
+  .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .user-avatar {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--acento), var(--dorado));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .user-name { font-size: 0.83rem; font-weight: 500; }
+  .user-email { font-size: 0.72rem; color: var(--gris); }
+
+  .btn-logout {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 0.5rem;
+    color: var(--gris);
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .btn-logout:hover { background: rgba(220,38,38,0.1); color: #fca5a5; border-color: rgba(220,38,38,0.2); }
+
+  /* ══ CONTENIDO PRINCIPAL ══ */
+  .main {
+    margin-left: var(--sidebar-w);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* ══ TOPBAR ══ */
+  .topbar {
+    background: rgba(10,22,40,0.8);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  .topbar-badge {
+    background: rgba(26,108,248,0.15);
+    border: 1px solid rgba(26,108,248,0.25);
+    color: var(--acento-cl);
+    border-radius: 6px;
+    padding: 0.25rem 0.7rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+
+  /* ══ VISTAS ══ */
+  .view { display: none; padding: 2rem; }
+  .view.active { display: block; }
+
+  /* ══ NOTICIAS ══ */
+  .noticias-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.2rem;
+  }
+
+  .noticia-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    padding: 1.4rem;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  .noticia-card:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(26,108,248,0.3);
+    transform: translateY(-2px);
+  }
+
+  .noticia-categoria {
+    display: inline-block;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    margin-bottom: 0.8rem;
+  }
+
+  .cat-laboral   { background: rgba(16,185,129,0.15); color: #34d399; }
+  .cat-ambiental { background: rgba(52,211,153,0.12); color: #6ee7b7; }
+  .cat-seguridad { background: rgba(245,158,11,0.15); color: #fcd34d; }
+  .cat-digital   { background: rgba(139,92,246,0.15); color: #c4b5fd; }
+  .cat-general   { background: rgba(26,108,248,0.15); color: #93c5fd; }
+
+  .noticia-titulo {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.97rem;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 0.6rem;
+    color: var(--blanco);
+  }
+
+  .noticia-resumen {
+    font-size: 0.84rem;
+    color: var(--gris);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+
+  .noticia-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #4a5568;
+  }
+
+  .noticia-fecha { color: #4a5568; }
+
+  .noticia-link {
+    color: var(--acento-cl);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .noticia-link:hover { text-decoration: underline; }
+
+  /* Video embebido */
+  .video-container {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    border-radius: 10px;
+    margin-bottom: 0.8rem;
+  }
+
+  .video-container iframe {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    border: 0;
+  }
+
+  /* ══ CHAT AGENTE ══ */
+  .chat-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 130px);
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .chat-header {
+    background: rgba(26,108,248,0.08);
+    border: 1px solid rgba(26,108,248,0.15);
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .agente-avatar {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--acento), var(--acento-cl));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    box-shadow: 0 0 16px rgba(26,108,248,0.3);
+  }
+
+  .agente-info h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .agente-info p {
+    font-size: 0.78rem;
+    color: var(--gris);
+  }
+
+  .uso-badge {
+    margin-left: auto;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.73rem;
+    color: var(--gris);
+  }
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0.5rem 0;
+    margin-bottom: 1rem;
+  }
+
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-track { background: transparent; }
+  .messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+  .msg {
+    display: flex;
+    gap: 0.75rem;
+    animation: msgIn 0.3s ease both;
+  }
+
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg.user { flex-direction: row-reverse; }
+
+  .msg-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .msg.agente .msg-avatar {
+    background: linear-gradient(135deg, var(--acento), var(--acento-cl));
+  }
+
+  .msg.user .msg-avatar {
+    background: linear-gradient(135deg, var(--dorado), #e8c56a);
+    color: var(--azul);
+    font-weight: 700;
+  }
+
+  .msg-bubble {
+    max-width: 75%;
+    padding: 0.85rem 1.1rem;
+    border-radius: 14px;
+    font-size: 0.88rem;
+    line-height: 1.65;
+  }
+
+  .msg.agente .msg-bubble {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px 14px 14px 14px;
+  }
+
+  .msg.user .msg-bubble {
+    background: linear-gradient(135deg, rgba(26,108,248,0.3), rgba(61,132,250,0.2));
+    border: 1px solid rgba(26,108,248,0.25);
+    border-radius: 14px 4px 14px 14px;
+    text-align: left;
+  }
+
+  .msg-bubble strong { color: var(--acento-cl); }
+  .msg-bubble code {
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    padding: 0.1em 0.4em;
+    font-size: 0.85em;
+  }
+
+  .typing {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 0.85rem 1.1rem;
+  }
+
+  .typing span {
+    width: 6px; height: 6px;
+    background: var(--acento-cl);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-6px); opacity: 1; }
+  }
+
+  .chat-input-area {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-end;
+  }
+
+  .chat-input {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    font-size: 0.9rem;
+    color: var(--blanco);
+    font-family: 'DM Sans', sans-serif;
+    resize: none;
+    outline: none;
+    max-height: 120px;
+    transition: border-color 0.2s;
+    line-height: 1.5;
+  }
+
+  .chat-input:focus {
+    border-color: var(--acento);
+    background: rgba(26,108,248,0.06);
+  }
+
+  .chat-input::placeholder { color: #4a5568; }
+
+  .btn-send {
+    background: linear-gradient(135deg, var(--acento), var(--acento-cl));
+    border: none;
+    border-radius: 10px;
+    width: 44px; height: 44px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(26,108,248,0.35);
+  }
+
+  .btn-send:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(26,108,248,0.45); }
+  .btn-send:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* ══ LOADING ══ */
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem;
+    color: var(--gris);
+    gap: 1rem;
+  }
+
+  .spinner {
+    width: 32px; height: 32px;
+    border: 2px solid rgba(26,108,248,0.2);
+    border-top-color: var(--acento);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--gris);
+  }
+
+  .empty-state .icon { font-size: 2.5rem; margin-bottom: 1rem; }
+  .empty-state h3 { font-family: 'Syne', sans-serif; font-size: 1rem; margin-bottom: 0.5rem; color: #b0bccf; }
+  .empty-state p { font-size: 0.85rem; }
+
+  /* ══ RESPONSIVE ══ */
+  @media (max-width: 768px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .view { padding: 1.2rem; }
+    .noticias-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">⚖</div>
+      <div>
+        <div class="logo-text">NormaAI</div>
+        <div class="logo-sub">Legal · by Procesus</div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Principal</div>
+      <button class="nav-item active" onclick="mostrarVista('noticias', this)">
+        <span class="nav-icon">📰</span> Noticias Legales
+      </button>
+      <button class="nav-item" onclick="mostrarVista('agente', this)">
+        <span class="nav-icon">🤖</span> Agente IA
+      </button>
+    </div>
+
+    <div class="nav-section" style="margin-top:1rem">
+      <div class="nav-label">Recursos</div>
+      <button class="nav-item" onclick="mostrarVista('videos', this)">
+        <span class="nav-icon">🎥</span> Videos
+      </button>
+      <button class="nav-item" onclick="mostrarVista('documentos', this)">
+        <span class="nav-icon">📄</span> Documentos
+      </button>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" id="avatar-inicial">U</div>
+        <div>
+          <div class="user-name" id="sidebar-nombre">Usuario</div>
+          <div class="user-email" id="sidebar-email">—</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="logout()">Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="page-title" id="page-title">Noticias Legales</div>
+      <div class="topbar-badge" id="topbar-fecha">Cargando...</div>
+    </div>
+
+    <!-- VISTA: NOTICIAS -->
+    <div class="view active" id="vista-noticias">
+      <div id="noticias-content">
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <span>Cargando noticias...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VISTA: AGENTE IA -->
+    <div class="view" id="vista-agente">
+      <div class="chat-container">
+        <div class="chat-header">
+          <div class="agente-avatar">⚖</div>
+          <div class="agente-info">
+            <h3>NormaAI — Agente Legal</h3>
+            <p>Especialista en normativa chilena · Conectado a BCN</p>
+          </div>
+          <div class="uso-badge" id="uso-badge">— / — consultas</div>
+        </div>
+
+        <div class="messages" id="messages">
+          <!-- Mensaje de bienvenida -->
+          <div class="msg agente">
+            <div class="msg-avatar">⚖</div>
+            <div class="msg-bubble">
+              Hola, soy <strong>NormaAI</strong>, tu agente especializado en normativa legal chilena. Estoy conectado a la Biblioteca del Congreso Nacional para darte información actualizada.<br><br>
+              ¿En qué área normativa puedo ayudarte hoy? Por ejemplo: seguridad laboral, medio ambiente, protección de datos, normativa laboral, ISO, entre otras.
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-input-area">
+          <textarea 
+            class="chat-input" 
+            id="chat-input" 
+            placeholder="Escribe tu consulta legal aquí..." 
+            rows="2"
+            onkeydown="handleKeyDown(event)"
+          ></textarea>
+          <button class="btn-send" id="btn-send" onclick="enviarMensaje()">➤</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VISTA: VIDEOS -->
+    <div class="view" id="vista-videos">
+      <div id="videos-content">
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <span>Cargando videos...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VISTA: DOCUMENTOS -->
+    <div class="view" id="vista-documentos">
+      <div class="empty-state">
+        <div class="icon">📄</div>
+        <h3>Documentos</h3>
+        <p>Los documentos y guías de cumplimiento aparecerán aquí.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // ── Verificar autenticación ──────────────────────────────────
+  const token = localStorage.getItem('normaai_token');
+  const userStr = localStorage.getItem('normaai_user');
+  if (!token) window.location.href = '/login';
+
+  const user = userStr ? JSON.parse(userStr) : {};
+
+  // Actualizar UI con datos del usuario
+  const nombre = user.nombre || user.email?.split('@')[0] || 'Usuario';
+  document.getElementById('sidebar-nombre').textContent = nombre;
+  document.getElementById('sidebar-email').textContent = user.email || '';
+  document.getElementById('avatar-inicial').textContent = nombre.charAt(0).toUpperCase();
+
+  // Fecha actual
+  const fecha = new Date().toLocaleDateString('es-CL', { 
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+  });
+  document.getElementById('topbar-fecha').textContent = fecha.charAt(0).toUpperCase() + fecha.slice(1);
+
+  // ── Navegación ───────────────────────────────────────────────
+  const titulos = {
+    noticias: 'Noticias Legales',
+    agente: 'Agente IA — Consulta Normativa',
+    videos: 'Videos y Capacitación',
+    documentos: 'Documentos y Guías'
+  };
+
+  function mostrarVista(nombre, el) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(`vista-${nombre}`).classList.add('active');
+    el.classList.add('active');
+    document.getElementById('page-title').textContent = titulos[nombre];
+
+    if (nombre === 'noticias') cargarNoticias();
+    if (nombre === 'videos') cargarVideos();
+  }
+
+  // ── Cargar noticias ──────────────────────────────────────────
+  async function cargarNoticias() {
+    const cont = document.getElementById('noticias-content');
+    cont.innerHTML = '<div class="loading-state"><div class="spinner"></div><span>Cargando noticias...</span></div>';
+
+    try {
+      const res = await fetch('/api/noticias', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.status === 401) { logout(); return; }
+
+      const noticias = await res.json();
+
+      if (!noticias.length) {
+        cont.innerHTML = `<div class="empty-state">
+          <div class="icon">📰</div>
+          <h3>Sin noticias por ahora</h3>
+          <p>Próximamente publicaremos actualizaciones legales relevantes para tu empresa.</p>
+        </div>`;
+        return;
+      }
+
+      cont.innerHTML = `<div class="noticias-grid">${noticias.map(renderNoticia).join('')}</div>`;
+    } catch {
+      cont.innerHTML = `<div class="empty-state">
+        <div class="icon">⚠️</div>
+        <h3>Error al cargar</h3>
+        <p>No se pudieron cargar las noticias. Intenta recargar la página.</p>
+      </div>`;
+    }
+  }
+
+  function renderNoticia(n) {
+    const cats = { laboral:'cat-laboral', ambiental:'cat-ambiental', seguridad:'cat-seguridad', digital:'cat-digital' };
+    const catClass = cats[n.categoria?.toLowerCase()] || 'cat-general';
+    const fecha = new Date(n.created_at).toLocaleDateString('es-CL');
+
+    const videoHtml = n.video_url ? `
+      <div class="video-container">
+        <iframe src="${n.video_url.replace('watch?v=', 'embed/')}" 
+          allowfullscreen loading="lazy"></iframe>
+      </div>` : '';
+
+    return `
+      <div class="noticia-card">
+        ${videoHtml}
+        <span class="noticia-categoria ${catClass}">${n.categoria || 'General'}</span>
+        <div class="noticia-titulo">${n.titulo}</div>
+        <div class="noticia-resumen">${n.resumen || ''}</div>
+        <div class="noticia-meta">
+          <span class="noticia-fecha">📅 ${fecha}</span>
+          ${n.url ? `<a class="noticia-link" href="${n.url}" target="_blank">Ver fuente →</a>` : ''}
+        </div>
+      </div>`;
+  }
+
+  // ── Cargar videos ────────────────────────────────────────────
+  async function cargarVideos() {
+    const cont = document.getElementById('videos-content');
+    try {
+      const res = await fetch('/api/noticias', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const noticias = await res.json();
+      const videos = noticias.filter(n => n.video_url);
+      
+      if (!videos.length) {
+        cont.innerHTML = `<div class="empty-state">
+          <div class="icon">🎥</div>
+          <h3>Sin videos por ahora</h3>
+          <p>Próximamente agregaremos videos de capacitación sobre normativa legal.</p>
+        </div>`;
+        return;
+      }
+      cont.innerHTML = `<div class="noticias-grid">${videos.map(renderNoticia).join('')}</div>`;
+    } catch {
+      cont.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><h3>Error al cargar</h3></div>`;
+    }
+  }
+
+  // ── Chat Agente ──────────────────────────────────────────────
+  let historial = [];
+  let consultasUsadas = 0;
+  let limite = 100;
+  let enviando = false;
+
+  function handleKeyDown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      enviarMensaje();
+    }
+  }
+
+  async function enviarMensaje() {
+    if (enviando) return;
+    const input = document.getElementById('chat-input');
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    input.value = '';
+    enviando = true;
+    document.getElementById('btn-send').disabled = true;
+
+    // Agregar mensaje del usuario
+    agregarMensaje('user', msg);
+    historial.push({ rol: 'user', contenido: msg });
+
+    // Mostrar typing
+    const typingId = mostrarTyping();
+
+    try {
+      const res = await fetch('/api/agente', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ mensaje: msg, historial: historial.slice(-8) })
+      });
+
+      quitarTyping(typingId);
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        agregarMensaje('agente', `⚠️ ${data.error || 'Error al procesar tu consulta.'}`);
+        return;
+      }
+
+      agregarMensaje('agente', data.respuesta);
+      historial.push({ rol: 'assistant', contenido: data.respuesta });
+
+      consultasUsadas = data.consultas_usadas;
+      limite = data.limite;
+      actualizarUsoBadge();
+
+    } catch {
+      quitarTyping(typingId);
+      agregarMensaje('agente', '⚠️ Error de conexión. Por favor intenta nuevamente.');
+    } finally {
+      enviando = false;
+      document.getElementById('btn-send').disabled = false;
+      input.focus();
+    }
+  }
+
+  function agregarMensaje(rol, texto) {
+    const msgs = document.getElementById('messages');
+    const isAgente = rol === 'agente';
+    const avatar = isAgente ? '⚖' : nombre.charAt(0).toUpperCase();
+    
+    // Formatear texto (negritas, saltos de línea)
+    const formateado = texto
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
+
+    const div = document.createElement('div');
+    div.className = `msg ${isAgente ? 'agente' : 'user'}`;
+    div.innerHTML = `
+      <div class="msg-avatar">${avatar}</div>
+      <div class="msg-bubble">${formateado}</div>`;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function mostrarTyping() {
+    const msgs = document.getElementById('messages');
+    const id = 'typing-' + Date.now();
+    const div = document.createElement('div');
+    div.className = 'msg agente';
+    div.id = id;
+    div.innerHTML = `
+      <div class="msg-avatar">⚖</div>
+      <div class="msg-bubble">
+        <div class="typing"><span></span><span></span><span></span></div>
+      </div>`;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return id;
+  }
+
+  function quitarTyping(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+  }
+
+  function actualizarUsoBadge() {
+    document.getElementById('uso-badge').textContent = 
+      `${consultasUsadas} / ${limite} consultas`;
+  }
+
+  // ── Logout ───────────────────────────────────────────────────
+  async function logout() {
+    try {
+      await fetch('/api/logout', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch {}
+    localStorage.removeItem('normaai_token');
+    localStorage.removeItem('normaai_user');
+    window.location.href = '/login';
+  }
+
+  // ── Inicio ───────────────────────────────────────────────────
+  cargarNoticias();
+</script>
+</body>
+</html>
