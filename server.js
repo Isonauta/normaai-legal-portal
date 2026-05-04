@@ -123,14 +123,37 @@ app.post('/api/agente', verificarToken, async (req, res) => {
   }
 
   try {
-    // Buscar normativa BCN relevante
-    let contexto_bcn = '';
+    // Buscar en KB interna normas relevantes
+    let contexto_bcn = 'Biblioteca del Congreso Nacional de Chile: bcn.cl/leychile';
+    let contexto_kb = '';
     try {
-      const palabrasClave = mensaje.split(' ').slice(0, 3).join('+');
-      const bcnUrl = `https://www.bcn.cl/leychile/consulta/listaResultadosSimple?tipDocumento=&numDocumento=&titulo=${encodeURIComponent(mensaje.slice(0,50))}&organism=&_=1`;
-      contexto_bcn = `Fuente: Biblioteca del Congreso Nacional de Chile (bcn.cl/leychile)`;
-    } catch {
-      contexto_bcn = 'Biblioteca del Congreso Nacional de Chile disponible en bcn.cl/leychile';
+      // Palabras clave del mensaje para buscar en KB
+      const palabras = mensaje.toLowerCase();
+      const normaDetectada = 
+        palabras.includes('14001') || palabras.includes('ambiental') || palabras.includes('medio ambiente') ? 'ISO 14001' :
+        palabras.includes('45001') || palabras.includes('seguridad') || palabras.includes('accidente') || palabras.includes('salud') ? 'ISO 45001' :
+        palabras.includes('27001') || palabras.includes('datos') || palabras.includes('información') || palabras.includes('ciberseguridad') ? 'ISO 27001' :
+        palabras.includes('37001') || palabras.includes('antisoborno') || palabras.includes('corrupción') || palabras.includes('compliance') ? 'ISO 37001' :
+        palabras.includes('22000') || palabras.includes('alimento') || palabras.includes('inocuidad') ? 'ISO 22000' :
+        palabras.includes('laboral') || palabras.includes('trabajador') || palabras.includes('contrato') ? 'General' : null;
+
+      if (normaDetectada) {
+        const { data: kbData } = await supabase
+          .from('normaai_kb')
+          .select('cuerpo_legal, numero, titulo, articulos_clave, como_cumplir, evidencia_minima, url_bcn')
+          .eq('norma_iso', normaDetectada)
+          .eq('vigente', true)
+          .limit(5);
+
+        if (kbData && kbData.length > 0) {
+          contexto_kb = '\n\nNORMATIVA RELEVANTE DE LA BASE DE CONOCIMIENTO:\n' +
+            kbData.map(k => 
+              `- ${k.cuerpo_legal} N°${k.numero}: ${k.titulo}\n  Artículos clave: ${k.articulos_clave}\n  Cómo cumplir: ${k.como_cumplir}\n  Evidencia mínima: ${k.evidencia_minima}\n  Fuente: ${k.url_bcn}`
+            ).join('\n\n');
+        }
+      }
+    } catch(e) {
+      console.error('Error KB:', e);
     }
 
     // Construir historial para Claude
