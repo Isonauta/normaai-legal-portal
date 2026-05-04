@@ -12,6 +12,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 
 // ── Clientes de servicios ──────────────────────────────────────
 const supabase = createClient(
@@ -51,6 +52,7 @@ app.post('/api/login', async (req, res) => {
       user: {
         email: data.user.email,
         nombre: cliente.nombre,
+        rol: cliente.rol || 'cliente',
       }
     });
   } catch (err) {
@@ -329,6 +331,89 @@ ${contenido_texto.slice(0, 4000)}`
     console.error(err);
     res.status(500).json({ error: 'Error al analizar documento' });
   }
+});
+
+
+// ══════════════════════════════════════════════════════════════
+//  MIDDLEWARE ADMIN
+// ══════════════════════════════════════════════════════════════
+async function verificarAdmin(req, res, next) {
+  const auth = req.headers.authorization;
+  if (!auth) return res.status(401).json({ error: 'No autorizado' });
+  const token = auth.split(' ')[1];
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) return res.status(401).json({ error: 'Token inválido' });
+    const { data: cliente } = await supabase
+      .from('normaai_clientes')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+    if (!cliente || cliente.rol !== 'admin') return res.status(403).json({ error: 'Acceso denegado' });
+    req.user = user;
+    next();
+  } catch { res.status(401).json({ error: 'Token inválido' }); }
+}
+
+// ── Admin: Clientes ──────────────────────────────────────────
+app.get('/api/admin/clientes', verificarAdmin, async (req, res) => {
+  const { data } = await supabase.from('normaai_clientes').select('*').order('created_at', { ascending: false });
+  res.json(data || []);
+});
+
+app.post('/api/admin/clientes/toggle', verificarAdmin, async (req, res) => {
+  const { id, activo } = req.body;
+  await supabase.from('normaai_clientes').update({ activo }).eq('id', id);
+  res.json({ ok: true });
+});
+
+// ── Admin: Noticias ──────────────────────────────────────────
+app.get('/api/admin/noticias', verificarAdmin, async (req, res) => {
+  const { data } = await supabase.from('normaai_noticias').select('*').order('created_at', { ascending: false });
+  res.json(data || []);
+});
+
+app.post('/api/admin/noticias/crear', verificarAdmin, async (req, res) => {
+  const { titulo, resumen, categoria, url, video_url, publicada } = req.body;
+  const { error } = await supabase.from('normaai_noticias').insert({
+    titulo, resumen, categoria, url, video_url, publicada
+  });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
+app.post('/api/admin/noticias/toggle', verificarAdmin, async (req, res) => {
+  const { id, publicada } = req.body;
+  await supabase.from('normaai_noticias').update({ publicada }).eq('id', id);
+  res.json({ ok: true });
+});
+
+app.post('/api/admin/noticias/eliminar', verificarAdmin, async (req, res) => {
+  const { id } = req.body;
+  await supabase.from('normaai_noticias').delete().eq('id', id);
+  res.json({ ok: true });
+});
+
+// ── Admin: Uso agente ────────────────────────────────────────
+app.get('/api/admin/uso', verificarAdmin, async (req, res) => {
+  const { data: uso } = await supabase
+    .from('normaai_uso_agente')
+    .select('*')
+    .order('updated_at', { ascending: false });
+  
+  const { data: clientes } = await supabase
+    .from('normaai_clientes')
+    .select('user_id, email, nombre');
+
+  const clienteMap = {};
+  (clientes || []).forEach(c => { clienteMap[c.user_id] = c.email; });
+
+  const resultado = (uso || []).map(u => ({
+    ...u,
+    email: clienteMap[u.user_id] || u.user_id
+  }));
+
+  res.json(resultado);
 });
 
 // ══════════════════════════════════════════════════════════════

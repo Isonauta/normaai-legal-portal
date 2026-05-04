@@ -394,7 +394,11 @@
 
       localStorage.setItem('normaai_token', data.token);
       localStorage.setItem('normaai_user', JSON.stringify(data.user));
-      window.location.href = '/dashboard';
+      if (data.user.rol === 'admin') {
+        window.location.href = '/admin';
+      } else {
+        window.location.href = '/dashboard';
+      }
 
     } catch {
       mostrarError('Error de conexión. Intenta nuevamente.');
