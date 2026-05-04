@@ -36,7 +36,7 @@ app.post('/api/login', async (req, res) => {
     
     // Verificar que el usuario esté activo en la tabla de clientes
     const { data: cliente } = await supabase
-      .from('clientes')
+      .from('normaai_clientes')
       .select('*')
       .eq('user_id', data.user.id)
       .single();
