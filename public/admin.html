@@ -116,6 +116,7 @@ textarea{resize:vertical;min-height:80px;}
     <div class="nav-section">
       <div class="nav-label">Panel</div>
       <button class="nav-item active" onclick="mostrarVista('resumen',this)"><span class="nav-icon">📊</span> Resumen</button>
+      <button class="nav-item" onclick="mostrarVista('matrices',this)"><span class="nav-icon">📋</span> Matrices <span id="badge-matrices" style="margin-left:auto;background:rgba(220,38,38,0.8);color:#fff;border-radius:999px;font-size:.65rem;padding:.1rem .45rem;display:none;">0</span></button>
       <button class="nav-item" onclick="mostrarVista('noticias',this)"><span class="nav-icon">📰</span> Noticias</button>
       <button class="nav-item" onclick="mostrarVista('clientes',this)"><span class="nav-icon">👥</span> Clientes</button>
       <button class="nav-item" onclick="mostrarVista('uso',this)"><span class="nav-icon">📈</span> Uso Agente</button>
@@ -205,6 +206,44 @@ textarea{resize:vertical;min-height:80px;}
       </div>
     </div>
 
+    <!-- MATRICES -->
+    <div class="view" id="vista-matrices">
+      <div class="tabla-container">
+        <div class="tabla-header">
+          <div class="tabla-titulo">📋 Matrices recibidas</div>
+          <button class="btn btn-primary btn-sm" onclick="cargarMatrices()">🔄 Actualizar</button>
+        </div>
+        <div id="matrices-lista"><div class="loading"><div class="spinner"></div>Cargando...</div></div>
+      </div>
+
+      <!-- Panel detalle de matriz -->
+      <div id="matriz-detalle" style="display:none;margin-top:1.5rem;">
+        <div class="form-card">
+          <div class="form-title" id="detalle-titulo">📄 Detalle de Matriz</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+            <div><span style="font-size:.72rem;color:var(--gris);text-transform:uppercase;letter-spacing:.06em;">Empresa</span><div id="detalle-empresa" style="font-weight:600;margin-top:.2rem;"></div></div>
+            <div><span style="font-size:.72rem;color:var(--gris);text-transform:uppercase;letter-spacing:.06em;">Cliente</span><div id="detalle-cliente" style="font-size:.85rem;margin-top:.2rem;"></div></div>
+            <div><span style="font-size:.72rem;color:var(--gris);text-transform:uppercase;letter-spacing:.06em;">Archivo</span><div id="detalle-archivo" style="font-size:.85rem;margin-top:.2rem;"></div></div>
+            <div><span style="font-size:.72rem;color:var(--gris);text-transform:uppercase;letter-spacing:.06em;">Recibida</span><div id="detalle-fecha" style="font-size:.85rem;margin-top:.2rem;"></div></div>
+          </div>
+
+          <!-- Borrador IA -->
+          <div style="margin-bottom:1rem;">
+            <label style="display:block;margin-bottom:.5rem;">Borrador generado por IA (editable antes de enviar)</label>
+            <textarea id="detalle-informe" rows="15" style="font-size:.82rem;line-height:1.6;"></textarea>
+          </div>
+
+          <!-- Acciones -->
+          <div style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:center;">
+            <button class="btn btn-primary" onclick="guardarBorrador()">💾 Guardar borrador</button>
+            <button class="btn btn-success" onclick="confirmarEnvio()" id="btn-enviar">✅ Aprobar y enviar al cliente</button>
+            <div id="detalle-estado-badge"></div>
+          </div>
+          <div id="detalle-msg" style="margin-top:.8rem;font-size:.85rem;display:none;"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- USO AGENTE -->
     <div class="view" id="vista-uso">
       <div class="tabla-container">
@@ -222,7 +261,7 @@ textarea{resize:vertical;min-height:80px;}
 const token = localStorage.getItem('normaai_token');
 if (!token) { window.location.href = '/login'; }
 
-const titulos = { resumen:'Resumen', noticias:'Gestión de Noticias', clientes:'Clientes', uso:'Uso del Agente' };
+const titulos = { resumen:'Resumen', matrices:'Matrices de Clientes', noticias:'Gestión de Noticias', clientes:'Clientes', uso:'Uso del Agente' };
 var publicadaActual = false;
 
 function mostrarVista(nombre, el) {
@@ -232,6 +271,7 @@ function mostrarVista(nombre, el) {
   el.classList.add('active');
   document.getElementById('page-title').textContent = titulos[nombre];
   if (nombre === 'resumen') cargarResumen();
+  if (nombre === 'matrices') cargarMatrices();
   if (nombre === 'noticias') cargarNoticias();
   if (nombre === 'clientes') cargarClientes();
   if (nombre === 'uso') cargarUso();
@@ -432,6 +472,104 @@ async function cargarUso() {
         <td><span class="badge ${color}">${pct}%</span></td>
       </tr>`;
     }).join('') + '</tbody></table>';
+}
+
+// ── Matrices ─────────────────────────────────────────────────
+let matrizActualId = null;
+
+async function cargarMatrices() {
+  const cont = document.getElementById('matrices-lista');
+  const data = await apiGet('/api/admin/matrices');
+  if (!data) return;
+
+  // Badge con pendientes
+  const pendientes = data.filter(m => m.estado === 'pendiente' || m.estado === 'en_revision').length;
+  const badge = document.getElementById('badge-matrices');
+  if (pendientes > 0) { badge.style.display = 'inline'; badge.textContent = pendientes; }
+  else { badge.style.display = 'none'; }
+
+  if (!data.length) { cont.innerHTML = '<div class="empty">No hay matrices recibidas aún.</div>'; return; }
+
+  const estadoColor = { pendiente:'badge-amarillo', en_revision:'badge-azul', aprobado:'badge-verde', enviado:'badge-verde' };
+  const estadoLabel = { pendiente:'⏳ Pendiente', en_revision:'🔍 En revisión', aprobado:'✅ Aprobado', enviado:'📨 Enviado' };
+
+  cont.innerHTML = '<table><thead><tr><th>Empresa</th><th>Cliente</th><th>Archivo</th><th>Estado</th><th>Fecha</th><th>Acción</th></tr></thead><tbody>' +
+    data.map(m => `<tr>
+      <td><strong>${m.empresa||'—'}</strong></td>
+      <td style="font-size:.78rem;color:var(--gris);">${m.cliente_email||'—'}</td>
+      <td style="font-size:.78rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.nombre_archivo}</td>
+      <td><span class="badge ${estadoColor[m.estado]||'badge-amarillo'}">${estadoLabel[m.estado]||m.estado}</span></td>
+      <td style="font-size:.78rem;color:var(--gris);">${new Date(m.created_at).toLocaleDateString('es-CL')}</td>
+      <td><button class="btn btn-primary btn-sm" onclick="abrirMatriz('${m.id}')">Revisar →</button></td>
+    </tr>`).join('') + '</tbody></table>';
+}
+
+async function abrirMatriz(id) {
+  const data = await apiGet('/api/admin/matrices/' + id);
+  if (!data) return;
+
+  matrizActualId = id;
+  document.getElementById('matriz-detalle').style.display = 'block';
+  document.getElementById('detalle-titulo').textContent = '📄 ' + data.nombre_archivo;
+  document.getElementById('detalle-empresa').textContent = data.empresa || '—';
+  document.getElementById('detalle-cliente').textContent = data.cliente_email || data.user_id;
+  document.getElementById('detalle-archivo').textContent = data.nombre_archivo;
+  document.getElementById('detalle-fecha').textContent = new Date(data.created_at).toLocaleDateString('es-CL', {day:'2-digit',month:'long',year:'numeric'});
+  document.getElementById('detalle-informe').value = data.informe_ia || '';
+
+  const estadoLabel = { pendiente:'⏳ Pendiente revisión', en_revision:'🔍 En revisión', aprobado:'✅ Aprobado', enviado:'📨 Enviado al cliente' };
+  const estadoColor = { pendiente:'badge-amarillo', en_revision:'badge-azul', aprobado:'badge-verde', enviado:'badge-verde' };
+  document.getElementById('detalle-estado-badge').innerHTML = `<span class="badge ${estadoColor[data.estado]||'badge-amarillo'}">${estadoLabel[data.estado]||data.estado}</span>`;
+
+  const btnEnviar = document.getElementById('btn-enviar');
+  btnEnviar.disabled = data.estado === 'enviado';
+  btnEnviar.textContent = data.estado === 'enviado' ? '📨 Ya enviado' : '✅ Aprobar y enviar al cliente';
+
+  document.getElementById('matriz-detalle').scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('detalle-msg').style.display = 'none';
+}
+
+async function guardarBorrador() {
+  if (!matrizActualId) return;
+  const informe = document.getElementById('detalle-informe').value;
+  const { ok } = await apiPost('/api/admin/matrices/' + matrizActualId + '/editar', { informe_ia: informe });
+  const msg = document.getElementById('detalle-msg');
+  msg.style.display = 'block';
+  if (ok) {
+    msg.style.color = '#4ade80';
+    msg.textContent = '✅ Borrador guardado correctamente.';
+  } else {
+    msg.style.color = '#f87171';
+    msg.textContent = '❌ Error al guardar. Intenta nuevamente.';
+  }
+  setTimeout(() => msg.style.display = 'none', 3000);
+}
+
+async function confirmarEnvio() {
+  if (!matrizActualId) return;
+  if (!confirm('¿Enviar el informe al cliente? Esta acción no se puede deshacer.')) return;
+
+  // Primero guardar el borrador editado
+  const informe = document.getElementById('detalle-informe').value;
+  await apiPost('/api/admin/matrices/' + matrizActualId + '/editar', { informe_ia: informe });
+
+  const msg = document.getElementById('detalle-msg');
+  msg.style.display = 'block';
+  msg.style.color = '#8a96a8';
+  msg.textContent = '⏳ Enviando informe al cliente...';
+
+  const { ok, data } = await apiPost('/api/admin/matrices/' + matrizActualId + '/aprobar', {});
+  if (ok) {
+    msg.style.color = '#4ade80';
+    msg.textContent = '✅ ' + (data.mensaje || 'Informe enviado correctamente al cliente.');
+    document.getElementById('btn-enviar').disabled = true;
+    document.getElementById('btn-enviar').textContent = '📨 Ya enviado';
+    document.getElementById('detalle-estado-badge').innerHTML = '<span class="badge badge-verde">📨 Enviado al cliente</span>';
+    cargarMatrices();
+  } else {
+    msg.style.color = '#f87171';
+    msg.textContent = '❌ ' + (data.error || 'Error al enviar. Intenta nuevamente.');
+  }
 }
 
 // ── Logout ───────────────────────────────────────────────────
