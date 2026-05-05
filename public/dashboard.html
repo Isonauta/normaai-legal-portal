@@ -123,7 +123,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
     </div>
     <div class="nav-section" style="margin-top:1rem">
       <div class="nav-label">Recursos</div>
-      <button class="nav-item" onclick="mostrarVista('documentos',this)"><span class="nav-icon">📄</span> Revisar Documento</button>
+
       <button class="nav-item" onclick="mostrarVista('matriz',this)"><span class="nav-icon">📊</span> Revisar tu Matriz</button>
       <button class="nav-item" onclick="mostrarVista('videos',this)"><span class="nav-icon">🎥</span> Videos</button>
     </div>
@@ -168,8 +168,14 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
           </div>
         </div>
         <div class="chat-input-area">
+          <button class="btn-adjuntar" id="btn-adjuntar" title="Adjuntar PDF o Word" onclick="document.getElementById('agente-file-input').click()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.5rem .7rem;color:#8a96a8;font-size:1rem;cursor:pointer;flex-shrink:0;transition:all .2s;" onmouseover="this.style.color='#e2e8f0'" onmouseout="this.style.color='#8a96a8'">📎</button>
+          <input type="file" id="agente-file-input" accept=".pdf,.doc,.docx" style="display:none" onchange="adjuntarDocumentoAgente(this)">
           <textarea class="chat-input" id="chat-input" placeholder="Escribe tu consulta legal aquí..." rows="2" onkeydown="handleKeyDown(event)"></textarea>
           <button class="btn-send" id="btn-send" onclick="enviarMensaje()">➤</button>
+        </div>
+        <div id="doc-adjunto-preview" style="display:none;padding:.4rem 1rem .6rem;font-size:.78rem;color:#8a96a8;display:none;align-items:center;gap:.5rem;background:rgba(26,108,248,0.06);border-top:1px solid rgba(26,108,248,0.1);">
+          <span>📄</span><span id="doc-adjunto-nombre" style="color:#93c5fd;"></span>
+          <button onclick="quitarDocumentoAdjunto()" style="background:none;border:none;color:#4a5568;cursor:pointer;font-size:.8rem;margin-left:auto;">✕ Quitar</button>
         </div>
       </div>
     </div>
@@ -179,25 +185,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
       <div id="historial-content"><div class="loading-state"><div class="spinner"></div><span>Cargando historial...</span></div></div>
     </div>
 
-    <!-- DOCUMENTOS -->
-    <div class="view" id="vista-documentos">
-      <div style="max-width:700px;margin:0 auto;">
-        <div class="info-box">
-          <div style="font-family:Syne,sans-serif;font-weight:700;font-size:1rem;margin-bottom:.4rem;">📋 Revisar Procedimiento o Documento</div>
-          <div style="font-size:.83rem;color:#8a96a8;line-height:1.6;">
-            Sube un procedimiento, instructivo o política para que el agente lo revise desde el punto de vista normativo.<br>
-            <strong style="color:#fcd34d;">⚠️ Solo PDF y Word (.docx). Excel no está disponible aquí.</strong>
-          </div>
-        </div>
-        <div class="drop-zone" onclick="document.getElementById('file-input').click()">
-          <div style="font-size:2rem;margin-bottom:.5rem;">📄</div>
-          <div style="font-size:.9rem;color:#8a96a8;">Haz click para seleccionar tu documento</div>
-          <div style="font-size:.75rem;color:#4a5568;margin-top:.3rem;">PDF, DOCX — Máximo 5MB</div>
-          <input type="file" id="file-input" accept=".pdf,.doc,.docx" style="display:none" onchange="procesarArchivo(this)">
-        </div>
-        <div id="doc-resultado" style="display:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1.5rem;margin-top:1rem;font-size:.88rem;line-height:1.7;"></div>
-      </div>
-    </div>
+
 
     <!-- VIDEOS -->
     <div class="view" id="vista-videos">
@@ -254,7 +242,7 @@ const titulos = {
   noticias: 'Noticias Legales',
   agente: 'Agente IA — Consulta Normativa',
   historial: 'Historial de Consultas',
-  documentos: 'Revisar Documentos',
+
   matriz: 'Revisar tu Matriz Legal',
   videos: 'Videos y Capacitación'
 };
@@ -321,6 +309,50 @@ var limite = 100;
 var enviando = false;
 var sesionActual = 'sesion_' + Date.now();
 
+// Documento adjunto en el agente
+var docAdjunto = null; // { nombre, base64, tipo }
+
+async function adjuntarDocumentoAgente(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (['xlsx','xls','csv'].includes(ext)) {
+    alert('Los archivos Excel no están disponibles aquí. Usa "Revisar tu Matriz" para evaluación de cumplimiento.');
+    input.value = '';
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    alert('El archivo supera los 5MB permitidos.');
+    input.value = '';
+    return;
+  }
+  try {
+    const base64 = await new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result.split(',')[1]);
+      r.onerror = () => rej(new Error('Error al leer archivo'));
+      r.readAsDataURL(file);
+    });
+    docAdjunto = { nombre: file.name, base64: base64, tipo: file.type || 'application/octet-stream' };
+    const preview = document.getElementById('doc-adjunto-preview');
+    document.getElementById('doc-adjunto-nombre').textContent = file.name;
+    preview.style.display = 'flex';
+    document.getElementById('chat-input').placeholder = 'Pregunta sobre el documento o escribe tu consulta...';
+    document.getElementById('chat-input').focus();
+  } catch(e) {
+    alert('Error al cargar el archivo: ' + e.message);
+  }
+  input.value = '';
+}
+
+function quitarDocumentoAdjunto() {
+  docAdjunto = null;
+  document.getElementById('doc-adjunto-preview').style.display = 'none';
+  document.getElementById('doc-adjunto-nombre').textContent = '';
+  document.getElementById('agente-file-input').value = '';
+  document.getElementById('chat-input').placeholder = 'Escribe tu consulta legal aquí...';
+}
+
 function handleKeyDown(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensaje(); }
 }
@@ -329,18 +361,39 @@ async function enviarMensaje() {
   if (enviando) return;
   const input = document.getElementById('chat-input');
   const msg = input.value.trim();
-  if (!msg) return;
+  if (!msg && !docAdjunto) return;
+  const msgTexto = msg || '📄 Adjunté un documento. Por favor analízalo.';
   input.value = '';
   enviando = true;
   document.getElementById('btn-send').disabled = true;
-  agregarMensaje('user', msg);
-  historial.push({ rol: 'user', contenido: msg });
+
+  // Mostrar mensaje del usuario (con indicador de doc si aplica)
+  const msgDisplay = docAdjunto ? `📄 <em style="font-size:.8rem;color:#93c5fd;">${docAdjunto.nombre}</em><br>${msgTexto}` : msgTexto;
+  agregarMensaje('user', msgDisplay);
+  historial.push({ rol: 'user', contenido: msgTexto });
+
+  // Guardar y limpiar doc adjunto antes del fetch
+  const docParaEnviar = docAdjunto ? { ...docAdjunto } : null;
+  if (docAdjunto) quitarDocumentoAdjunto();
+
   const typingId = mostrarTyping();
   try {
+    const body = {
+      mensaje: msgTexto,
+      historial: historial.slice(-8),
+      sesion_id: sesionActual
+    };
+    if (docParaEnviar) {
+      body.documento = {
+        nombre: docParaEnviar.nombre,
+        base64: docParaEnviar.base64,
+        tipo: docParaEnviar.tipo
+      };
+    }
     const res = await fetch('/api/agente', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-      body: JSON.stringify({ mensaje: msg, historial: historial.slice(-8), sesion_id: sesionActual })
+      body: JSON.stringify(body)
     });
     quitarTyping(typingId);
     const data = await res.json();

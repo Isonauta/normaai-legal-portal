@@ -127,7 +127,7 @@ app.get('/api/noticias', verificarToken, async (req, res) => {
 //  AGENTE IA
 // ══════════════════════════════════════════════════════════════
 app.post('/api/agente', verificarToken, async (req, res) => {
-  const { mensaje, historial = [] } = req.body;
+  const { mensaje, historial = [], documento } = req.body;
   if (!mensaje) return res.status(400).json({ error: 'Mensaje requerido' });
 
   const mesActual = new Date().toISOString().slice(0, 7);
@@ -179,32 +179,56 @@ app.post('/api/agente', verificarToken, async (req, res) => {
       console.error('Error KB:', e);
     }
 
+    // Construir contenido del mensaje del usuario (con o sin documento adjunto)
+    let contenidoUsuario;
+    if (documento && documento.base64 && documento.nombre) {
+      const ext = documento.nombre.split('.').pop().toLowerCase();
+      if (ext === 'pdf') {
+        contenidoUsuario = [
+          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: documento.base64 } },
+          { type: 'text', text: mensaje || 'Por favor revisa este documento desde el punto de vista de la normativa legal chilena aplicable.' }
+        ];
+      } else {
+        // DOCX u otros: enviar como texto indicando el nombre
+        contenidoUsuario = [
+          { type: 'text', text: `[Documento adjunto: ${documento.nombre}]
+
+${mensaje || 'Por favor revisa este documento desde el punto de vista de la normativa legal chilena aplicable.'}` }
+        ];
+      }
+    } else {
+      contenidoUsuario = mensaje;
+    }
+
     const mensajes = [
       ...historial.slice(-6).map(m => ({
         role: m.rol,
         content: m.contenido
       })),
-      { role: 'user', content: mensaje }
+      { role: 'user', content: contenidoUsuario }
     ];
 
     const respuesta = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1500,
-      system: `Eres NormaAI, un agente especializado en normativa legal chilena. 
-Ayudas a empresas con sistemas de gestión ISO (9001, 14001, 45001, 27001, 37001, 37301 y otras) 
-a entender y cumplir sus requisitos legales en Chile.
+      system: `Eres NormaAI, un agente legal especializado en normativa chilena vigente.
+Apoyas a empresas con sistemas de gestión ISO (9001, 14001, 45001, 27001, 37001, 37301 y otras) a entender y cumplir sus requisitos legales en Chile.
+
+ROL Y LÍMITES — MUY IMPORTANTE:
+- Eres un ASESOR LEGAL, no un consultor de implementación ISO
+- NUNCA ofrezcas ni menciones: capacitaciones, auditorías, implementación de normas, planes de acción, consultorías o servicios de Procesus
+- NUNCA generes informes formales, certificados ni documentos con sello
+- Tu función es EXCLUSIVAMENTE orientar en la normativa legal chilena aplicable: qué leyes aplican, qué exigen, cómo se interpretan
 
 INSTRUCCIONES:
-- Al inicio de cada conversación nueva, preséntate brevemente y pregunta: 
-  "¿En qué área normativa o cuerpo legal puedo ayudarte hoy? (Ej: seguridad laboral, medio ambiente, protección de datos, laboral, etc.)"
 - Responde SIEMPRE en español
-- Cita leyes chilenas específicas con su número cuando sea posible
-- Explica cómo cumplir cada requisito y qué evidencia mínima se necesita
-- Si no tienes certeza de algo, indícalo claramente y sugiere consultar bcn.cl/leychile
-- NO hagas evaluaciones de cumplimiento (no tienes acceso a la evidencia de la empresa)
-- NO generes informes ni certificados (eso es un servicio separado de Procesus)
-- Mantén un tono profesional pero cercano
-- Fuente de normativa: ${contexto_bcn}`,
+- Cita leyes y reglamentos chilenos específicos con su número (Ej: Ley N°16.744, DS N°594, Ley N°21.719)
+- Señala artículos específicos cuando sea relevante
+- Si recibes un documento adjunto, analiza su contenido desde el punto de vista legal: identifica qué normativa aplica, qué cumple y qué podría mejorar desde la perspectiva legal
+- Agrega siempre al final de análisis de documentos: "Esta revisión es orientativa y no reemplaza la evaluación formal de cumplimiento legal."
+- Si no tienes certeza de algo, indícalo y sugiere consultar bcn.cl/leychile
+- Mantén un tono profesional y directo
+- Fuente de normativa: ${contexto_bcn}${contexto_kb}`,
       messages: mensajes,
     });
 
@@ -299,70 +323,6 @@ app.get('/api/historial/sesion/:sesion_id', verificarToken, async (req, res) => 
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: 'Error al cargar sesión' });
-  }
-});
-
-// ══════════════════════════════════════════════════════════════
-//  DOCUMENTOS — Analizar PDF/Word
-// ══════════════════════════════════════════════════════════════
-app.post('/api/analizar-documento', verificarToken, async (req, res) => {
-  const { nombre, contenido_texto, sesion_id } = req.body;
-
-  const ext = nombre?.split('.').pop()?.toLowerCase();
-  if (['xlsx','xls','csv'].includes(ext)) {
-    return res.status(400).json({
-      error: 'Los archivos Excel y CSV no están disponibles en el agente. La evaluación de cumplimiento de matrices es un servicio separado. Contacta a Procesus para más información.'
-    });
-  }
-
-  if (!contenido_texto || contenido_texto.length < 50) {
-    return res.status(400).json({ error: 'No se pudo extraer texto del documento.' });
-  }
-
-  try {
-    const respuesta = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2000,
-      system: `Eres NormaAI, especialista en normativa legal chilena. 
-Cuando recibes un documento (procedimiento, instructivo, política, etc.), debes:
-1. Identificar de qué tipo de documento se trata
-2. Revisar si cumple con la normativa chilena aplicable
-3. Señalar artículos o requisitos legales específicos que aplican
-4. Indicar observaciones concretas de mejora
-5. Aclarar siempre: "Esta revisión es orientativa y no reemplaza la evaluación formal de cumplimiento."
-Responde en español, de forma clara y estructurada.`,
-      messages: [{
-        role: 'user',
-        content: `Por favor revisa este documento desde el punto de vista de la normativa legal chilena:
-
-Nombre: ${nombre}
-
-Contenido:
-${contenido_texto.slice(0, 4000)}`
-      }]
-    });
-
-    const textoRespuesta = respuesta.content[0].text;
-
-    const mesActual = new Date().toISOString().slice(0, 7);
-    const { data: uso } = await supabase
-      .from('normaai_uso_agente')
-      .select('consultas')
-      .eq('user_id', req.user.id)
-      .eq('mes', mesActual)
-      .single();
-
-    await supabase.from('normaai_uso_agente').upsert({
-      user_id: req.user.id,
-      mes: mesActual,
-      consultas: (uso?.consultas || 0) + 1,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'user_id,mes' });
-
-    res.json({ respuesta: textoRespuesta });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al analizar documento' });
   }
 });
 
