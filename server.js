@@ -76,6 +76,7 @@ app.post('/api/login', async (req, res) => {
     res.json({
       token: data.session.access_token,
       user: {
+        id: data.user.id,
         email: data.user.email,
         nombre: cliente.nombre,
         rol: cliente.rol || 'cliente',
