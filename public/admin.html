@@ -236,6 +236,7 @@ textarea{resize:vertical;min-height:80px;}
           <!-- Acciones -->
           <div style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:center;">
             <button class="btn btn-primary" onclick="guardarBorrador()">💾 Guardar borrador</button>
+            <button class="btn" style="background:rgba(99,102,241,0.15);color:#818cf8;border:1px solid rgba(99,102,241,0.3);" onclick="descargarWord()">📝 Descargar Word</button>
             <button class="btn btn-success" onclick="confirmarEnvio()" id="btn-enviar">✅ Aprobar y enviar al cliente</button>
             <div id="detalle-estado-badge"></div>
           </div>
@@ -532,8 +533,13 @@ async function abrirMatriz(id) {
 async function guardarBorrador() {
   if (!matrizActualId) return;
   const informe = document.getElementById('detalle-informe').value;
-  const { ok } = await apiPost('/api/admin/matrices/' + matrizActualId + '/editar', { informe_ia: informe });
+  const btn = document.querySelector('button[onclick="guardarBorrador()"]');
   const msg = document.getElementById('detalle-msg');
+  btn.disabled = true;
+  btn.textContent = '⏳ Guardando...';
+  const { ok } = await apiPost('/api/admin/matrices/' + matrizActualId + '/editar', { informe_ia: informe });
+  btn.disabled = false;
+  btn.textContent = '💾 Guardar borrador';
   msg.style.display = 'block';
   if (ok) {
     msg.style.color = '#4ade80';
@@ -543,6 +549,36 @@ async function guardarBorrador() {
     msg.textContent = '❌ Error al guardar. Intenta nuevamente.';
   }
   setTimeout(() => msg.style.display = 'none', 3000);
+}
+
+async function descargarWord() {
+  if (!matrizActualId) return;
+  const btn = document.querySelector('button[onclick="descargarWord()"]');
+  btn.disabled = true;
+  btn.textContent = '⏳ Generando Word...';
+  try {
+    const res = await fetch('/api/admin/matrices/' + matrizActualId + '/word', {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      alert(err.error || 'Error al generar Word');
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const empresa = document.getElementById('detalle-empresa').textContent || 'informe';
+    a.download = `Informe_${empresa.replace(/\s+/g,'_')}_Procesus.docx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    alert('Error al descargar: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📝 Descargar Word';
+  }
 }
 
 async function confirmarEnvio() {

@@ -4,6 +4,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 const path = require('path');
 const multer = require('multer');
 const nodemailer = require('nodemailer');
+const { Document, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, Packer } = require('docx');
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
@@ -742,6 +743,133 @@ app.get('/api/admin/matrices/:id', verificarAdmin, async (req, res) => {
   }
 });
 
+// ── Generar documento Word del informe ───────────────────────
+function generarWordBuffer(matriz, fechaEmision) {
+  const lineas = (matriz.informe_ia || '').split('\n');
+  const children = [];
+
+  // Portada
+  children.push(new Paragraph({
+    children: [new TextRun({ text: 'PROCESUS — NormaAI Legal', bold: true, size: 32, color: '0f2a4a' })],
+    alignment: AlignmentType.CENTER, spacing: { after: 200 }
+  }));
+  children.push(new Paragraph({
+    children: [new TextRun({ text: 'INFORME DE CUMPLIMIENTO NORMATIVO', bold: true, size: 28, color: '1e6fc8' })],
+    alignment: AlignmentType.CENTER, spacing: { after: 200 }
+  }));
+  children.push(new Paragraph({
+    children: [new TextRun({ text: `Empresa: ${matriz.empresa}`, bold: true, size: 24 })],
+    alignment: AlignmentType.CENTER, spacing: { after: 100 }
+  }));
+  children.push(new Paragraph({
+    children: [new TextRun({ text: `Archivo analizado: ${matriz.nombre_archivo}`, size: 20, color: '64748b' })],
+    alignment: AlignmentType.CENTER, spacing: { after: 100 }
+  }));
+  children.push(new Paragraph({
+    children: [new TextRun({ text: `Fecha de emisión: ${fechaEmision}`, size: 20, color: '64748b' })],
+    alignment: AlignmentType.CENTER, spacing: { after: 100 }
+  }));
+  children.push(new Paragraph({
+    children: [new TextRun({ text: `Folio: NormaAI-${matriz.id.substring(0,8).toUpperCase()}`, size: 18, color: '94a3b8' })],
+    alignment: AlignmentType.CENTER, spacing: { after: 400 }
+  }));
+  children.push(new Paragraph({ children: [new TextRun({ text: '─'.repeat(60), color: 'e2e8f0' })], spacing: { after: 400 } }));
+
+  // Contenido del informe
+  for (const linea of lineas) {
+    const trim = linea.trim();
+    if (!trim) {
+      children.push(new Paragraph({ spacing: { after: 100 } }));
+      continue;
+    }
+    if (trim.startsWith('# ') && !trim.startsWith('## ')) {
+      children.push(new Paragraph({
+        children: [new TextRun({ text: trim.replace(/^# /, ''), bold: true, size: 28, color: '0f2a4a' })],
+        heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 }
+      }));
+    } else if (trim.startsWith('## ')) {
+      children.push(new Paragraph({
+        children: [new TextRun({ text: trim.replace(/^## /, ''), bold: true, size: 24, color: '1e6fc8' })],
+        heading: HeadingLevel.HEADING_2, spacing: { before: 300, after: 150 }
+      }));
+    } else if (trim.startsWith('### ')) {
+      children.push(new Paragraph({
+        children: [new TextRun({ text: trim.replace(/^### /, ''), bold: true, size: 22, color: '334155' })],
+        heading: HeadingLevel.HEADING_3, spacing: { before: 200, after: 100 }
+      }));
+    } else if (trim.startsWith('- ') || trim.startsWith('* ')) {
+      children.push(new Paragraph({
+        children: [new TextRun({ text: trim.replace(/^[-*] /, ''), size: 20 })],
+        bullet: { level: 0 }, spacing: { after: 80 }
+      }));
+    } else if (/^\d+\./.test(trim)) {
+      children.push(new Paragraph({
+        children: [new TextRun({ text: trim, size: 20 })],
+        numbering: { reference: 'default-numbering', level: 0 }, spacing: { after: 80 }
+      }));
+    } else {
+      // Procesar negritas inline
+      const partes = trim.split(/\*\*([^*]+)\*\*/);
+      const runs = partes.map((p, i) => new TextRun({ text: p, bold: i % 2 === 1, size: 20 }));
+      children.push(new Paragraph({ children: runs, spacing: { after: 120 } }));
+    }
+  }
+
+  // Certificado
+  children.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { before: 400 } }));
+  children.push(new Paragraph({
+    children: [new TextRun({ text: '🏆 CERTIFICADO DE REVISIÓN — PROCESUS', bold: true, size: 24, color: '15803d' })],
+    spacing: { before: 200, after: 200 }
+  }));
+  children.push(new Paragraph({
+    children: [new TextRun({
+      text: `Procesus — NormaAI Legal certifica que la Matriz de Requisitos Legales de ${matriz.empresa} fue revisada el ${fechaEmision} por consultores especializados en normativa chilena, contrastada con el Diario Oficial de la República de Chile vigente a la misma fecha y verificada según los estándares de los sistemas de gestión ISO aplicables.`,
+      size: 20, color: '166534'
+    })],
+    spacing: { after: 150 }
+  }));
+  children.push(new Paragraph({
+    children: [new TextRun({ text: `Este certificado es válido por 12 meses desde su emisión. Folio: NormaAI-${matriz.id.substring(0,8).toUpperCase()}`, size: 18, color: '64748b', italics: true })],
+    spacing: { after: 200 }
+  }));
+  children.push(new Paragraph({
+    children: [new TextRun({ text: 'Procesus — NormaAI Legal · legal.normaai.cl · contacto@normaai.cl', size: 18, color: '94a3b8' })],
+    alignment: AlignmentType.CENTER, spacing: { before: 400 }
+  }));
+
+  const doc = new Document({
+    numbering: {
+      config: [{
+        reference: 'default-numbering',
+        levels: [{ level: 0, format: 'decimal', text: '%1.', alignment: AlignmentType.LEFT }]
+      }]
+    },
+    sections: [{ properties: {}, children }]
+  });
+
+  return Packer.toBuffer(doc);
+}
+
+// ── Admin: Descargar Word del informe ─────────────────────────
+app.get('/api/admin/matrices/:id/word', verificarAdmin, async (req, res) => {
+  try {
+    const { data: matriz, error } = await supabase
+      .from('normaai_matrices').select('*').eq('id', req.params.id).single();
+    if (error || !matriz) return res.status(404).json({ error: 'No encontrada' });
+
+    const fechaEmision = new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' });
+    const buffer = await generarWordBuffer(matriz, fechaEmision);
+    const filename = `Informe_${(matriz.empresa||'Procesus').replace(/[^a-zA-Z0-9]/g,'_')}_NormaAI.docx`;
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } catch (err) {
+    console.error('Error generando Word:', err);
+    res.status(500).json({ error: 'Error al generar Word: ' + err.message });
+  }
+});
+
 // ── Admin: Editar informe antes de aprobar ────────────────────
 app.post('/api/admin/matrices/:id/editar', verificarAdmin, async (req, res) => {
   try {
@@ -776,10 +904,20 @@ app.post('/api/admin/matrices/:id/aprobar', verificarAdmin, async (req, res) => 
     });
 
     const transporter = crearTransporter();
+    const wordBuffer = await generarWordBuffer(matriz, fechaEmision);
+    const wordFilename = `Informe_${(matriz.empresa||'Procesus').replace(/[^a-zA-Z0-9]/g,'_')}_NormaAI.docx`;
+
     await transporter.sendMail({
       from: `"NormaAI Legal — Procesus" <${process.env.GMAIL_USER}>`,
       to: emailCliente,
       subject: `✅ Informe de Revisión de Matriz Legal — ${matriz.empresa}`,
+      attachments: [
+        {
+          filename: wordFilename,
+          content: wordBuffer,
+          contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        }
+      ],
       html: `
         <div style="font-family:Arial,sans-serif;max-width:650px;margin:0 auto;">
           <div style="background:linear-gradient(135deg,#0f2a4a,#1e6fc8);padding:28px 32px;border-radius:8px 8px 0 0;">
@@ -789,13 +927,15 @@ app.post('/api/admin/matrices/:id/aprobar', verificarAdmin, async (req, res) => 
           <div style="background:#f8fafc;padding:28px 32px;border:1px solid #e2e8f0;">
             <p style="font-size:16px;color:#1e293b;">Estimado/a cliente de <strong>${matriz.empresa}</strong>,</p>
             <p style="color:#475569;">La revisión de su <strong>Matriz de Requisitos Legales</strong> ha sido completada por nuestro equipo de consultores especializados.</p>
-            <div style="background:white;border-radius:8px;padding:24px;border:1px solid #e2e8f0;margin:20px 0;">
-              <h2 style="color:#0f2a4a;font-size:16px;margin-top:0;border-bottom:2px solid #e2e8f0;padding-bottom:12px;">📋 Informe de Revisión</h2>
-              <p style="color:#64748b;font-size:13px;"><strong>Archivo analizado:</strong> ${matriz.nombre_archivo}</p>
-              <p style="color:#64748b;font-size:13px;"><strong>Fecha de emisión:</strong> ${fechaEmision}</p>
-              <div style="color:#334155;line-height:1.7;margin-top:16px;">
-                ${matriz.informe_ia.replace(/\n/g,'<br>').replace(/## /g,'<h3 style="color:#0f2a4a;">').replace(/\*\*/g,'')}
-              </div>
+            <div style="background:white;border-radius:8px;padding:20px;border:1px solid #e2e8f0;margin:20px 0;">
+              <h2 style="color:#0f2a4a;font-size:15px;margin-top:0;border-bottom:2px solid #e2e8f0;padding-bottom:10px;">📋 Detalles del Informe</h2>
+              <p style="color:#64748b;font-size:13px;margin:6px 0;"><strong>Empresa:</strong> ${matriz.empresa}</p>
+              <p style="color:#64748b;font-size:13px;margin:6px 0;"><strong>Archivo analizado:</strong> ${matriz.nombre_archivo}</p>
+              <p style="color:#64748b;font-size:13px;margin:6px 0;"><strong>Fecha de emisión:</strong> ${fechaEmision}</p>
+              <p style="color:#64748b;font-size:13px;margin:6px 0;"><strong>Folio:</strong> NormaAI-${matriz.id.substring(0,8).toUpperCase()}</p>
+            </div>
+            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px;margin:20px 0;">
+              <p style="color:#1e40af;font-size:13px;margin:0;">📎 <strong>El informe completo está adjunto en formato Word (.docx)</strong> en este correo. Puede abrirlo directamente con Microsoft Word o Google Docs.</p>
             </div>
             <div style="background:#f0fdf4;border:2px solid #16a34a;border-radius:8px;padding:20px;margin:20px 0;">
               <h2 style="color:#15803d;font-size:15px;margin-top:0;">🏆 Certificado de Revisión — Procesus</h2>
