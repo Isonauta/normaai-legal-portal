@@ -112,7 +112,7 @@ async function verificarToken(req, res, next) {
 app.get('/api/noticias', verificarToken, async (req, res) => {
   try {
     const { data, error } = await supabase
-      .from('noticias')
+      .from('normaai_noticias')
       .select('*')
       .eq('publicada', true)
       .order('created_at', { ascending: false })
@@ -386,7 +386,7 @@ app.post('/api/matriz/subir', verificarToken, upload.single('archivo'), async (r
   try {
     if (!req.file) return res.status(400).json({ error: 'No se recibió archivo' });
 
-    const { nombre_empresa } = req.body;
+    const { nombre_empresa, normas_iso, alcance_sistema, sitios_trabajo } = req.body;
     const archivo = req.file;
     const ext = archivo.originalname.split('.').pop().toLowerCase();
     const fechaHoy = new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -398,6 +398,13 @@ app.post('/api/matriz/subir', verificarToken, upload.single('archivo'), async (r
       .single();
 
     const empresa = nombre_empresa || cliente?.empresa || 'Sin nombre';
+    const contextoEmpresa = `
+DATOS DE LA EMPRESA:
+- Empresa: ${empresa}
+- Normas ISO: ${normas_iso || 'No especificadas'}
+- Alcance del sistema: ${alcance_sistema || 'No especificado'}
+- Sitios / Lugares de trabajo: ${sitios_trabajo || 'No especificados'}
+`
 
     let informeIA = '';
     try {
@@ -428,8 +435,9 @@ app.post('/api/matriz/subir', verificarToken, upload.single('archivo'), async (r
           max_tokens: 4000,
           messages: [{
             role: 'user',
-            content: `Eres Cristián Cordero, consultor ISO senior de Procesus. Analiza la siguiente matriz de requisitos legales de "${empresa}" y genera el INFORME DE CUMPLIMIENTO NORMATIVO completo.
+            content: `Eres Cristián Cordero, consultor ISO senior de Procesus. Analiza la siguiente matriz de requisitos legales y genera el INFORME DE CUMPLIMIENTO NORMATIVO completo.
 
+${contextoEmpresa}
 ESTADÍSTICAS DE LA MATRIZ:
 - Cuerpos legales: ${totalCuerpos}
 - Total requisitos: ${totalRequisitos}
@@ -468,7 +476,7 @@ Generado por: Procesus — NormaAI Legal`
             role: 'user',
             content: [
               { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: archivoBase64 } },
-              { type: 'text', text: `Eres Cristián Cordero, consultor ISO de Procesus. Analiza esta matriz de requisitos legales de "${empresa}" (fecha: ${fechaHoy}) y genera un informe completo con: resumen ejecutivo con KPIs, cumplimiento por cuerpo legal, brechas detectadas con recomendaciones específicas, y validez para auditoría ISO.` }
+              { type: 'text', text: `Eres Cristián Cordero, consultor ISO de Procesus. Analiza esta matriz de requisitos legales y genera un informe completo con: resumen ejecutivo con KPIs, cumplimiento por cuerpo legal, brechas detectadas con recomendaciones específicas, y validez para auditoría ISO. Considera los sitios de trabajo y alcance al evaluar la cobertura normativa.\n\n${contextoEmpresa}\nFecha de revisión: ${fechaHoy}` }
             ]
           }]
         });
@@ -488,7 +496,7 @@ Generado por: Procesus — NormaAI Legal`
         user_id: req.user.id,
         empresa: empresa,
         nombre_archivo: archivo.originalname,
-        contenido_texto: `${ext.toUpperCase()}: ${archivo.originalname} (${(archivo.size/1024).toFixed(1)} KB)`,
+        contenido_texto: `${ext.toUpperCase()}: ${archivo.originalname} (${(archivo.size/1024).toFixed(1)} KB)\n${contextoEmpresa}`,
         informe_ia: informeIA,
         estado: 'pendiente',
         archivo_original_base64: archivo.buffer.toString('base64'),
@@ -515,6 +523,9 @@ Generado por: Procesus — NormaAI Legal`
             <div style="background:#f8fafc;padding:24px;border:1px solid #e2e8f0;">
               <p><strong>Empresa:</strong> ${empresa}</p>
               <p><strong>Archivo:</strong> ${archivo.originalname}</p>
+              <p><strong>Normas ISO:</strong> ${normas_iso || 'No especificadas'}</p>
+              <p><strong>Alcance:</strong> ${alcance_sistema || 'No especificado'}</p>
+              <p><strong>Sitios:</strong> ${sitios_trabajo || 'No especificados'}</p>
               <p><strong>Cliente:</strong> ${req.user.email}</p>
               <p><strong>Fecha:</strong> ${fechaHoy}</p>
               <hr style="border:1px solid #e2e8f0;margin:16px 0;">

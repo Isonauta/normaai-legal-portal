@@ -206,8 +206,20 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
           </div>
         </div>
         <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1.5rem;margin-bottom:1rem;">
-          <div style="font-size:.88rem;font-weight:600;margin-bottom:.8rem;color:#e2e8f0;">Datos de tu empresa</div>
-          <input type="text" id="nombre-empresa-matriz" placeholder="Nombre de tu empresa (opcional)" style="width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;margin-bottom:1rem;box-sizing:border-box;outline:none;">
+          <div style="font-size:.88rem;font-weight:600;margin-bottom:.8rem;color:#e2e8f0;">Datos de tu empresa <span style="color:#f87171;font-size:.75rem;font-weight:400;">* Todos los campos son obligatorios</span></div>
+
+          <label style="display:block;font-size:.78rem;color:#8a96a8;margin-bottom:.3rem;">Nombre de la empresa <span style="color:#f87171;">*</span></label>
+          <input type="text" id="nombre-empresa-matriz" placeholder="Ej: Minera Los Andes S.A." style="width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;margin-bottom:1rem;box-sizing:border-box;outline:none;">
+
+          <label style="display:block;font-size:.78rem;color:#8a96a8;margin-bottom:.3rem;">Normas ISO certificadas o en implementación <span style="color:#f87171;">*</span></label>
+          <input type="text" id="normas-iso-matriz" placeholder="Ej: ISO 9001, ISO 14001, ISO 45001" style="width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;margin-bottom:1rem;box-sizing:border-box;outline:none;">
+
+          <label style="display:block;font-size:.78rem;color:#8a96a8;margin-bottom:.3rem;">Alcance del sistema de gestión <span style="color:#f87171;">*</span></label>
+          <textarea id="alcance-sistema-matriz" placeholder="Ej: Diseño, producción y comercialización de equipos industriales" rows="2" style="width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;margin-bottom:1rem;box-sizing:border-box;outline:none;resize:vertical;font-family:inherit;"></textarea>
+
+          <label style="display:block;font-size:.78rem;color:#8a96a8;margin-bottom:.3rem;">Sitios o lugares de trabajo <span style="color:#f87171;">*</span></label>
+          <input type="text" id="sitios-trabajo-matriz" placeholder="Ej: Planta Santiago, Oficina Valparaíso, Faena Norte" style="width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;margin-bottom:1.2rem;box-sizing:border-box;outline:none;">
+
           <div class="drop-zone" onclick="document.getElementById('input-matriz').click()">
             <div style="font-size:2rem;margin-bottom:.5rem;">📁</div>
             <div style="font-size:.9rem;color:#8a96a8;">Haz click para seleccionar tu matriz</div>
@@ -602,11 +614,26 @@ async function subirMatriz(input) {
   const file = input.files[0];
   if (!file) return;
   const resultado = document.getElementById('resultado-matriz');
-  const empresa = document.getElementById('nombre-empresa-matriz').value;
+
+  // Validar campos obligatorios
+  const empresa = document.getElementById('nombre-empresa-matriz').value.trim();
+  const normasIso = document.getElementById('normas-iso-matriz').value.trim();
+  const alcance = document.getElementById('alcance-sistema-matriz').value.trim();
+  const sitios = document.getElementById('sitios-trabajo-matriz').value.trim();
+
+  if (!empresa || !normasIso || !alcance || !sitios) {
+    resultado.innerHTML = '<div style="color:#fcd34d;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.2);border-radius:8px;padding:1rem;font-size:.85rem;">⚠️ Por favor completa todos los campos obligatorios antes de subir tu matriz.</div>';
+    input.value = '';
+    return;
+  }
+
   resultado.innerHTML = '<div style="color:#8a96a8;font-size:.85rem;padding:.8rem;background:rgba(255,255,255,0.03);border-radius:8px;">⏳ Subiendo matriz, por favor espera...</div>';
   const formData = new FormData();
   formData.append('archivo', file);
-  if (empresa) formData.append('nombre_empresa', empresa);
+  formData.append('nombre_empresa', empresa);
+  formData.append('normas_iso', normasIso);
+  formData.append('alcance_sistema', alcance);
+  formData.append('sitios_trabajo', sitios);
   try {
     const res = await fetch('/api/matriz/subir', {
       method: 'POST',
@@ -619,6 +646,10 @@ async function subirMatriz(input) {
     } else {
       resultado.innerHTML = '<div style="color:#4ade80;background:rgba(22,163,74,0.1);border-radius:8px;padding:1rem;">✅ ' + data.mensaje + '</div>';
       input.value = '';
+      document.getElementById('nombre-empresa-matriz').value = '';
+      document.getElementById('normas-iso-matriz').value = '';
+      document.getElementById('alcance-sistema-matriz').value = '';
+      document.getElementById('sitios-trabajo-matriz').value = '';
       cargarMisMatrices();
     }
   } catch(e) {
