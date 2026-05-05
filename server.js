@@ -366,8 +366,58 @@ ${contenido_texto.slice(0, 4000)}`
 });
 
 // ══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 //  MATRIZ — Subir y analizar matriz legal del cliente
 // ══════════════════════════════════════════════════════════════
+
+// Leer Excel real con SheetJS
+function leerExcel(buffer) {
+  try {
+    const XLSX = require('xlsx');
+    const wb = XLSX.read(buffer, { type: 'buffer' });
+    const resultado = [];
+    for (const sheetName of wb.SheetNames) {
+      const ws = wb.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      const articulos = [];
+      let headerFound = false;
+      let colMap = {};
+      for (const row of rows) {
+        const rowStr = row.map(c => String(c||'').trim());
+        if (!headerFound) {
+          const hasHeader = rowStr.some(c => {
+            const cu = c.toUpperCase();
+            return cu.includes('ARTÍCULO') || cu.includes('ARTICULO') || cu.includes('DESCRIPCIÓN') || cu.includes('DESCRIPCION');
+          });
+          if (hasHeader) {
+            headerFound = true;
+            rowStr.forEach((h, i) => {
+              const hu = h.toUpperCase();
+              if (hu.includes('ARTÍCULO') || hu.includes('ARTICULO')) colMap.art = i;
+              if (hu.includes('DESCRIPCIÓN') || hu.includes('DESCRIPCION')) colMap.desc = i;
+              if (hu.includes('COMO') || hu.includes('CÓMO')) colMap.como = i;
+              if (hu.includes('CUMPLE') && !hu.includes('INCUMPLE')) colMap.cumple = i;
+              if (hu.includes('RESPONSABLE') || (hu.includes('NOMBRE') && !hu.includes('EVALUADOR'))) colMap.resp = i;
+            });
+          }
+          continue;
+        }
+        const art = String(row[colMap.art] || '').trim();
+        const desc = String(row[colMap.desc] || '').trim();
+        const como = String(row[colMap.como] || '').trim();
+        const cumple = String(row[colMap.cumple] || '').trim();
+        if ((art || desc) && desc.length > 5) {
+          articulos.push({ art, desc: desc.substring(0, 300), como: como.substring(0, 300), cumple });
+        }
+      }
+      if (articulos.length > 0) resultado.push({ cuerpoLegal: sheetName, articulos });
+    }
+    return resultado;
+  } catch(e) {
+    console.error('Error leyendo Excel:', e.message);
+    return [];
+  }
+}
 
 // ── Cliente: Subir matriz ─────────────────────────────────────
 app.post('/api/matriz/subir', verificarToken, upload.single('archivo'), async (req, res) => {
@@ -377,6 +427,7 @@ app.post('/api/matriz/subir', verificarToken, upload.single('archivo'), async (r
     const { nombre_empresa } = req.body;
     const archivo = req.file;
     const ext = archivo.originalname.split('.').pop().toLowerCase();
+    const fechaHoy = new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' });
 
     const { data: cliente } = await supabase
       .from('normaai_clientes')
@@ -386,88 +437,96 @@ app.post('/api/matriz/subir', verificarToken, upload.single('archivo'), async (r
 
     const empresa = nombre_empresa || cliente?.empresa || 'Sin nombre';
 
-    // Generar análisis IA
     let informeIA = '';
     try {
-      if (ext === 'pdf') {
+      if (['xlsx', 'xls'].includes(ext)) {
+        const datosExcel = leerExcel(archivo.buffer);
+        const totalCuerpos = datosExcel.length;
+        const totalRequisitos = datosExcel.reduce((s, h) => s + h.articulos.length, 0);
+        const cumplen = datosExcel.reduce((s, h) => s + h.articulos.filter(a => {
+          const c = a.cumple.toUpperCase();
+          return c === 'SI' || c === 'SÍ' || c === 'X' || c === 'TRUE';
+        }).length, 0);
+        const noCumplen = datosExcel.reduce((s, h) => s + h.articulos.filter(a => {
+          const c = a.cumple.toUpperCase();
+          return c === 'NO' || c === 'FALSE';
+        }).length, 0);
+        const parcial = Math.max(0, totalRequisitos - cumplen - noCumplen);
+        const pctCumplimiento = totalRequisitos > 0 ? ((cumplen / totalRequisitos) * 100).toFixed(1) : '0.0';
+
+        const resumenTexto = datosExcel.map(hoja =>
+          `CUERPO LEGAL: ${hoja.cuerpoLegal} (${hoja.articulos.length} requisitos)\n` +
+          hoja.articulos.map(a =>
+            `  Art.${a.art || 'N/A'}: ${a.desc.substring(0, 150)}\n  Como cumple: ${a.como || 'NO ESPECIFICADO'}\n  Cumple: ${a.cumple || 'NO INDICADO'}`
+          ).join('\n')
+        ).join('\n\n');
+
+        const mensajeIA = await anthropic.messages.create({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 4000,
+          messages: [{
+            role: 'user',
+            content: `Eres Cristián Cordero, consultor ISO senior de Procesus. Analiza la siguiente matriz de requisitos legales de "${empresa}" y genera el INFORME DE CUMPLIMIENTO NORMATIVO completo.
+
+ESTADÍSTICAS DE LA MATRIZ:
+- Cuerpos legales: ${totalCuerpos}
+- Total requisitos: ${totalRequisitos}
+- Cumplen: ${cumplen} | Parcial: ${parcial} | No cumplen: ${noCumplen}
+- % Cumplimiento global: ${pctCumplimiento}%
+
+CONTENIDO COMPLETO DE LA MATRIZ:
+${resumenTexto}
+
+Genera el informe con estas secciones:
+
+## RESUMEN EJECUTIVO
+Describe el nivel de cumplimiento (ALTO >80%, MEDIO 50-80%, BAJO <50%) con los números exactos. Evalúa el estado general de la matriz.
+
+## CUMPLIMIENTO POR CUERPO LEGAL
+Para cada cuerpo legal: total requisitos, cumplen, parcial, no cumplen, % cumplimiento. Formato tabla de texto.
+
+## BRECHAS DETECTADAS Y RECOMENDACIONES
+Identifica artículos sin "cómo se cumple" completo o con cumplimiento negativo/parcial. Para cada brecha: qué falta y acción correctiva específica. Si no hay brechas significativas, indica cumplimiento total y da recomendaciones de mejora continua.
+
+## VALIDEZ PARA AUDITORÍA ISO
+Evalúa si la matriz está lista para una auditoría. Señala qué ajustes se requieren si los hay.
+
+Fecha de revisión: ${fechaHoy}
+Generado por: Procesus — NormaAI Legal`
+          }]
+        });
+        informeIA = mensajeIA.content[0].text;
+
+      } else if (ext === 'pdf') {
         const archivoBase64 = archivo.buffer.toString('base64');
         const mensajeIA = await anthropic.messages.create({
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 3000,
+          max_tokens: 4000,
           messages: [{
             role: 'user',
             content: [
-              {
-                type: 'document',
-                source: { type: 'base64', media_type: 'application/pdf', data: archivoBase64 }
-              },
-              {
-                type: 'text',
-                text: `Eres un consultor legal especializado en normativa chilena. Analiza esta matriz de requisitos legales de la empresa "${empresa}" y genera un informe estructurado con:
-
-## 1. RESUMEN EJECUTIVO
-Total de cuerpos legales identificados, estado general de la matriz.
-
-## 2. ANÁLISIS POR CUERPO LEGAL
-Para cada ley/decreto identificado, evalúa si los artículos están completos y actualizados según la normativa chilena vigente.
-
-## 3. BRECHAS DETECTADAS
-Requisitos que podrían faltar o estar desactualizados. Menciona normas específicas si detectas ausencias.
-
-## 4. RECOMENDACIONES
-Acciones concretas ordenadas por prioridad.
-
-## 5. VALIDEZ DE LA MATRIZ
-Indica si la matriz cumple con los estándares mínimos para una auditoría ISO.
-
-Sé específico con números de leyes y decretos chilenos.`
-              }
+              { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: archivoBase64 } },
+              { type: 'text', text: `Eres Cristián Cordero, consultor ISO de Procesus. Analiza esta matriz de requisitos legales de "${empresa}" (fecha: ${fechaHoy}) y genera un informe completo con: resumen ejecutivo con KPIs, cumplimiento por cuerpo legal, brechas detectadas con recomendaciones específicas, y validez para auditoría ISO.` }
             ]
           }]
         });
         informeIA = mensajeIA.content[0].text;
+
       } else {
-        // Excel o Word — análisis general
-        const mensajeIA = await anthropic.messages.create({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 2000,
-          messages: [{
-            role: 'user',
-            content: `Eres un consultor legal especializado en normativa chilena. Se recibió una matriz de requisitos legales de la empresa "${empresa}" en formato ${ext.toUpperCase()}.
-
-Nombre del archivo: ${archivo.originalname}
-Tamaño: ${(archivo.size / 1024).toFixed(1)} KB
-
-Genera un informe preliminar con:
-
-## 1. RECEPCIÓN CONFIRMADA
-Confirma recepción de la matriz.
-
-## 2. QUÉ SE REVISARÁ
-Lista los aspectos que el equipo evaluará: completitud de cuerpos legales, actualización según Diario Oficial vigente, brechas potenciales según rubro.
-
-## 3. ESTÁNDARES DE REVISIÓN
-Menciona las principales normas chilenas que se verificarán según el tipo de empresa (laboral, ambiental, SST, datos personales, etc.).
-
-## 4. PRÓXIMOS PASOS
-El cliente recibirá el informe completo con sello Procesus en 24-48 horas hábiles.`
-          }]
-        });
-        informeIA = mensajeIA.content[0].text;
+        informeIA = `## RECEPCIÓN CONFIRMADA\n\nMatriz recibida el ${fechaHoy}.\n- Archivo: ${archivo.originalname}\n- Empresa: ${empresa}\n\n## PRÓXIMOS PASOS\n\nEl equipo de Procesus analizará el documento y enviará el informe certificado en 24-48 horas hábiles.`;
       }
     } catch (e) {
       console.error('Error IA:', e.message);
-      informeIA = 'Matriz recibida correctamente. El equipo de Procesus realizará el análisis detallado en las próximas 24-48 horas hábiles.';
+      informeIA = `Matriz recibida el ${fechaHoy}. El equipo de Procesus realizará el análisis en las próximas 24-48 horas hábiles.`;
     }
 
-    // Guardar en Supabase
     const { data: matriz, error } = await supabase
       .from('normaai_matrices')
       .insert({
         user_id: req.user.id,
         empresa: empresa,
         nombre_archivo: archivo.originalname,
-        contenido_texto: `Archivo ${ext.toUpperCase()}: ${archivo.originalname} (${(archivo.size/1024).toFixed(1)} KB)`,
+        contenido_texto: `${ext.toUpperCase()}: ${archivo.originalname} (${(archivo.size/1024).toFixed(1)} KB)`,
         informe_ia: informeIA,
         estado: 'pendiente'
       })
@@ -486,28 +545,23 @@ El cliente recibirá el informe completo con sello Procesus en 24-48 horas hábi
         html: `
           <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
             <div style="background:#0f2a4a;padding:20px;border-radius:8px 8px 0 0;">
-              <h2 style="color:white;margin:0;">NormaAI Legal — Nueva Matriz Recibida</h2>
+              <h2 style="color:white;margin:0;">NormaAI Legal — Nueva Matriz</h2>
             </div>
             <div style="background:#f8fafc;padding:24px;border:1px solid #e2e8f0;">
               <p><strong>Empresa:</strong> ${empresa}</p>
               <p><strong>Archivo:</strong> ${archivo.originalname}</p>
               <p><strong>Cliente:</strong> ${req.user.email}</p>
-              <p><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'})}</p>
-              <hr style="border:1px solid #e2e8f0;margin:20px 0;">
-              <h3>Borrador IA:</h3>
-              <div style="background:white;padding:16px;border-radius:6px;border-left:4px solid #1e6fc8;">
-                ${informeIA.replace(/\n/g,'<br>')}
-              </div>
-              <hr style="border:1px solid #e2e8f0;margin:20px 0;">
-              <a href="https://legal.normaai.cl/admin"
-                 style="background:#1e6fc8;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;">
-                Revisar y Aprobar en el Panel Admin →
+              <p><strong>Fecha:</strong> ${fechaHoy}</p>
+              <hr style="border:1px solid #e2e8f0;margin:16px 0;">
+              <p style="color:#64748b;font-size:13px;">El análisis IA está listo para tu revisión en el panel admin.</p>
+              <a href="https://legal.normaai.cl/admin" style="background:#1e6fc8;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;margin-top:8px;">
+                Revisar en el Panel Admin →
               </a>
             </div>
           </div>`
       });
     } catch (emailErr) {
-      console.error('Error email notificación:', emailErr.message);
+      console.error('Error email:', emailErr.message);
     }
 
     res.json({

@@ -512,7 +512,7 @@ async function abrirMatriz(id) {
   document.getElementById('matriz-detalle').style.display = 'block';
   document.getElementById('detalle-titulo').textContent = '📄 ' + data.nombre_archivo;
   document.getElementById('detalle-empresa').textContent = data.empresa || '—';
-  document.getElementById('detalle-cliente').textContent = data.cliente_email || data.user_id;
+  document.getElementById('detalle-cliente').textContent = data.cliente_email || data.cliente_nombre || data.user_id;
   document.getElementById('detalle-archivo').textContent = data.nombre_archivo;
   document.getElementById('detalle-fecha').textContent = new Date(data.created_at).toLocaleDateString('es-CL', {day:'2-digit',month:'long',year:'numeric'});
   document.getElementById('detalle-informe').value = data.informe_ia || '';
