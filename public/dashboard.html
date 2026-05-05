@@ -124,6 +124,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
     <div class="nav-section" style="margin-top:1rem">
       <div class="nav-label">Recursos</div>
       <button class="nav-item" onclick="mostrarVista('documentos',this)"><span class="nav-icon">📄</span> Revisar Documento</button>
+      <button class="nav-item" onclick="mostrarVista('matriz',this)"><span class="nav-icon">📊</span> Revisar tu Matriz</button>
       <button class="nav-item" onclick="mostrarVista('videos',this)"><span class="nav-icon">🎥</span> Videos</button>
     </div>
     <div class="sidebar-footer">
@@ -202,6 +203,34 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
     <div class="view" id="vista-videos">
       <div id="videos-content"><div class="loading-state"><div class="spinner"></div><span>Cargando videos...</span></div></div>
     </div>
+
+    <!-- MATRIZ -->
+    <div class="view" id="vista-matriz">
+      <div style="max-width:700px;margin:0 auto;">
+        <div class="info-box">
+          <div style="font-family:Syne,sans-serif;font-weight:700;font-size:1rem;margin-bottom:.4rem;">📊 Revisión de Matriz de Requisitos Legales</div>
+          <div style="font-size:.83rem;color:#8a96a8;line-height:1.6;">
+            Sube tu matriz de requisitos legales y nuestro equipo de consultores la revisará. Recibirás un <strong style="color:#e2e8f0;">informe certificado con sello Procesus</strong> en tu correo en 24-48 horas hábiles.<br>
+            <strong style="color:#fcd34d;">⚠️ Este servicio incluye revisión humana. El resultado no es inmediato.</strong>
+          </div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1.5rem;margin-bottom:1rem;">
+          <div style="font-size:.88rem;font-weight:600;margin-bottom:.8rem;color:#e2e8f0;">Datos de tu empresa</div>
+          <input type="text" id="nombre-empresa-matriz" placeholder="Nombre de tu empresa (opcional)" style="width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;margin-bottom:1rem;box-sizing:border-box;outline:none;">
+          <div class="drop-zone" onclick="document.getElementById('input-matriz').click()">
+            <div style="font-size:2rem;margin-bottom:.5rem;">📁</div>
+            <div style="font-size:.9rem;color:#8a96a8;">Haz click para seleccionar tu matriz</div>
+            <div style="font-size:.75rem;color:#4a5568;margin-top:.3rem;">Excel (.xlsx, .xls) · PDF · Word (.docx) — Máximo 10MB</div>
+            <input type="file" id="input-matriz" accept=".xlsx,.xls,.pdf,.doc,.docx" style="display:none" onchange="subirMatriz(this)">
+          </div>
+          <div id="resultado-matriz" style="margin-top:1rem;"></div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1.5rem;">
+          <div style="font-size:.88rem;font-weight:600;margin-bottom:.8rem;color:#e2e8f0;">Mis matrices enviadas</div>
+          <div id="matrices-contenido"><div style="color:#3d4f6a;font-size:.85rem;">Cargando...</div></div>
+        </div>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -226,6 +255,7 @@ const titulos = {
   agente: 'Agente IA — Consulta Normativa',
   historial: 'Historial de Consultas',
   documentos: 'Revisar Documentos',
+  matriz: 'Revisar tu Matriz Legal',
   videos: 'Videos y Capacitación'
 };
 
@@ -238,6 +268,7 @@ function mostrarVista(nombre_vista, el) {
   if (nombre_vista === 'noticias') cargarNoticias();
   if (nombre_vista === 'historial') cargarHistorial();
   if (nombre_vista === 'videos') cargarVideos();
+  if (nombre_vista === 'matriz') cargarMisMatrices();
 }
 
 // ── Noticias ─────────────────────────────────────────────────
@@ -450,6 +481,60 @@ async function hacerLogout() {
 
 // ── Inicio ───────────────────────────────────────────────────
 cargarNoticias();
+
+// ── Matriz Legal ─────────────────────────────────────────────
+async function subirMatriz(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const resultado = document.getElementById('resultado-matriz');
+  const empresa = document.getElementById('nombre-empresa-matriz').value;
+  resultado.innerHTML = '<div style="color:#8a96a8;font-size:.85rem;padding:.8rem;background:rgba(255,255,255,0.03);border-radius:8px;">⏳ Subiendo matriz, por favor espera...</div>';
+  const formData = new FormData();
+  formData.append('archivo', file);
+  if (empresa) formData.append('nombre_empresa', empresa);
+  try {
+    const res = await fetch('/api/matriz/subir', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+      body: formData
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      resultado.innerHTML = '<div style="color:#f87171;background:rgba(220,38,38,0.1);border-radius:8px;padding:1rem;">⚠️ ' + (data.error || 'Error al subir') + '</div>';
+    } else {
+      resultado.innerHTML = '<div style="color:#4ade80;background:rgba(22,163,74,0.1);border-radius:8px;padding:1rem;">✅ ' + data.mensaje + '</div>';
+      input.value = '';
+      cargarMisMatrices();
+    }
+  } catch(e) {
+    resultado.innerHTML = '<div style="color:#f87171;padding:.8rem;">Error de conexión. Intenta nuevamente.</div>';
+  }
+}
+
+async function cargarMisMatrices() {
+  const cont = document.getElementById('matrices-contenido');
+  if (!cont) return;
+  try {
+    const res = await fetch('/api/matriz/mis-matrices', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+    if (!data.length) {
+      cont.innerHTML = '<div style="color:#3d4f6a;font-size:.85rem;">Aún no has enviado ninguna matriz.</div>';
+      return;
+    }
+    const estadoColor = { pendiente:'#c9a84c', en_revision:'#60a5fa', aprobado:'#4ade80', enviado:'#4ade80' };
+    const estadoLabel = { pendiente:'⏳ Pendiente revisión', en_revision:'🔍 En revisión', aprobado:'✅ Aprobado', enviado:'✅ Informe enviado' };
+    cont.innerHTML = data.map(m => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:.8rem 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+        <div>
+          <div style="font-size:.88rem;font-weight:600;color:#e2e8f0;">${m.nombre_archivo}</div>
+          <div style="font-size:.75rem;color:#8a96a8;">${m.empresa || ''} · ${new Date(m.created_at).toLocaleDateString('es-CL')}</div>
+        </div>
+        <span style="font-size:.75rem;padding:.3rem .8rem;border-radius:20px;background:rgba(255,255,255,0.05);color:${estadoColor[m.estado]||'#8a96a8'};white-space:nowrap;">${estadoLabel[m.estado]||m.estado}</span>
+      </div>`).join('');
+  } catch(e) {
+    cont.innerHTML = '<div style="color:#3d4f6a;font-size:.85rem;">Error al cargar.</div>';
+  }
+}
 </script>
 </body>
 </html>
