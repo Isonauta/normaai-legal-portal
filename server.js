@@ -529,7 +529,10 @@ Generado por: Procesus — NormaAI Legal`
         nombre_archivo: archivo.originalname,
         contenido_texto: `${ext.toUpperCase()}: ${archivo.originalname} (${(archivo.size/1024).toFixed(1)} KB)`,
         informe_ia: informeIA,
-        estado: 'pendiente'
+        estado: 'pendiente',
+        archivo_original_base64: archivo.buffer.toString('base64'),
+        archivo_original_nombre: archivo.originalname,
+        archivo_original_tipo: archivo.mimetype || 'application/octet-stream'
       })
       .select()
       .single();
@@ -612,10 +615,48 @@ app.get('/api/matriz/:id/descargar', verificarToken, async (req, res) => {
       informe: matriz.informe_ia,
       nombre_archivo: matriz.nombre_archivo,
       empresa: matriz.empresa,
-      fecha: matriz.updated_at
+      fecha: matriz.updated_at,
+      tiene_archivo_final: !!matriz.informe_final_base64,
+      informe_final_nombre: matriz.informe_final_nombre || null
     });
   } catch (err) {
     res.status(500).json({ error: 'Error al descargar informe' });
+  }
+});
+
+// ── Cliente: Descargar archivo final del informe ──────────────
+app.get('/api/matriz/:id/archivo-final', verificarToken, async (req, res) => {
+  try {
+    const { data: matriz, error } = await supabase
+      .from('normaai_matrices')
+      .select('informe_final_base64, informe_final_nombre, informe_ia, empresa, id, updated_at')
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id)
+      .single();
+
+    if (error || !matriz) return res.status(404).json({ error: 'No encontrada' });
+    if (matriz.estado !== 'enviado' && matriz.estado !== 'aprobado') {
+      return res.status(400).json({ error: 'Informe no disponible aún' });
+    }
+
+    let buffer, nombre, tipo;
+    if (matriz.informe_final_base64) {
+      buffer = Buffer.from(matriz.informe_final_base64, 'base64');
+      nombre = matriz.informe_final_nombre || `Informe_${(matriz.empresa||'NormaAI').replace(/[^a-zA-Z0-9]/g,'_')}.docx`;
+      tipo = nombre.endsWith('.pdf') ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    } else {
+      // Generar Word del borrador si no hay archivo final
+      const fechaEmision = new Date(matriz.updated_at).toLocaleDateString('es-CL', { day:'2-digit', month:'long', year:'numeric' });
+      buffer = await generarWordBuffer(matriz, fechaEmision);
+      nombre = `Informe_${(matriz.empresa||'NormaAI').replace(/[^a-zA-Z0-9]/g,'_')}_NormaAI.docx`;
+      tipo = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    }
+
+    res.setHeader('Content-Type', tipo);
+    res.setHeader('Content-Disposition', `attachment; filename="${nombre}"`);
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al descargar archivo' });
   }
 });
 
@@ -870,6 +911,55 @@ app.get('/api/admin/matrices/:id/word', verificarAdmin, async (req, res) => {
   }
 });
 
+// ── Admin: Descargar archivo original del cliente ─────────────
+app.get('/api/admin/matrices/:id/archivo-original', verificarAdmin, async (req, res) => {
+  try {
+    const { data: matriz, error } = await supabase
+      .from('normaai_matrices')
+      .select('archivo_original_base64, archivo_original_nombre, archivo_original_tipo')
+      .eq('id', req.params.id)
+      .single();
+
+    if (error || !matriz || !matriz.archivo_original_base64) {
+      return res.status(404).json({ error: 'Archivo original no disponible' });
+    }
+
+    const buffer = Buffer.from(matriz.archivo_original_base64, 'base64');
+    const nombre = matriz.archivo_original_nombre || 'matriz_cliente';
+    const tipo = matriz.archivo_original_tipo || 'application/octet-stream';
+
+    res.setHeader('Content-Type', tipo);
+    res.setHeader('Content-Disposition', `attachment; filename="${nombre}"`);
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al descargar archivo' });
+  }
+});
+
+// ── Admin: Subir informe final editado ────────────────────────
+app.post('/api/admin/matrices/:id/informe-final', verificarAdmin, upload.single('archivo'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No se recibió archivo' });
+
+    const archivo = req.file;
+    const base64 = archivo.buffer.toString('base64');
+
+    await supabase
+      .from('normaai_matrices')
+      .update({
+        informe_final_base64: base64,
+        informe_final_nombre: archivo.originalname,
+        estado: 'en_revision',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', req.params.id);
+
+    res.json({ ok: true, nombre: archivo.originalname });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al subir informe final' });
+  }
+});
+
 // ── Admin: Editar informe antes de aprobar ────────────────────
 app.post('/api/admin/matrices/:id/editar', verificarAdmin, async (req, res) => {
   try {
@@ -904,8 +994,20 @@ app.post('/api/admin/matrices/:id/aprobar', verificarAdmin, async (req, res) => 
     });
 
     const transporter = crearTransporter();
-    const wordBuffer = await generarWordBuffer(matriz, fechaEmision);
-    const wordFilename = `Informe_${(matriz.empresa||'Procesus').replace(/[^a-zA-Z0-9]/g,'_')}_NormaAI.docx`;
+
+    // Usar informe final subido por Cristián, o generar Word del borrador
+    let adjuntoBuffer, adjuntoNombre, adjuntoTipo;
+    if (matriz.informe_final_base64) {
+      adjuntoBuffer = Buffer.from(matriz.informe_final_base64, 'base64');
+      adjuntoNombre = matriz.informe_final_nombre || `Informe_${(matriz.empresa||'Procesus').replace(/[^a-zA-Z0-9]/g,'_')}_NormaAI.docx`;
+      adjuntoTipo = adjuntoNombre.endsWith('.pdf') 
+        ? 'application/pdf' 
+        : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    } else {
+      adjuntoBuffer = await generarWordBuffer(matriz, fechaEmision);
+      adjuntoNombre = `Informe_${(matriz.empresa||'Procesus').replace(/[^a-zA-Z0-9]/g,'_')}_NormaAI.docx`;
+      adjuntoTipo = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    }
 
     await transporter.sendMail({
       from: `"NormaAI Legal — Procesus" <${process.env.GMAIL_USER}>`,
@@ -913,9 +1015,9 @@ app.post('/api/admin/matrices/:id/aprobar', verificarAdmin, async (req, res) => 
       subject: `✅ Informe de Revisión de Matriz Legal — ${matriz.empresa}`,
       attachments: [
         {
-          filename: wordFilename,
-          content: wordBuffer,
-          contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          filename: adjuntoNombre,
+          content: adjuntoBuffer,
+          contentType: adjuntoTipo
         }
       ],
       html: `

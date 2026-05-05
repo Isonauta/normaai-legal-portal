@@ -237,10 +237,14 @@ textarea{resize:vertical;min-height:80px;}
           <div style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:center;">
             <button class="btn btn-primary" onclick="guardarBorrador()">💾 Guardar borrador</button>
             <button class="btn" style="background:rgba(99,102,241,0.15);color:#818cf8;border:1px solid rgba(99,102,241,0.3);" onclick="descargarWord()">📝 Descargar Word</button>
+            <button class="btn" style="background:rgba(14,165,233,0.15);color:#38bdf8;border:1px solid rgba(14,165,233,0.3);" onclick="descargarMatrizOriginal()">📥 Descargar matriz cliente</button>
+            <button class="btn" style="background:rgba(251,146,60,0.15);color:#fb923c;border:1px solid rgba(251,146,60,0.3);" onclick="document.getElementById('input-informe-final').click()">📤 Subir informe final</button>
+            <input type="file" id="input-informe-final" accept=".docx,.pdf" style="display:none" onchange="subirInformeFinal(this)">
             <button class="btn btn-success" onclick="confirmarEnvio()" id="btn-enviar">✅ Aprobar y enviar al cliente</button>
             <div id="detalle-estado-badge"></div>
           </div>
           <div id="detalle-msg" style="margin-top:.8rem;font-size:.85rem;display:none;"></div>
+          <div id="informe-final-status" style="margin-top:.5rem;font-size:.82rem;color:#8a96a8;display:none;"></div>
         </div>
       </div>
     </div>
@@ -606,6 +610,63 @@ async function confirmarEnvio() {
     msg.style.color = '#f87171';
     msg.textContent = '❌ ' + (data.error || 'Error al enviar. Intenta nuevamente.');
   }
+}
+
+async function descargarMatrizOriginal() {
+  if (!matrizActualId) return;
+  const btn = document.querySelector('button[onclick="descargarMatrizOriginal()"]');
+  btn.disabled = true;
+  btn.textContent = '⏳ Descargando...';
+  try {
+    const res = await fetch('/api/admin/matrices/' + matrizActualId + '/archivo-original', {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    if (!res.ok) { alert('Error al descargar la matriz original'); return; }
+    const blob = await res.blob();
+    const disposition = res.headers.get('Content-Disposition') || '';
+    const nombreMatch = disposition.match(/filename="([^"]+)"/);
+    const nombre = nombreMatch ? nombreMatch[1] : 'matriz_cliente';
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = nombre; a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    alert('Error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📥 Descargar matriz cliente';
+  }
+}
+
+async function subirInformeFinal(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const status = document.getElementById('informe-final-status');
+  status.style.display = 'block';
+  status.style.color = '#8a96a8';
+  status.textContent = '⏳ Subiendo informe final...';
+  const formData = new FormData();
+  formData.append('archivo', file);
+  try {
+    const res = await fetch('/api/admin/matrices/' + matrizActualId + '/informe-final', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token },
+      body: formData
+    });
+    const data = await res.json();
+    if (res.ok) {
+      status.style.color = '#4ade80';
+      status.textContent = '✅ Informe final subido: ' + file.name + ' — listo para enviar al cliente.';
+      document.getElementById('btn-enviar').style.background = '#16a34a';
+    } else {
+      status.style.color = '#f87171';
+      status.textContent = '❌ ' + (data.error || 'Error al subir');
+    }
+  } catch(e) {
+    status.style.color = '#f87171';
+    status.textContent = '❌ Error de conexión';
+  }
+  input.value = '';
 }
 
 // ── Logout ───────────────────────────────────────────────────
