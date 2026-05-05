@@ -629,7 +629,7 @@ app.get('/api/matriz/:id/archivo-final', verificarToken, async (req, res) => {
   try {
     const { data: matriz, error } = await supabase
       .from('normaai_matrices')
-      .select('informe_final_base64, informe_final_nombre, informe_ia, empresa, id, updated_at')
+      .select('informe_final_base64, informe_final_nombre, informe_ia, empresa, id, updated_at, estado')
       .eq('id', req.params.id)
       .eq('user_id', req.user.id)
       .single();
@@ -911,28 +911,88 @@ app.get('/api/admin/matrices/:id/word', verificarAdmin, async (req, res) => {
   }
 });
 
+// ── Admin: Diagnóstico de archivo original (debug endpoint) ──
+app.get('/api/admin/matrices/:id/archivo-original/diagnostico', verificarAdmin, async (req, res) => {
+  try {
+    const { data: meta, error: metaErr } = await supabase
+      .from('normaai_matrices')
+      .select('id, empresa, nombre_archivo, archivo_original_nombre, archivo_original_tipo, created_at')
+      .eq('id', req.params.id)
+      .single();
+
+    if (metaErr) return res.json({ ok: false, supabase_error: metaErr.message });
+    if (!meta) return res.json({ ok: false, razon: 'Registro no encontrado' });
+
+    const { data: check, error: checkErr } = await supabase
+      .from('normaai_matrices')
+      .select('archivo_original_base64')
+      .eq('id', req.params.id)
+      .single();
+
+    const tieneBase64 = !checkErr && check && !!check.archivo_original_base64;
+    const longitudBase64 = tieneBase64 ? check.archivo_original_base64.length : 0;
+
+    res.json({
+      ok: tieneBase64,
+      id: meta.id,
+      empresa: meta.empresa,
+      nombre_archivo: meta.nombre_archivo,
+      archivo_original_nombre: meta.archivo_original_nombre,
+      archivo_original_tipo: meta.archivo_original_tipo,
+      tiene_base64: tieneBase64,
+      longitud_base64: longitudBase64,
+      tamano_kb: longitudBase64 ? Math.round(longitudBase64 * 0.75 / 1024) : 0,
+      created_at: meta.created_at,
+      supabase_error: checkErr ? checkErr.message : null
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // ── Admin: Descargar archivo original del cliente ─────────────
 app.get('/api/admin/matrices/:id/archivo-original', verificarAdmin, async (req, res) => {
   try {
     const { data: matriz, error } = await supabase
       .from('normaai_matrices')
-      .select('archivo_original_base64, archivo_original_nombre, archivo_original_tipo')
+      .select('archivo_original_base64, archivo_original_nombre, archivo_original_tipo, empresa, nombre_archivo')
       .eq('id', req.params.id)
       .single();
 
-    if (error || !matriz || !matriz.archivo_original_base64) {
-      return res.status(404).json({ error: 'Archivo original no disponible' });
+    if (error) {
+      console.error(`[archivo-original] Supabase error id=${req.params.id}:`, error.message);
+      return res.status(500).json({ error: 'Error en base de datos: ' + error.message });
+    }
+    if (!matriz) {
+      return res.status(404).json({ error: 'Registro no encontrado' });
+    }
+    if (!matriz.archivo_original_base64) {
+      console.warn(`[archivo-original] id=${req.params.id} (${matriz.empresa}) sin archivo_original_base64`);
+      return res.status(404).json({
+        error: 'Archivo original no disponible',
+        detalle: 'Esta matriz fue subida antes de implementar el almacenamiento del archivo original.',
+        empresa: matriz.empresa,
+        nombre_archivo: matriz.nombre_archivo
+      });
     }
 
-    const buffer = Buffer.from(matriz.archivo_original_base64, 'base64');
-    const nombre = matriz.archivo_original_nombre || 'matriz_cliente';
+    let buffer;
+    try {
+      buffer = Buffer.from(matriz.archivo_original_base64, 'base64');
+    } catch (e) {
+      console.error(`[archivo-original] Error decodificando base64 id=${req.params.id}:`, e.message);
+      return res.status(500).json({ error: 'Error al decodificar archivo: ' + e.message });
+    }
+
+    const nombre = matriz.archivo_original_nombre || matriz.nombre_archivo || 'matriz_cliente';
     const tipo = matriz.archivo_original_tipo || 'application/octet-stream';
 
     res.setHeader('Content-Type', tipo);
     res.setHeader('Content-Disposition', `attachment; filename="${nombre}"`);
     res.send(buffer);
   } catch (err) {
-    res.status(500).json({ error: 'Error al descargar archivo' });
+    console.error(`[archivo-original] Error inesperado id=${req.params.id}:`, err.message);
+    res.status(500).json({ error: 'Error al descargar archivo: ' + err.message });
   }
 });
 

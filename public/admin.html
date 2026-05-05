@@ -621,7 +621,17 @@ async function descargarMatrizOriginal() {
     const res = await fetch('/api/admin/matrices/' + matrizActualId + '/archivo-original', {
       headers: { Authorization: 'Bearer ' + token }
     });
-    if (!res.ok) { alert('Error al descargar la matriz original'); return; }
+    if (!res.ok) {
+      let msg = 'Error al descargar la matriz original';
+      try {
+        const errData = await res.json();
+        msg = errData.error || msg;
+        if (errData.detalle) msg += '\n\n' + errData.detalle;
+        if (errData.empresa) msg += '\nEmpresa: ' + errData.empresa;
+      } catch(_) {}
+      alert(msg);
+      return;
+    }
     const blob = await res.blob();
     const disposition = res.headers.get('Content-Disposition') || '';
     const nombreMatch = disposition.match(/filename="([^"]+)"/);
@@ -636,6 +646,18 @@ async function descargarMatrizOriginal() {
     btn.disabled = false;
     btn.textContent = '📥 Descargar matriz cliente';
   }
+}
+
+// Diagnóstico de archivo original (para debug desde consola del admin)
+async function diagnosticoArchivoOriginal(id) {
+  const mid = id || matrizActualId;
+  if (!mid) return console.warn('No hay matrizActualId');
+  const res = await fetch('/api/admin/matrices/' + mid + '/archivo-original/diagnostico', {
+    headers: { Authorization: 'Bearer ' + token }
+  });
+  const data = await res.json();
+  console.table(data);
+  return data;
 }
 
 async function subirInformeFinal(input) {
