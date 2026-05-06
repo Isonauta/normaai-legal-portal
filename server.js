@@ -1324,31 +1324,10 @@ app.post('/api/admin/matrices/:id/aprobar', verificarAdmin, async (req, res) => 
 
     const transporter = crearTransporter();
 
-    // Usar informe final subido por Cristián, o generar Word del borrador
-    let adjuntoBuffer, adjuntoNombre, adjuntoTipo;
-    if (matriz.informe_final_base64) {
-      adjuntoBuffer = Buffer.from(matriz.informe_final_base64, 'base64');
-      adjuntoNombre = matriz.informe_final_nombre || `Informe_${(matriz.empresa||'Procesus').replace(/[^a-zA-Z0-9]/g,'_')}_NormaAI.docx`;
-      adjuntoTipo = adjuntoNombre.endsWith('.pdf') 
-        ? 'application/pdf' 
-        : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-    } else {
-      adjuntoBuffer = await generarWordBuffer(matriz, fechaEmision);
-      adjuntoNombre = `Informe_${(matriz.empresa||'Procesus').replace(/[^a-zA-Z0-9]/g,'_')}_NormaAI.docx`;
-      adjuntoTipo = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-    }
-
-    await transporter.sendMail({
+        await transporter.sendMail({
       from: `"NormaAI Legal — Procesus" <${process.env.GMAIL_USER}>`,
       to: emailCliente,
-      subject: `✅ Informe de Revisión de Matriz Legal — ${matriz.empresa}`,
-      attachments: [
-        {
-          filename: adjuntoNombre,
-          content: adjuntoBuffer,
-          contentType: adjuntoTipo
-        }
-      ],
+      subject: `✅ Informe de Cumplimiento Normativo listo — ${matriz.empresa}`,
       html: `
         <div style="font-family:Arial,sans-serif;max-width:650px;margin:0 auto;">
           <div style="background:linear-gradient(135deg,#0f2a4a,#1e6fc8);padding:28px 32px;border-radius:8px 8px 0 0;">
@@ -1366,7 +1345,7 @@ app.post('/api/admin/matrices/:id/aprobar', verificarAdmin, async (req, res) => 
               <p style="color:#64748b;font-size:13px;margin:6px 0;"><strong>Folio:</strong> NormaAI-${matriz.id.substring(0,8).toUpperCase()}</p>
             </div>
             <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px;margin:20px 0;">
-              <p style="color:#1e40af;font-size:13px;margin:0;">📎 <strong>El informe completo está adjunto en formato Word (.docx)</strong> en este correo. Puede abrirlo directamente con Microsoft Word o Google Docs.</p>
+              <p style="color:#1e40af;font-size:13px;margin:0;">📎 <strong>El informe completo está disponible en la plataforma NormaAI Legal</strong> en este correo. Puede abrirlo directamente con Microsoft Word o Google Docs.</p>
             </div>
             <div style="background:#f0fdf4;border:2px solid #16a34a;border-radius:8px;padding:20px;margin:20px 0;">
               <h2 style="color:#15803d;font-size:15px;margin-top:0;">🏆 Certificado de Revisión — Procesus</h2>
