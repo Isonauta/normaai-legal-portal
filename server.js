@@ -1399,7 +1399,7 @@ app.post('/api/admin/matrices/:id/aprobar', verificarAdmin, async (req, res) => 
 
     const transporter = crearTransporter();
 
-        await transporter.sendMail({
+    await transporter.sendMail({
       from: `"NormaAI Legal — Procesus" <${process.env.GMAIL_USER}>`,
       to: emailCliente,
       subject: `✅ Informe de Cumplimiento Normativo listo — ${matriz.empresa}`,
