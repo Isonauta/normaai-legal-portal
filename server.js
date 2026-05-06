@@ -332,6 +332,30 @@ app.get('/api/historial/sesion/:sesion_id', verificarToken, async (req, res) => 
 //  MATRIZ — Subir y analizar matriz legal del cliente
 // ══════════════════════════════════════════════════════════════
 
+
+// ── Leer Excel ───────────────────────────────────────────────
+function leerExcel(buffer) {
+  const XLSX = require('xlsx');
+  const wb = XLSX.read(buffer, { type: 'buffer' });
+  return wb.SheetNames.map(name => {
+    const ws = wb.Sheets[name];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+    const articulos = [];
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      const art  = String(r[1] || '').trim();
+      const desc = String(r[2] || '').trim();
+      const como = String(r[3] || '').trim();
+      const cumple = String(r[4] || '').trim();
+      const resp = String(r[5] || '').trim();
+      if (art && desc && desc.length > 10) {
+        articulos.push({ art, desc, como, cumple, responsable: resp });
+      }
+    }
+    return { cuerpoLegal: name, articulos };
+  }).filter(h => h.articulos.length > 0);
+}
+
 // ── Generador de informe HTML ─────────────────────────────────
 function generarInformeHTML({ datosExcel, totalCuerpos, totalRequisitos, cumplen, noCumplen, parcial, pctCumplimiento, empresa, normas_iso, alcance_sistema, sitios_trabajo, fechaHoy }) {
   const pct = parseFloat(pctCumplimiento);
