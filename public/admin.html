@@ -731,10 +731,6 @@ async function confirmarEnvio() {
   if (!matrizActualId) return;
   if (!confirm('¿Enviar el informe al cliente? Esta acción no se puede deshacer.')) return;
 
-  // Primero guardar el borrador editado
-  const informe = document.getElementById('detalle-informe').value;
-  await apiPost('/api/admin/matrices/' + matrizActualId + '/editar', { informe_ia: informe });
-
   const msg = document.getElementById('detalle-msg');
   msg.style.display = 'block';
   msg.style.color = '#8a96a8';
