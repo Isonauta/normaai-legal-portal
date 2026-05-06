@@ -110,9 +110,26 @@ async function scrapearDiarioOficial(fecha) {
   }
 }
 
+function detectarCategoria(titulo) {
+  const t = titulo.toLowerCase();
+  if (t.includes('ambiental') || t.includes('medio ambiente') || t.includes('residuo') || t.includes('emisión')) return 'ambiental';
+  if (t.includes('seguridad') || t.includes('salud ocupacional') || t.includes('accidente') || t.includes('higiene')) return 'seguridad';
+  if (t.includes('datos personales') || t.includes('privacidad') || t.includes('ciberseguridad') || t.includes('digital')) return 'digital';
+  if (t.includes('laboral') || t.includes('trabajo') || t.includes('trabajador') || t.includes('remuneración')) return 'laboral';
+  return 'general';
+}
+
+function generarResumen(titulo, fecha) {
+  const tipo = detectarTipo(titulo);
+  const categoria = detectarCategoria(titulo);
+  const categoriaLabel = { ambiental: 'medio ambiente', seguridad: 'seguridad y salud ocupacional', digital: 'protección de datos y ciberseguridad', laboral: 'legislación laboral', general: 'normativa general' };
+  return `${tipo} publicado en el Diario Oficial de Chile el ${fecha}, relevante para ${categoriaLabel[categoria] || 'normativa empresarial'}. Revisa el texto completo en el enlace.`;
+}
+
 async function insertarEnKB(normas) {
   let insertadas = 0;
   let omitidas = 0;
+  let noticias = 0;
 
   for (const norma of normas) {
     try {
@@ -127,6 +144,7 @@ async function insertarEnKB(normas) {
         continue;
       }
 
+      // 1. Insertar en KB
       const { error } = await supabase.from('normaai_kb').insert({
         titulo: norma.titulo.substring(0, 200),
         descripcion: `Publicado en el Diario Oficial de Chile el ${norma.fecha}. ${norma.titulo}`,
@@ -138,10 +156,26 @@ async function insertarEnKB(normas) {
       });
 
       if (error) {
-        console.error('Error insertando:', error.message);
+        console.error('Error insertando en KB:', error.message);
       } else {
-        console.log(`Insertada: ${norma.titulo.substring(0, 70)}...`);
+        console.log(`KB insertada: ${norma.titulo.substring(0, 70)}...`);
         insertadas++;
+
+        // 2. Crear noticia automática en normaai_noticias
+        const { error: errNoticia } = await supabase.from('normaai_noticias').insert({
+          titulo: norma.titulo.substring(0, 200),
+          resumen: generarResumen(norma.titulo, norma.fecha),
+          categoria: detectarCategoria(norma.titulo),
+          url: norma.url,
+          publicada: true
+        });
+
+        if (errNoticia) {
+          console.error('Error creando noticia:', errNoticia.message);
+        } else {
+          console.log(`Noticia creada: ${norma.titulo.substring(0, 50)}...`);
+          noticias++;
+        }
       }
 
       await new Promise(r => setTimeout(r, 300));
@@ -151,7 +185,7 @@ async function insertarEnKB(normas) {
     }
   }
 
-  console.log(`\nResumen: ${insertadas} insertadas, ${omitidas} ya existian`);
+  console.log(`\nResumen: ${insertadas} normas en KB, ${noticias} noticias creadas, ${omitidas} ya existían`);
   return insertadas;
 }
 
