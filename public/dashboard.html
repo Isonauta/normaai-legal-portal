@@ -147,7 +147,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
 
     <!-- NOTICIAS -->
     <div class="view active" id="vista-noticias">
-      <div id="noticias-content"><div class="loading-state"><div class="spinner"></div><span>Cargando noticias...</span></div></div>
+      <div id="noticias-content"></div>
     </div>
 
     <!-- AGENTE -->
@@ -303,6 +303,7 @@ async function cargarVideos() {
   const cont = document.getElementById('videos-content');
   try {
     const res = await fetch('/api/noticias', { headers: { Authorization: 'Bearer ' + token } });
+    if (res.status === 401) { hacerLogout(); return; }
     const noticias = await res.json();
     const videos = noticias.filter(function(n){ return n.video_url; });
     if (!videos.length) {
@@ -607,7 +608,7 @@ async function hacerLogout() {
 }
 
 // ── Inicio ───────────────────────────────────────────────────
-cargarNoticias();
+// cargarNoticias se llama solo cuando el usuario navega a esa vista
 
 // ── Matriz Legal ─────────────────────────────────────────────
 async function subirMatriz(input) {
