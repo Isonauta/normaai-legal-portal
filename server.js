@@ -550,16 +550,68 @@ DATOS DE LA EMPRESA:
         const archivoBase64 = archivo.buffer.toString('base64');
         const mensajeIA = await anthropic.messages.create({
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 4000,
+          max_tokens: 8000,
           messages: [{
             role: 'user',
             content: [
               { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: archivoBase64 } },
-              { type: 'text', text: `Eres Cristián Cordero, consultor ISO de Procesus. Analiza esta matriz de requisitos legales y genera un informe completo con: resumen ejecutivo con KPIs, cumplimiento por cuerpo legal, brechas detectadas con recomendaciones específicas, y validez para auditoría ISO. Considera los sitios de trabajo y alcance al evaluar la cobertura normativa.\n\n${contextoEmpresa}\nFecha de revisión: ${fechaHoy}` }
+              { type: 'text', text: `Eres un analizador experto de matrices de requisitos legales. Analiza el PDF adjunto que contiene una matriz de cumplimiento legal y extrae TODOS los datos para generar un informe HTML completo.
+
+${contextoEmpresa}
+Fecha de revisión: ${fechaHoy}
+
+INSTRUCCIONES CRÍTICAS:
+1. Lee cada fila de la matriz e identifica: cuerpo legal, artículo, descripción del requisito, cómo se cumple/evidencia, estado de cumplimiento (SI/NO/vacío), y responsable.
+2. Agrupa los requisitos por cuerpo legal.
+3. Para cada requisito sin evidencia documentada, márcalo como riesgo medio. Para cada NO cumple, marca como riesgo alto.
+4. Genera el informe ÚNICAMENTE como HTML válido, sin markdown, sin explicaciones adicionales.
+
+El HTML debe seguir EXACTAMENTE esta estructura:
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Informe Cumplimiento — EMPRESA</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Arial,Helvetica,sans-serif;font-size:10pt;color:#1f2937;background:#fff;line-height:1.6;}
+.page{max-width:900px;margin:0 auto;padding:1.5cm;}
+@media print{.portada{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+@page{margin:1.2cm 1.5cm;size:A4;}
+</style>
+</head>
+<body>
+<div class="page">
+
+[PORTADA con fondo #0d2144, logo NormaAI Legal by Procesus, título "Informe de Cumplimiento Normativo", datos de empresa/normas/alcance/sitios/fecha/nivel]
+
+[5 KPIs en grid: total requisitos, cumplen, brechas, sin verificar, cuerpos legales]
+
+[Gauge SVG circular con % de cumplimiento y nivel ALTO/MEDIO/BAJO]
+
+[Sección "1. Resumen Ejecutivo" con análisis y recomendaciones]
+
+[Sección "2. Análisis Detallado por Cuerpo Legal" — para cada cuerpo legal:
+  - Header con semáforo 🔴🟡🟢, nombre, estadísticas y % 
+  - Para cada artículo: tarjeta con Art.X, badge estado (✓ Cumple / ✗ No cumple / ⚠ Sin verificar), badge riesgo si aplica, descripción del requisito, y evidencia/cómo se cumple]
+
+[Pie de página: "Informe generado por NormaAI Legal · Procesus · [fecha] · Confidencial"]
+
+</div>
+</body>
+</html>
+
+IMPORTANTE: Responde SOLO con el HTML completo. Sin texto antes ni después. Sin bloques de código markdown.` }
             ]
           }]
         });
-        informeIA = mensajeIA.content[0].text;
+        // Limpiar posibles bloques markdown que el modelo pueda agregar
+        let htmlRaw = mensajeIA.content[0].text.trim();
+        if (htmlRaw.startsWith('\`\`\`')) {
+          htmlRaw = htmlRaw.replace(/^```html?\n?/m, '').replace(/\n?```$/m, '').trim();
+        }
+        informeIA = htmlRaw;
 
       } else {
         informeIA = `## RECEPCIÓN CONFIRMADA\n\nMatriz recibida el ${fechaHoy}.\n- Archivo: ${archivo.originalname}\n- Empresa: ${empresa}\n\n## PRÓXIMOS PASOS\n\nEl equipo de Procesus analizará el documento y enviará el informe certificado en 24-48 horas hábiles.`;
