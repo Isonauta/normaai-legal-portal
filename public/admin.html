@@ -281,8 +281,7 @@ textarea{resize:vertical;min-height:80px;}
 
           <!-- Acciones principales -->
           <div style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem;">
-            <button class="btn" style="background:rgba(99,102,241,0.15);color:#818cf8;border:1px solid rgba(99,102,241,0.3);" onclick="verInformeAdmin()">👁 Ver Informe HTML</button>
-            <button class="btn" style="background:rgba(99,102,241,0.15);color:#818cf8;border:1px solid rgba(99,102,241,0.3);" onclick="descargarWord()">📝 Descargar Word</button>
+            <button class="btn" style="background:rgba(99,102,241,0.15);color:#818cf8;border:1px solid rgba(99,102,241,0.3);" onclick="descargarWord()">📝 Descargar Word borrador</button>
             <button class="btn" style="background:rgba(14,165,233,0.15);color:#38bdf8;border:1px solid rgba(14,165,233,0.3);" onclick="descargarMatrizOriginal()">📥 Descargar matriz cliente</button>
             <button class="btn" style="background:rgba(251,146,60,0.15);color:#fb923c;border:1px solid rgba(251,146,60,0.3);" onclick="document.getElementById('input-informe-final').click()">📤 Subir informe final editado</button>
             <input type="file" id="input-informe-final" accept=".docx,.pdf" style="display:none" onchange="subirInformeFinal(this)">
@@ -291,15 +290,6 @@ textarea{resize:vertical;min-height:80px;}
           </div>
           <div id="detalle-msg" style="margin-top:.8rem;font-size:.85rem;display:none;"></div>
           <div id="informe-final-status" style="margin-top:.5rem;font-size:.82rem;color:#8a96a8;display:none;"></div>
-
-          <!-- Preview del informe HTML en iframe -->
-          <div id="informe-preview-wrap" style="display:none;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">
-              <span style="font-size:.8rem;color:#8a96a8;">Vista previa del informe — se abrirá en nueva pestaña al hacer clic en Ver</span>
-              <button onclick="abrirInformeNuevaPestana()" style="background:rgba(26,108,248,0.15);border:1px solid rgba(26,108,248,0.3);border-radius:6px;padding:.3rem .7rem;color:#60a5fa;font-size:.75rem;cursor:pointer;">↗ Abrir en nueva pestaña</button>
-            </div>
-            <iframe id="informe-iframe" style="width:100%;height:600px;border:1px solid rgba(255,255,255,0.1);border-radius:8px;background:white;"></iframe>
-          </div>
         </div>
       </div>
     </div>
