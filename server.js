@@ -731,8 +731,19 @@ app.get('/api/matriz/:id/informe-html', async (req, res) => {
   }
 });
 
-// ── Admin: Ver informe HTML ───────────────────────────────────
-app.get('/api/admin/matrices/:id/informe-html', verificarAdmin, async (req, res) => {
+// ── Admin: Ver informe HTML (acepta token por query param para iframe)
+app.get('/api/admin/matrices/:id/informe-html', async (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
+  if (!token) return res.status(401).send('<h3>Sin autorización</h3>');
+  try {
+    const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+    if (authErr || !user) return res.status(401).send('<h3>Token inválido</h3>');
+    // Verificar que es admin
+    const { data: cliente } = await supabase
+      .from('normaai_clientes').select('rol').eq('user_id', user.id).single();
+    if (!cliente || cliente.rol !== 'admin') return res.status(403).send('<h3>Acceso denegado</h3>');
+  } catch(e) { return res.status(401).send('<h3>Error de autenticación</h3>'); }
+
   try {
     const { data: matriz, error } = await supabase
       .from('normaai_matrices')
@@ -740,13 +751,13 @@ app.get('/api/admin/matrices/:id/informe-html', verificarAdmin, async (req, res)
       .eq('id', req.params.id)
       .single();
 
-    if (error || !matriz) return res.status(404).json({ error: 'No encontrada' });
-    if (!matriz.informe_ia) return res.status(404).json({ error: 'Informe no generado' });
+    if (error || !matriz) return res.status(404).send('<h3>Informe no encontrado</h3>');
+    if (!matriz.informe_ia) return res.status(404).send('<h3>Informe no generado aún</h3>');
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(matriz.informe_ia);
   } catch (err) {
-    res.status(500).json({ error: 'Error al cargar informe' });
+    res.status(500).send('<h3>Error al cargar informe</h3>');
   }
 });
 
