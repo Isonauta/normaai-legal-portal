@@ -608,7 +608,7 @@ async function hacerLogout() {
 }
 
 // ── Inicio ───────────────────────────────────────────────────
-// cargarNoticias se llama solo cuando el usuario navega a esa vista
+cargarNoticias(); // Cargar noticias al entrar al dashboard
 
 // ── Matriz Legal ─────────────────────────────────────────────
 async function subirMatriz(input) {
@@ -643,7 +643,8 @@ async function subirMatriz(input) {
     });
     const data = await res.json();
     if (!res.ok) {
-      resultado.innerHTML = '<div style="color:#f87171;background:rgba(220,38,38,0.1);border-radius:8px;padding:1rem;">⚠️ ' + (data.error || 'Error al subir') + '</div>';
+      const esLimite = res.status === 429;
+      resultado.innerHTML = '<div style="color:' + (esLimite ? '#fcd34d' : '#f87171') + ';background:' + (esLimite ? 'rgba(251,191,36,0.1)' : 'rgba(220,38,38,0.1)') + ';border:1px solid ' + (esLimite ? 'rgba(251,191,36,0.3)' : 'rgba(220,38,38,0.3)') + ';border-radius:8px;padding:1rem;">' + (esLimite ? '🔒' : '⚠️') + ' ' + (data.error || 'Error al subir') + '</div>';
     } else {
       resultado.innerHTML = '<div style="color:#4ade80;background:rgba(22,163,74,0.1);border-radius:8px;padding:1rem;">✅ ' + data.mensaje + '</div>';
       input.value = '';

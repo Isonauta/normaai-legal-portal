@@ -531,6 +531,22 @@ app.post('/api/matriz/subir', verificarToken, upload.single('archivo'), async (r
       .single();
 
     const empresa = nombre_empresa || cliente?.empresa || 'Sin nombre';
+
+    // Verificar límite de matrices anuales
+    const matricesPermitidas = cliente?.matrices_permitidas ?? 2;
+    const anioActual = new Date().getFullYear();
+    const inicioAnio = new Date(anioActual, 0, 1).toISOString();
+    const { count: matricesUsadas } = await supabase
+      .from('normaai_matrices')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', req.user.id)
+      .gte('created_at', inicioAnio);
+
+    if (matricesUsadas >= matricesPermitidas) {
+      return res.status(429).json({
+        error: `Has alcanzado el límite de ${matricesPermitidas} matrices anuales incluidas en tu plan. Para aumentar tu cuota contacta a contacto@normaai.cl`
+      });
+    }
     const contextoEmpresa = `
 DATOS DE LA EMPRESA:
 - Empresa: ${empresa}
@@ -1027,8 +1043,31 @@ app.post('/api/admin/clientes/crear', verificarAdmin, async (req, res) => {
 });
 
 app.get('/api/admin/clientes', verificarAdmin, async (req, res) => {
-  const { data } = await supabase.from('normaai_clientes').select('*').order('created_at', { ascending: false });
-  res.json(data || []);
+  const { data: clientes } = await supabase.from('normaai_clientes').select('*').order('created_at', { ascending: false });
+  if (!clientes) return res.json([]);
+  // Agregar conteo de matrices del año actual por cliente
+  const anioActual = new Date().getFullYear();
+  const inicioAnio = new Date(anioActual, 0, 1).toISOString();
+  const clientesConMatrices = await Promise.all(clientes.map(async (c) => {
+    const { count } = await supabase
+      .from('normaai_matrices')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', c.user_id)
+      .gte('created_at', inicioAnio);
+    return { ...c, matrices_usadas: count || 0, matrices_permitidas: c.matrices_permitidas ?? 2 };
+  }));
+  res.json(clientesConMatrices);
+});
+
+// ── Admin: Actualizar límite de matrices de un cliente ────────
+app.post('/api/admin/clientes/limite', verificarAdmin, async (req, res) => {
+  const { user_id, matrices_permitidas } = req.body;
+  if (!user_id || matrices_permitidas === undefined) return res.status(400).json({ error: 'Datos incompletos' });
+  const { error } = await supabase.from('normaai_clientes')
+    .update({ matrices_permitidas: parseInt(matrices_permitidas) })
+    .eq('user_id', user_id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
 });
 
 app.post('/api/admin/clientes/toggle', verificarAdmin, async (req, res) => {
