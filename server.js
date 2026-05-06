@@ -332,6 +332,155 @@ app.get('/api/historial/sesion/:sesion_id', verificarToken, async (req, res) => 
 //  MATRIZ — Subir y analizar matriz legal del cliente
 // ══════════════════════════════════════════════════════════════
 
+// ── Generador de informe HTML ─────────────────────────────────
+function generarInformeHTML({ datosExcel, totalCuerpos, totalRequisitos, cumplen, noCumplen, parcial, pctCumplimiento, empresa, normas_iso, alcance_sistema, sitios_trabajo, fechaHoy }) {
+  const pct = parseFloat(pctCumplimiento);
+  const nivel = pct >= 80 ? 'ALTO' : pct >= 50 ? 'MEDIO' : 'BAJO';
+  const nivelColor = pct >= 80 ? '#1a7a4a' : pct >= 50 ? '#b45309' : '#b91c1c';
+  const nivelBg = pct >= 80 ? '#f0fdf4' : pct >= 50 ? '#fffbeb' : '#fef2f2';
+  const circum = 2 * Math.PI * 48;
+  const offset = circum * (1 - pct / 100);
+
+  const resumenTxt = pct === 100
+    ? `La matriz presenta cumplimiento ÓPTIMO del 100% con los ${totalRequisitos} requisitos en conformidad total. No se identificaron brechas.`
+    : `La matriz presenta ${noCumplen} brechas confirmadas y ${parcial} requisitos sin verificar de un total de ${totalRequisitos}. Se recomienda atención antes de cualquier auditoría.`;
+
+  const recs = pct === 100
+    ? ['Mantener revisión semestral de cada cuerpo legal.', 'Designar responsable por norma para seguimiento de cambios vía BCN.', 'Documentar evidencia con trazabilidad de fechas.', 'Sincronizar con actualizaciones del Diario Oficial de Chile.']
+    : ['Documentar evidencia para todos los requisitos sin verificar.', 'Asignar responsables a cada artículo con brecha.', 'Establecer plan de acción con fechas comprometidas.', 'Revisar requisitos críticos con asesoría legal especializada.'];
+
+  // Generar secciones por cuerpo legal
+  const seccionesLeyes = datosExcel.map(hoja => {
+    const reqs = hoja.articulos;
+    if (!reqs || reqs.length === 0) return '';
+    const leyC = reqs.filter(a => ['SI','SÍ','X','TRUE'].includes(a.cumple.toUpperCase())).length;
+    const leyNC = reqs.filter(a => ['NO','FALSE'].includes(a.cumple.toUpperCase())).length;
+    const leySD = reqs.length - leyC - leyNC;
+    const leyPct = reqs.length > 0 ? ((leyC / reqs.length) * 100).toFixed(1) : '0.0';
+    const c = leyNC > 0 ? '#b91c1c' : leySD > 0 ? '#b45309' : '#1a7a4a';
+    const bg = leyNC > 0 ? '#fef2f2' : leySD > 0 ? '#fffbeb' : '#f0fdf4';
+    const sem = leyNC > 0 ? '🔴' : leySD > 0 ? '🟡' : '🟢';
+
+    const cards = reqs.map(r => {
+      const esCumple = ['SI','SÍ','X','TRUE'].includes(r.cumple.toUpperCase());
+      const esNoCumple = ['NO','FALSE'].includes(r.cumple.toUpperCase());
+      const estColor = esCumple ? '#15803d' : esNoCumple ? '#b91c1c' : '#a16207';
+      const estBg = esCumple ? '#dcfce7' : esNoCumple ? '#fee2e2' : '#fef9c3';
+      const estTxt = esCumple ? '✓ Cumple' : esNoCumple ? '✗ No cumple' : '⚠ Sin verificar';
+      const comoHtml = r.como && r.como.trim()
+        ? r.como
+        : '<span style="color:#9ca3af;font-style:italic;">No especificado — requiere documentar evidencia</span>';
+      const riesgo = esNoCumple ? '<span style="background:#fee2e2;color:#b91c1c;padding:.1rem .4rem;border-radius:3px;font-size:.68rem;font-weight:700;">RIESGO ALTO</span>' :
+                     (!r.como || !r.como.trim()) ? '<span style="background:#fef9c3;color:#a16207;padding:.1rem .4rem;border-radius:3px;font-size:.68rem;font-weight:700;">RIESGO MEDIO</span>' : '';
+
+      return \`<div style="background:#fafafa;border-radius:6px;padding:.7rem .9rem;border-left:3px solid \${estColor};margin-bottom:.5rem;">
+        <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.35rem;">
+          <span style="font-weight:700;font-size:.82rem;color:\${estColor};">Art. \${r.art || 'N/A'}</span>
+          <span style="background:\${estBg};color:\${estColor};padding:.15rem .45rem;border-radius:4px;font-size:.68rem;font-weight:600;">\${estTxt}</span>
+          \${riesgo}
+          \${r.responsable ? \`<span style="font-size:.68rem;color:#6b7280;margin-left:auto;">👤 \${r.responsable}</span>\` : ''}
+        </div>
+        <div style="font-size:.82rem;color:#374151;margin-bottom:.35rem;">\${r.desc ? r.desc.substring(0, 300) : ''}</div>
+        <div style="font-size:.68rem;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.2rem;">Cómo se cumple / Evidencia:</div>
+        <div style="font-size:.82rem;color:#4b5563;">\${comoHtml}</div>
+      </div>\`;
+    }).join('');
+
+    return \`<div style="margin-bottom:1.3rem;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;page-break-inside:avoid;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:.7rem 1rem;flex-wrap:wrap;gap:.4rem;background:\${bg};border-left:4px solid \${c};">
+        <div>
+          <div style="font-weight:700;font-size:.9rem;font-family:Arial,sans-serif;color:\${c};">\${sem} \${hoja.cuerpoLegal}</div>
+          <div style="font-size:.72rem;color:#6b7280;margin-top:.1rem;">\${reqs.length} requisitos</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;">
+          <span style="background:#dcfce7;color:#15803d;padding:.18rem .5rem;border-radius:4px;font-size:.68rem;font-weight:600;">✓ \${leyC}</span>
+          <span style="background:#fee2e2;color:#b91c1c;padding:.18rem .5rem;border-radius:4px;font-size:.68rem;font-weight:600;">✗ \${leyNC}</span>
+          <span style="background:#fef9c3;color:#a16207;padding:.18rem .5rem;border-radius:4px;font-size:.68rem;font-weight:600;">⚠ \${leySD}</span>
+          <span style="font-weight:700;font-size:.9rem;font-family:Arial,sans-serif;color:\${c};">\${leyPct}%</span>
+        </div>
+      </div>
+      <div style="padding:.5rem .8rem .8rem;">\${cards}</div>
+    </div>\`;
+  }).join('');
+
+  const recHTML = recs.map(r => `<li style="margin-bottom:.3rem;color:#374151;">${r}</li>`).join('');
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Informe Cumplimiento — ${empresa}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Arial,Helvetica,sans-serif;font-size:10pt;color:#1f2937;background:#fff;line-height:1.6;}
+.page{max-width:900px;margin:0 auto;padding:1.5cm;}
+@media print{.portada{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.kpi{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.gauge-row{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+@page{margin:1.2cm 1.5cm;size:A4;}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div style="background:#0d2144;color:white;border-radius:10px;padding:2.5rem;margin-bottom:2rem;">
+  <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:1.8rem;">
+    <div style="width:38px;height:38px;background:#1a6cf8;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">⚖</div>
+    <div>
+      <div style="font-weight:700;font-size:1.1rem;">NormaAI Legal</div>
+      <div style="font-size:.62rem;color:#c9a84c;text-transform:uppercase;letter-spacing:.1em;">by Procesus</div>
+    </div>
+  </div>
+  <h1 style="font-size:1.8rem;font-weight:700;line-height:1.2;margin-bottom:.5rem;">Informe de Cumplimiento<br><span style="color:#c9a84c;">Normativo</span></h1>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem 1.5rem;margin-top:1.5rem;font-size:.82rem;">
+    <div><div style="color:#8a96a8;font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;">Empresa</div><div style="color:#e2e8f0;margin-top:.1rem;">${empresa}</div></div>
+    <div><div style="color:#8a96a8;font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;">Normas ISO</div><div style="color:#e2e8f0;margin-top:.1rem;">${normas_iso || 'No especificadas'}</div></div>
+    <div><div style="color:#8a96a8;font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;">Alcance</div><div style="color:#e2e8f0;margin-top:.1rem;">${alcance_sistema || 'No especificado'}</div></div>
+    <div><div style="color:#8a96a8;font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;">Sitios</div><div style="color:#e2e8f0;margin-top:.1rem;">${sitios_trabajo || 'No especificados'}</div></div>
+    <div><div style="color:#8a96a8;font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;">Fecha análisis</div><div style="color:#e2e8f0;margin-top:.1rem;">${fechaHoy}</div></div>
+    <div><div style="color:#8a96a8;font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;">Nivel</div><div style="color:#c9a84c;font-weight:700;margin-top:.1rem;">${nivel} — ${pctCumplimiento}%</div></div>
+  </div>
+  <div style="display:inline-block;margin-top:1.2rem;border:1px solid rgba(201,168,76,0.5);color:#c9a84c;padding:.25rem .7rem;border-radius:4px;font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;">🔒 Confidencial · NormaAI Legal · Procesus</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.7rem;margin-bottom:1.5rem;">
+  ${[{n:totalRequisitos,l:'Requisitos',c:'#1f2937'},{n:cumplen,l:'Cumplen',c:'#15803d'},{n:noCumplen,l:'Brechas',c:'#b91c1c'},{n:parcial,l:'Sin verificar',c:'#a16207'},{n:totalCuerpos,l:'Cuerpos legales',c:'#1f2937'}].map(k=>`<div style="border:1px solid #e5e7eb;border-radius:8px;padding:.9rem .6rem;text-align:center;background:#fafafa;"><div style="font-size:1.7rem;font-weight:700;color:${k.c};">${k.n}</div><div style="font-size:.62rem;color:#6b7280;margin-top:.3rem;text-transform:uppercase;letter-spacing:.04em;">${k.l}</div></div>`).join('')}
+</div>
+
+<div style="display:flex;align-items:center;gap:1.5rem;background:${nivelBg};border:1px solid ${nivelColor}40;border-radius:8px;padding:1.2rem 1.5rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+  <svg width="110" height="110" viewBox="0 0 110 110">
+    <circle cx="55" cy="55" r="48" fill="none" stroke="#e5e7eb" stroke-width="9"/>
+    <circle cx="55" cy="55" r="48" fill="none" stroke="${nivelColor}" stroke-width="9"
+      stroke-dasharray="${circum.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"
+      stroke-linecap="round" transform="rotate(-90 55 55)"/>
+    <text x="55" y="51" text-anchor="middle" font-size="18" font-weight="700" fill="${nivelColor}" font-family="Arial">${pctCumplimiento}%</text>
+    <text x="55" y="65" text-anchor="middle" font-size="7.5" fill="#6b7280" font-family="Arial">cumplimiento</text>
+  </svg>
+  <div style="flex:1;min-width:200px;">
+    <div style="font-size:1.2rem;font-weight:700;color:${nivelColor};margin-bottom:.3rem;">Nivel ${nivel}</div>
+    <p style="font-size:.85rem;color:#374151;line-height:1.6;">${resumenTxt}</p>
+  </div>
+</div>
+
+<div style="font-size:.95rem;font-weight:700;color:#0d2144;border-bottom:2px solid #1a6cf8;padding-bottom:.35rem;margin:1.8rem 0 1rem;">1. Resumen Ejecutivo</div>
+<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1rem 1.2rem;font-size:.87rem;line-height:1.7;margin-bottom:1.5rem;">
+  <p>${resumenTxt}</p>
+  <p style="font-weight:700;margin-top:.7rem;font-size:.82rem;">Recomendaciones generales:</p>
+  <ul style="padding-left:1.2rem;margin-top:.5rem;">${recHTML}</ul>
+</div>
+
+<div style="font-size:.95rem;font-weight:700;color:#0d2144;border-bottom:2px solid #1a6cf8;padding-bottom:.35rem;margin:1.8rem 0 1rem;">2. Análisis Detallado por Cuerpo Legal</div>
+${seccionesLeyes}
+
+<div style="margin-top:2rem;padding-top:1rem;border-top:1px solid #e5e7eb;text-align:center;font-size:.68rem;color:#9ca3af;">
+  Informe generado por <strong>NormaAI Legal · Procesus</strong> · ${fechaHoy} · Confidencial<br>
+  Este documento es de carácter orientativo. Para validación oficial contacte a Procesus.
+</div>
+
+</div>
+</body>
+</html>`;
+}
+
 // Leer Excel real con SheetJS
 function leerExcel(buffer) {
   try {
@@ -430,42 +579,12 @@ DATOS DE LA EMPRESA:
           ).join('\n')
         ).join('\n\n');
 
-        const mensajeIA = await anthropic.messages.create({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 4000,
-          messages: [{
-            role: 'user',
-            content: `Eres Cristián Cordero, consultor ISO senior de Procesus. Analiza la siguiente matriz de requisitos legales y genera el INFORME DE CUMPLIMIENTO NORMATIVO completo.
-
-${contextoEmpresa}
-ESTADÍSTICAS DE LA MATRIZ:
-- Cuerpos legales: ${totalCuerpos}
-- Total requisitos: ${totalRequisitos}
-- Cumplen: ${cumplen} | Parcial: ${parcial} | No cumplen: ${noCumplen}
-- % Cumplimiento global: ${pctCumplimiento}%
-
-CONTENIDO COMPLETO DE LA MATRIZ:
-${resumenTexto}
-
-Genera el informe con estas secciones:
-
-## RESUMEN EJECUTIVO
-Describe el nivel de cumplimiento (ALTO >80%, MEDIO 50-80%, BAJO <50%) con los números exactos. Evalúa el estado general de la matriz.
-
-## CUMPLIMIENTO POR CUERPO LEGAL
-Para cada cuerpo legal: total requisitos, cumplen, parcial, no cumplen, % cumplimiento. Formato tabla de texto.
-
-## BRECHAS DETECTADAS Y RECOMENDACIONES
-Identifica artículos sin "cómo se cumple" completo o con cumplimiento negativo/parcial. Para cada brecha: qué falta y acción correctiva específica. Si no hay brechas significativas, indica cumplimiento total y da recomendaciones de mejora continua.
-
-## VALIDEZ PARA AUDITORÍA ISO
-Evalúa si la matriz está lista para una auditoría. Señala qué ajustes se requieren si los hay.
-
-Fecha de revisión: ${fechaHoy}
-Generado por: Procesus — NormaAI Legal`
-          }]
+        // Generar HTML estructurado directamente desde los datos de la matriz
+        informeIA = generarInformeHTML({
+          datosExcel, totalCuerpos, totalRequisitos,
+          cumplen, noCumplen, parcial, pctCumplimiento,
+          empresa, normas_iso, alcance_sistema, sitios_trabajo, fechaHoy
         });
-        informeIA = mensajeIA.content[0].text;
 
       } else if (ext === 'pdf') {
         const archivoBase64 = archivo.buffer.toString('base64');
@@ -569,6 +688,56 @@ app.get('/api/matriz/mis-matrices', verificarToken, async (req, res) => {
 });
 
 // ── Cliente: Descargar informe aprobado ───────────────────────
+// ── Cliente: Ver informe HTML (acepta token por query param para iframe/nueva pestaña)
+app.get('/api/matriz/:id/informe-html', async (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
+  if (!token) return res.status(401).send('<h3>Sin autorización</h3>');
+  let userId;
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) return res.status(401).send('<h3>Token inválido</h3>');
+    userId = user.id;
+  } catch(e) { return res.status(401).send('<h3>Error de autenticación</h3>'); }
+  try {
+    const { data: matriz, error } = await supabase
+      .from('normaai_matrices')
+      .select('informe_ia, estado, empresa, id')
+      .eq('id', req.params.id)
+      .eq('user_id', userId)
+      .single();
+
+    if (error || !matriz) return res.status(404).send('<h3>Informe no encontrado</h3>');
+    if (matriz.estado !== 'enviado' && matriz.estado !== 'aprobado') {
+      return res.status(400).send('<h3>El informe aún no está disponible</h3>');
+    }
+    if (!matriz.informe_ia) return res.status(404).send('<h3>Informe no generado</h3>');
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(matriz.informe_ia);
+  } catch (err) {
+    res.status(500).send('<h3>Error al cargar informe</h3>');
+  }
+});
+
+// ── Admin: Ver informe HTML ───────────────────────────────────
+app.get('/api/admin/matrices/:id/informe-html', verificarAdmin, async (req, res) => {
+  try {
+    const { data: matriz, error } = await supabase
+      .from('normaai_matrices')
+      .select('informe_ia, empresa, id, estado')
+      .eq('id', req.params.id)
+      .single();
+
+    if (error || !matriz) return res.status(404).json({ error: 'No encontrada' });
+    if (!matriz.informe_ia) return res.status(404).json({ error: 'Informe no generado' });
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(matriz.informe_ia);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al cargar informe' });
+  }
+});
+
 app.get('/api/matriz/:id/descargar', verificarToken, async (req, res) => {
   try {
     const { data: matriz, error } = await supabase

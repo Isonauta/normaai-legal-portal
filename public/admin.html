@@ -272,31 +272,30 @@ textarea{resize:vertical;min-height:80px;}
       <div id="matriz-detalle" style="display:none;margin-top:1.5rem;">
         <div class="form-card">
           <div class="form-title" id="detalle-titulo">📄 Detalle de Matriz</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem;">
             <div><span style="font-size:.72rem;color:var(--gris);text-transform:uppercase;letter-spacing:.06em;">Empresa</span><div id="detalle-empresa" style="font-weight:600;margin-top:.2rem;"></div></div>
             <div><span style="font-size:.72rem;color:var(--gris);text-transform:uppercase;letter-spacing:.06em;">Cliente</span><div id="detalle-cliente" style="font-size:.85rem;margin-top:.2rem;"></div></div>
             <div><span style="font-size:.72rem;color:var(--gris);text-transform:uppercase;letter-spacing:.06em;">Archivo</span><div id="detalle-archivo" style="font-size:.85rem;margin-top:.2rem;"></div></div>
             <div><span style="font-size:.72rem;color:var(--gris);text-transform:uppercase;letter-spacing:.06em;">Recibida</span><div id="detalle-fecha" style="font-size:.85rem;margin-top:.2rem;"></div></div>
           </div>
 
-          <!-- Borrador IA -->
-          <div style="margin-bottom:1rem;">
-            <label style="display:block;margin-bottom:.5rem;">Borrador generado por IA (editable antes de enviar)</label>
-            <textarea id="detalle-informe" rows="15" style="font-size:.82rem;line-height:1.6;"></textarea>
-          </div>
-
-          <!-- Acciones -->
-          <div style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:center;">
-            <button class="btn btn-primary" onclick="guardarBorrador()">💾 Guardar borrador</button>
-            <button class="btn" style="background:rgba(99,102,241,0.15);color:#818cf8;border:1px solid rgba(99,102,241,0.3);" onclick="descargarWord()">📝 Descargar Word</button>
+          <!-- Acciones principales -->
+          <div style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem;">
+            <button class="btn" style="background:rgba(99,102,241,0.15);color:#818cf8;border:1px solid rgba(99,102,241,0.3);" onclick="verInformeAdmin()">👁 Ver Informe HTML</button>
             <button class="btn" style="background:rgba(14,165,233,0.15);color:#38bdf8;border:1px solid rgba(14,165,233,0.3);" onclick="descargarMatrizOriginal()">📥 Descargar matriz cliente</button>
-            <button class="btn" style="background:rgba(251,146,60,0.15);color:#fb923c;border:1px solid rgba(251,146,60,0.3);" onclick="document.getElementById('input-informe-final').click()">📤 Subir informe final</button>
-            <input type="file" id="input-informe-final" accept=".docx,.pdf" style="display:none" onchange="subirInformeFinal(this)">
             <button class="btn btn-success" onclick="confirmarEnvio()" id="btn-enviar">✅ Aprobar y enviar al cliente</button>
             <div id="detalle-estado-badge"></div>
           </div>
           <div id="detalle-msg" style="margin-top:.8rem;font-size:.85rem;display:none;"></div>
-          <div id="informe-final-status" style="margin-top:.5rem;font-size:.82rem;color:#8a96a8;display:none;"></div>
+
+          <!-- Preview del informe HTML en iframe -->
+          <div id="informe-preview-wrap" style="display:none;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">
+              <span style="font-size:.8rem;color:#8a96a8;">Vista previa del informe — se abrirá en nueva pestaña al hacer clic en Ver</span>
+              <button onclick="abrirInformeNuevaPestana()" style="background:rgba(26,108,248,0.15);border:1px solid rgba(26,108,248,0.3);border-radius:6px;padding:.3rem .7rem;color:#60a5fa;font-size:.75rem;cursor:pointer;">↗ Abrir en nueva pestaña</button>
+            </div>
+            <iframe id="informe-iframe" style="width:100%;height:600px;border:1px solid rgba(255,255,255,0.1);border-radius:8px;background:white;"></iframe>
+          </div>
         </div>
       </div>
     </div>
@@ -507,6 +506,23 @@ async function cargarClientes() {
     }).join('') + '</tbody></table>';
 }
 
+// ── Ver informe HTML en admin ────────────────────────────────
+async function verInformeAdmin() {
+  if (!matrizActualId) return;
+  const wrap = document.getElementById('informe-preview-wrap');
+  const iframe = document.getElementById('informe-iframe');
+  wrap.style.display = 'block';
+  iframe.src = '/api/admin/matrices/' + matrizActualId + '/informe-html?token=' + encodeURIComponent(token);
+  iframe.onload = () => {
+    // Inyectar token via postMessage si es necesario
+  };
+}
+
+function abrirInformeNuevaPestana() {
+  if (!matrizActualId) return;
+  window.open('/api/admin/matrices/' + matrizActualId + '/informe-html-view?t=' + token, '_blank');
+}
+
 async function toggleCliente(id, activo) {
   await apiPost('/api/admin/clientes/toggle', { id, activo: !activo });
   cargarClientes();
@@ -654,7 +670,8 @@ async function abrirMatriz(id) {
   document.getElementById('detalle-cliente').textContent = data.cliente_email || data.cliente_nombre || data.user_id;
   document.getElementById('detalle-archivo').textContent = data.nombre_archivo;
   document.getElementById('detalle-fecha').textContent = new Date(data.created_at).toLocaleDateString('es-CL', {day:'2-digit',month:'long',year:'numeric'});
-  document.getElementById('detalle-informe').value = data.informe_ia || '';
+  // informe_ia ahora es HTML — no se muestra en textarea
+  document.getElementById('informe-preview-wrap').style.display = 'none';
 
   const estadoLabel = { pendiente:'⏳ Pendiente revisión', en_revision:'🔍 En revisión', aprobado:'✅ Aprobado', enviado:'📨 Enviado al cliente' };
   const estadoColor = { pendiente:'badge-amarillo', en_revision:'badge-azul', aprobado:'badge-verde', enviado:'badge-verde' };
