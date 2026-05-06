@@ -282,11 +282,15 @@ textarea{resize:vertical;min-height:80px;}
           <!-- Acciones principales -->
           <div style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem;">
             <button class="btn" style="background:rgba(99,102,241,0.15);color:#818cf8;border:1px solid rgba(99,102,241,0.3);" onclick="verInformeAdmin()">👁 Ver Informe HTML</button>
+            <button class="btn" style="background:rgba(99,102,241,0.15);color:#818cf8;border:1px solid rgba(99,102,241,0.3);" onclick="descargarWord()">📝 Descargar Word</button>
             <button class="btn" style="background:rgba(14,165,233,0.15);color:#38bdf8;border:1px solid rgba(14,165,233,0.3);" onclick="descargarMatrizOriginal()">📥 Descargar matriz cliente</button>
+            <button class="btn" style="background:rgba(251,146,60,0.15);color:#fb923c;border:1px solid rgba(251,146,60,0.3);" onclick="document.getElementById('input-informe-final').click()">📤 Subir informe final editado</button>
+            <input type="file" id="input-informe-final" accept=".docx,.pdf" style="display:none" onchange="subirInformeFinal(this)">
             <button class="btn btn-success" onclick="confirmarEnvio()" id="btn-enviar">✅ Aprobar y enviar al cliente</button>
             <div id="detalle-estado-badge"></div>
           </div>
           <div id="detalle-msg" style="margin-top:.8rem;font-size:.85rem;display:none;"></div>
+          <div id="informe-final-status" style="margin-top:.5rem;font-size:.82rem;color:#8a96a8;display:none;"></div>
 
           <!-- Preview del informe HTML en iframe -->
           <div id="informe-preview-wrap" style="display:none;">
@@ -520,7 +524,7 @@ async function verInformeAdmin() {
 
 function abrirInformeNuevaPestana() {
   if (!matrizActualId) return;
-  window.open('/api/admin/matrices/' + matrizActualId + '/informe-html-view?t=' + token, '_blank');
+  window.open('/api/admin/matrices/' + matrizActualId + '/informe-html?token=' + encodeURIComponent(token), '_blank');
 }
 
 async function toggleCliente(id, activo) {

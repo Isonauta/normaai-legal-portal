@@ -1345,7 +1345,7 @@ app.post('/api/admin/matrices/:id/aprobar', verificarAdmin, async (req, res) => 
               <p style="color:#64748b;font-size:13px;margin:6px 0;"><strong>Folio:</strong> NormaAI-${matriz.id.substring(0,8).toUpperCase()}</p>
             </div>
             <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px;margin:20px 0;">
-              <p style="color:#1e40af;font-size:13px;margin:0;">📎 <strong>El informe completo está disponible en la plataforma NormaAI Legal</strong> en este correo. Puede abrirlo directamente con Microsoft Word o Google Docs.</p>
+              <p style="color:#1e40af;font-size:13px;margin:0;">📎 <strong>Tu Informe de Cumplimiento Normativo está disponible en la plataforma.</strong> Ingresa con tus credenciales, ve a "Revisar tu Matriz" y haz clic en "👁 Ver informe" para verlo y descargarlo como PDF.</p>
             </div>
             <div style="background:#f0fdf4;border:2px solid #16a34a;border-radius:8px;padding:20px;margin:20px 0;">
               <h2 style="color:#15803d;font-size:15px;margin-top:0;">🏆 Certificado de Revisión — Procesus</h2>
