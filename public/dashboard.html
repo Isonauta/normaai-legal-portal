@@ -680,7 +680,7 @@ async function cargarMisMatrices() {
           </div>
           <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
             <span style="font-size:.75rem;padding:.3rem .8rem;border-radius:20px;background:rgba(255,255,255,0.05);color:${estadoColor[m.estado]||'#8a96a8'};white-space:nowrap;">${estadoLabel[m.estado]||m.estado}</span>
-            ${listo(m) ? `<button onclick="verInformeHTML('${m.id}')" style="font-size:.75rem;padding:.3rem .8rem;border-radius:6px;background:rgba(26,108,248,0.15);color:#60a5fa;border:1px solid rgba(26,108,248,0.3);cursor:pointer;">👁 Ver informe</button>` : ''}
+            ${listo(m) ? `<button onclick="verInformeHTML('${m.id}')" style="font-size:.75rem;padding:.3rem .8rem;border-radius:6px;background:rgba(26,108,248,0.15);color:#60a5fa;border:1px solid rgba(26,108,248,0.3);cursor:pointer;">⬇ Descargar informe</button>` : ''}
             ${listo(m) ? `<button onclick="descargarPDF('${m.id}')" style="font-size:.75rem;padding:.3rem .8rem;border-radius:6px;background:rgba(22,163,74,0.15);color:#4ade80;border:1px solid rgba(22,163,74,0.3);cursor:pointer;">⬇ PDF</button>` : ''}
           </div>
         </div>
@@ -690,18 +690,36 @@ async function cargarMisMatrices() {
   }
 }
 
-// Ver informe HTML en nueva pestaña
+// Ver informe — descarga el Word aprobado
 async function verInformeHTML(id) {
-  window.open('/api/matriz/' + id + '/informe-html', '_blank');
+  await descargarInformeFinal(id);
 }
 
-// Descargar PDF via print del browser
+// Descargar PDF — descarga el Word aprobado
 async function descargarPDF(id) {
-  const ventana = window.open('/api/matriz/' + id + '/informe-html', '_blank');
-  if (ventana) {
-    ventana.onload = () => {
-      setTimeout(() => ventana.print(), 800);
-    };
+  await descargarInformeFinal(id);
+}
+
+async function descargarInformeFinal(id) {
+  try {
+    const res = await fetch('/api/matriz/' + id + '/archivo-final', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert(err.error || 'El informe aún no está disponible.');
+      return;
+    }
+    const blob = await res.blob();
+    const disposition = res.headers.get('Content-Disposition') || '';
+    const nombreMatch = disposition.match(/filename="([^"]+)"/);
+    const nombre = nombreMatch ? nombreMatch[1] : 'Informe_NormaAI.docx';
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = nombre; a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    alert('Error al descargar el informe: ' + e.message);
   }
 }
 
@@ -742,8 +760,8 @@ async function verInforme(id) {
             <div style="font-size:.8rem;color:#8a96a8;margin-top:.2rem;">Archivo: ${data.nombre_archivo} · Emitido: ${fechaEmision}</div>
           </div>
           <div style="display:flex;gap:.6rem;align-items:center;">
-            <button onclick="verInformeHTML('${id}')" style="background:rgba(26,108,248,0.2);color:#60a5fa;border:1px solid rgba(26,108,248,0.3);padding:.5rem 1rem;border-radius:6px;cursor:pointer;font-size:.82rem;">👁 Ver informe</button>
-            <button onclick="descargarPDF('${id}')" style="background:rgba(22,163,74,0.2);color:#4ade80;border:1px solid rgba(22,163,74,0.3);padding:.5rem 1rem;border-radius:6px;cursor:pointer;font-size:.82rem;">⬇ Descargar PDF</button>
+            <button onclick="verInformeHTML('${id}')" style="background:rgba(26,108,248,0.2);color:#60a5fa;border:1px solid rgba(26,108,248,0.3);padding:.5rem 1rem;border-radius:6px;cursor:pointer;font-size:.82rem;">⬇ Descargar informe</button>
+            <button onclick="descargarPDF('${id}')" style="background:rgba(22,163,74,0.2);color:#4ade80;border:1px solid rgba(22,163,74,0.3);padding:.5rem 1rem;border-radius:6px;cursor:pointer;font-size:.82rem;">⬇ Descargar</button>
             <button onclick="this.closest('div[style*=fixed]').remove()" style="background:rgba(255,255,255,0.1);border:none;color:#fff;padding:.5rem .9rem;border-radius:6px;cursor:pointer;">✕</button>
           </div>
         </div>
