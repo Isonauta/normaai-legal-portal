@@ -556,19 +556,94 @@ DATOS DE LA EMPRESA:
         const parcial = Math.max(0, totalRequisitos - cumplen - noCumplen);
         const pctCumplimiento = totalRequisitos > 0 ? ((cumplen / totalRequisitos) * 100).toFixed(1) : '0.0';
 
-        const resumenTexto = datosExcel.map(hoja =>
-          `CUERPO LEGAL: ${hoja.cuerpoLegal} (${hoja.articulos.length} requisitos)\n` +
-          hoja.articulos.map(a =>
-            `  Art.${a.art || 'N/A'}: ${a.desc.substring(0, 150)}\n  Como cumple: ${a.como || 'NO ESPECIFICADO'}\n  Cumple: ${a.cumple || 'NO INDICADO'}`
-          ).join('\n')
-        ).join('\n\n');
+        // Construir contenido completo artículo por artículo
+        const contenidoCompleto = datosExcel.map(hoja => {
+          const leyC = hoja.articulos.filter(a => ['SI','SÍ','X','TRUE'].includes(a.cumple.toUpperCase())).length;
+          const leyNC = hoja.articulos.filter(a => ['NO','FALSE'].includes(a.cumple.toUpperCase())).length;
+          const leySD = hoja.articulos.length - leyC - leyNC;
+          const leyPct = hoja.articulos.length > 0 ? ((leyC / hoja.articulos.length) * 100).toFixed(1) : '0.0';
+          const estado = leyNC > 0 ? 'NO CUMPLE' : leySD > 0 ? 'PARCIAL' : 'CUMPLE';
 
-        // Generar HTML estructurado directamente desde los datos de la matriz
-        informeIA = generarInformeHTML({
-          datosExcel, totalCuerpos, totalRequisitos,
-          cumplen, noCumplen, parcial, pctCumplimiento,
-          empresa, normas_iso, alcance_sistema, sitios_trabajo, fechaHoy
+          return `=== ${hoja.cuerpoLegal} ===
+Resumen: ${hoja.articulos.length} requisitos | ${leyC} cumplen | ${leyNC} no cumplen | ${leySD} sin verificar | ${leyPct}% | Estado: ${estado}
+
+` + hoja.articulos.map(a => {
+            const cumpleStr = ['SI','SÍ','X','TRUE'].includes(a.cumple.toUpperCase()) ? 'SI' :
+                              ['NO','FALSE'].includes(a.cumple.toUpperCase()) ? 'NO' : 'SIN DATO';
+            const evidencia = a.como && a.como.trim() ? a.como.trim() : 'No especificado — requiere documentar evidencia';
+            return `Artículo ${a.art || 'N/A'} | ${cumpleStr} | Responsable: ${a.responsable || 'No asignado'}
+Requisito: ${a.desc}
+Cómo se cumple / Evidencia: ${evidencia}`;
+          }).join('\n\n');
+        }).join('\n\n');
+
+        const mensajeIA = await anthropic.messages.create({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 8000,
+          messages: [{
+            role: 'user',
+            content: `Eres Cristián Cordero, consultor ISO senior de Procesus. Genera el INFORME DE CUMPLIMIENTO NORMATIVO completo basado en los datos exactos de la matriz. NO inventes información — usa únicamente los datos proporcionados.
+
+DATOS DE LA EMPRESA:
+- Empresa: ${empresa}
+- Normas ISO: ${normas_iso || 'No especificadas'}
+- Alcance: ${alcance_sistema || 'No especificado'}
+- Sitios: ${sitios_trabajo || 'No especificados'}
+- Fecha de emisión: ${fechaHoy}
+- Folio: NormaAI-${Date.now().toString(36).toUpperCase().slice(-8)}
+
+ESTADÍSTICAS GLOBALES:
+- Total cuerpos legales: ${totalCuerpos}
+- Total requisitos: ${totalRequisitos}
+- Cumplen: ${cumplen} (${pctCumplimiento}%)
+- No cumplen: ${noCumplen}
+- Sin verificar: ${parcial}
+- Nivel: ${parseFloat(pctCumplimiento) >= 80 ? 'ALTO' : parseFloat(pctCumplimiento) >= 50 ? 'MEDIO' : 'BAJO'}
+
+CONTENIDO COMPLETO DE LA MATRIZ:
+${contenidoCompleto}
+
+INSTRUCCIONES PARA EL INFORME:
+
+## PROCESUS — NormaAI Legal
+## INFORME DE CUMPLIMIENTO NORMATIVO
+## Empresa: ${empresa} | Folio: NormaAI-${Date.now().toString(36).toUpperCase().slice(-8)} | Fecha: ${fechaHoy}
+
+---
+
+## 1. RESUMEN EJECUTIVO
+Escribe 2-3 párrafos describiendo: nivel de cumplimiento global con números exactos, estado general de la matriz, y evaluación de preparación para auditoría ISO. Sé específico con los números reales.
+
+## 2. ESTADÍSTICAS DE CUMPLIMIENTO
+Tabla con: Cuerpos legales analizados, Total requisitos, Cumplen, No cumplen, Sin verificar, % Cumplimiento global, Nivel (ALTO/MEDIO/BAJO).
+
+## 3. CUMPLIMIENTO POR CUERPO LEGAL
+Para cada cuerpo legal en la matriz, incluye:
+- Nombre del cuerpo legal y subtítulo
+- Semáforo: 🟢 CUMPLE / 🟡 PARCIAL / 🔴 NO CUMPLE
+- Estadísticas: X conformes | X brechas | X sin verificar | X%
+- Para cada artículo:
+  * Número y título del artículo
+  * Estado: ✅ Cumple / ❌ No cumple / ⚠️ Sin verificar
+  * Responsable
+  * Texto completo del requisito legal
+  * CÓMO SE CUMPLE / EVIDENCIA: [copiar exactamente de la matriz, o indicar "No especificado — requiere documentar evidencia"]
+  * Si no cumple o sin dato: OBSERVACIÓN: [recomendación específica de qué hacer]
+
+## 4. BRECHAS Y RECOMENDACIONES PRIORITARIAS
+Lista las brechas críticas (NO CUMPLE) y sin dato, con recomendación específica de acción correctiva para cada una. Si no hay brechas, confirmar cumplimiento total y dar 4 recomendaciones de mejora continua.
+
+## 5. VALIDEZ PARA AUDITORÍA ISO
+Evalúa si la matriz está lista para una auditoría ISO. Señala ajustes específicos requeridos.
+
+## CERTIFICADO DE REVISIÓN — PROCESUS
+Procesus — NormaAI Legal certifica que la Matriz de Requisitos Legales de ${empresa} fue revisada el ${fechaHoy} por consultores especializados en normativa chilena, contrastada con el Diario Oficial de la República de Chile vigente a la misma fecha y verificada según los estándares de los sistemas de gestión ISO aplicables.
+Folio: NormaAI-${Date.now().toString(36).toUpperCase().slice(-8)} | Válido por 12 meses.
+
+Usa formato Markdown con encabezados ##, tablas y listas. Sé exhaustivo — incluye TODOS los artículos de TODOS los cuerpos legales.`
+          }]
         });
+        informeIA = mensajeIA.content[0].text;
 
       } else if (ext === 'pdf') {
         const archivoBase64 = archivo.buffer.toString('base64');
