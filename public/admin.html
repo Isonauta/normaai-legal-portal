@@ -196,11 +196,63 @@ textarea{resize:vertical;min-height:80px;}
     </div>
 
     <!-- CLIENTES -->
+    <!-- MODAL CREAR USUARIO -->
+    <div id="modal-crear-usuario" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+      <div style="background:#0d2144;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:2rem;width:100%;max-width:480px;margin:1rem;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+          <div style="font-family:Syne,sans-serif;font-size:1.1rem;font-weight:700;">👤 Nuevo Usuario</div>
+          <button onclick="cerrarModalUsuario()" style="background:none;border:none;color:#8a96a8;font-size:1.3rem;cursor:pointer;">✕</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.9rem;">
+          <div>
+            <label style="display:block;font-size:.75rem;color:#8a96a8;margin-bottom:.3rem;">Nombre completo *</label>
+            <input id="nu-nombre" type="text" placeholder="María González" style="width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;box-sizing:border-box;outline:none;">
+          </div>
+          <div>
+            <label style="display:block;font-size:.75rem;color:#8a96a8;margin-bottom:.3rem;">Email *</label>
+            <input id="nu-email" type="email" placeholder="maria@empresa.cl" style="width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;box-sizing:border-box;outline:none;">
+          </div>
+          <div>
+            <label style="display:block;font-size:.75rem;color:#8a96a8;margin-bottom:.3rem;">Contraseña inicial *</label>
+            <div style="display:flex;gap:.5rem;">
+              <input id="nu-password" type="text" placeholder="Mínimo 8 caracteres" style="flex:1;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;box-sizing:border-box;outline:none;">
+              <button onclick="generarPassword()" style="padding:.7rem .9rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#8a96a8;cursor:pointer;font-size:.8rem;white-space:nowrap;">🎲 Generar</button>
+            </div>
+          </div>
+          <div>
+            <label style="display:block;font-size:.75rem;color:#8a96a8;margin-bottom:.3rem;">Empresa</label>
+            <input id="nu-empresa" type="text" placeholder="Nombre de la empresa" style="width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;box-sizing:border-box;outline:none;">
+          </div>
+          <div style="display:flex;gap:.8rem;">
+            <div style="flex:1;">
+              <label style="display:block;font-size:.75rem;color:#8a96a8;margin-bottom:.3rem;">Rol</label>
+              <select id="nu-rol" style="width:100%;padding:.7rem 1rem;background:rgba(13,33,68,0.9);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;box-sizing:border-box;outline:none;">
+                <option value="cliente">Cliente</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div style="flex:1;">
+              <label style="display:block;font-size:.75rem;color:#8a96a8;margin-bottom:.3rem;">Fecha de vencimiento</label>
+              <input id="nu-fecha-fin" type="date" style="width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;box-sizing:border-box;outline:none;">
+            </div>
+          </div>
+          <div id="nu-resultado" style="display:none;"></div>
+          <div style="display:flex;gap:.7rem;margin-top:.5rem;">
+            <button onclick="cerrarModalUsuario()" style="flex:1;padding:.8rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#8a96a8;cursor:pointer;font-size:.88rem;">Cancelar</button>
+            <button id="nu-btn-crear" onclick="crearUsuario()" style="flex:2;padding:.8rem;background:linear-gradient(135deg,#1a6cf8,#3d84fa);border:none;border-radius:8px;color:#fff;cursor:pointer;font-size:.88rem;font-weight:600;">✓ Crear Usuario y Enviar Email</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="view" id="vista-clientes">
       <div class="tabla-container">
         <div class="tabla-header">
           <div class="tabla-titulo">👥 Clientes activos</div>
-          <button class="btn btn-primary btn-sm" onclick="cargarClientes()">🔄 Actualizar</button>
+          <div style="display:flex;gap:.5rem;">
+            <button class="btn btn-primary btn-sm" onclick="abrirModalUsuario()">+ Nuevo Usuario</button>
+            <button class="btn btn-sm" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);" onclick="cargarClientes()">🔄 Actualizar</button>
+          </div>
         </div>
         <div id="clientes-lista"><div class="loading"><div class="spinner"></div>Cargando...</div></div>
       </div>
@@ -459,6 +511,88 @@ async function toggleCliente(id, activo) {
   await apiPost('/api/admin/clientes/toggle', { id, activo: !activo });
   cargarClientes();
 }
+
+// ── Crear Usuario ─────────────────────────────────────────────
+function abrirModalUsuario() {
+  document.getElementById('nu-nombre').value = '';
+  document.getElementById('nu-email').value = '';
+  document.getElementById('nu-password').value = '';
+  document.getElementById('nu-empresa').value = '';
+  document.getElementById('nu-rol').value = 'cliente';
+  document.getElementById('nu-fecha-fin').value = '';
+  document.getElementById('nu-resultado').style.display = 'none';
+  document.getElementById('nu-btn-crear').disabled = false;
+  document.getElementById('nu-btn-crear').textContent = '✓ Crear Usuario y Enviar Email';
+  const modal = document.getElementById('modal-crear-usuario');
+  modal.style.display = 'flex';
+}
+
+function cerrarModalUsuario() {
+  document.getElementById('modal-crear-usuario').style.display = 'none';
+}
+
+function generarPassword() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#$!';
+  let pwd = '';
+  for (let i = 0; i < 10; i++) pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+  document.getElementById('nu-password').value = pwd;
+}
+
+async function crearUsuario() {
+  const nombre = document.getElementById('nu-nombre').value.trim();
+  const email = document.getElementById('nu-email').value.trim();
+  const password = document.getElementById('nu-password').value.trim();
+  const empresa = document.getElementById('nu-empresa').value.trim();
+  const rol = document.getElementById('nu-rol').value;
+  const fecha_fin = document.getElementById('nu-fecha-fin').value || null;
+  const resultado = document.getElementById('nu-resultado');
+  const btn = document.getElementById('nu-btn-crear');
+
+  if (!nombre || !email || !password) {
+    resultado.style.display = 'block';
+    resultado.innerHTML = '<div style="color:#fca5a5;background:rgba(220,38,38,0.1);border-radius:8px;padding:.8rem;font-size:.83rem;">⚠️ Nombre, email y contraseña son obligatorios.</div>';
+    return;
+  }
+  if (password.length < 8) {
+    resultado.style.display = 'block';
+    resultado.innerHTML = '<div style="color:#fca5a5;background:rgba(220,38,38,0.1);border-radius:8px;padding:.8rem;font-size:.83rem;">⚠️ La contraseña debe tener al menos 8 caracteres.</div>';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Creando usuario...';
+  resultado.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/admin/clientes/crear', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ nombre, email, password, empresa, rol, fecha_fin })
+    });
+    const data = await res.json();
+    resultado.style.display = 'block';
+    if (res.ok) {
+      resultado.innerHTML = '<div style="color:#4ade80;background:rgba(22,163,74,0.1);border-radius:8px;padding:.8rem;font-size:.83rem;">✅ ' + data.mensaje + '</div>';
+      btn.textContent = '✅ Usuario creado';
+      cargarClientes();
+      setTimeout(cerrarModalUsuario, 2500);
+    } else {
+      resultado.innerHTML = '<div style="color:#fca5a5;background:rgba(220,38,38,0.1);border-radius:8px;padding:.8rem;font-size:.83rem;">⚠️ ' + (data.error || 'Error al crear usuario') + '</div>';
+      btn.disabled = false;
+      btn.textContent = '✓ Crear Usuario y Enviar Email';
+    }
+  } catch(e) {
+    resultado.style.display = 'block';
+    resultado.innerHTML = '<div style="color:#fca5a5;background:rgba(220,38,38,0.1);border-radius:8px;padding:.8rem;font-size:.83rem;">⚠️ Error de conexión.</div>';
+    btn.disabled = false;
+    btn.textContent = '✓ Crear Usuario y Enviar Email';
+  }
+}
+
+// Cerrar modal al hacer clic fuera
+document.getElementById('modal-crear-usuario').addEventListener('click', function(e) {
+  if (e.target === this) cerrarModalUsuario();
+});
 
 // ── Uso Agente ───────────────────────────────────────────────
 async function cargarUso() {

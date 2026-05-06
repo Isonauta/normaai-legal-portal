@@ -654,6 +654,90 @@ async function verificarAdmin(req, res, next) {
 }
 
 // ── Admin: Clientes ──────────────────────────────────────────
+// ── Admin: Crear usuario ─────────────────────────────────────
+app.post('/api/admin/clientes/crear', verificarAdmin, async (req, res) => {
+  const { nombre, email, password, empresa, rol, fecha_fin } = req.body;
+  if (!nombre || !email || !password) {
+    return res.status(400).json({ error: 'Nombre, email y contraseña son obligatorios' });
+  }
+  try {
+    // 1. Crear usuario en Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true
+    });
+
+    if (authError) {
+      if (authError.message.includes('already registered')) {
+        return res.status(400).json({ error: 'Ya existe un usuario con ese email' });
+      }
+      return res.status(400).json({ error: 'Error al crear usuario: ' + authError.message });
+    }
+
+    const userId = authData.user.id;
+
+    // 2. Registrar en normaai_clientes
+    const { error: clienteError } = await supabase.from('normaai_clientes').insert({
+      user_id: userId,
+      nombre,
+      empresa: empresa || '',
+      email,
+      rol: rol || 'cliente',
+      activo: true,
+      fecha_fin: fecha_fin || null
+    });
+
+    if (clienteError) {
+      // Revertir: eliminar el usuario de Auth si falla el insert
+      await supabase.auth.admin.deleteUser(userId);
+      return res.status(500).json({ error: 'Error al registrar cliente: ' + clienteError.message });
+    }
+
+    // 3. Enviar email de bienvenida
+    try {
+      const transporter = crearTransporter();
+      await transporter.sendMail({
+        from: `"NormaAI Legal" <${process.env.GMAIL_USER}>`,
+        to: email,
+        subject: '🎉 Bienvenido a NormaAI Legal — Tus credenciales de acceso',
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+            <div style="background:#0f2a4a;padding:24px;border-radius:8px 8px 0 0;text-align:center;">
+              <h1 style="color:white;margin:0;font-size:1.5rem;">⚖ NormaAI Legal</h1>
+              <p style="color:#c9a84c;margin:4px 0 0;font-size:.85rem;">by Procesus</p>
+            </div>
+            <div style="background:#f8fafc;padding:28px;border:1px solid #e2e8f0;border-radius:0 0 8px 8px;">
+              <h2 style="color:#0f2a4a;margin:0 0 16px;">Hola ${nombre}, bienvenido/a 👋</h2>
+              <p style="color:#475569;">Tu acceso a <strong>NormaAI Legal</strong> ha sido activado. Aquí están tus credenciales:</p>
+              <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:20px 0;">
+                <p style="margin:0 0 8px;"><strong>🌐 Plataforma:</strong> <a href="https://legal.normaai.cl" style="color:#1a6cf8;">legal.normaai.cl</a></p>
+                <p style="margin:0 0 8px;"><strong>📧 Email:</strong> ${email}</p>
+                <p style="margin:0;"><strong>🔑 Contraseña:</strong> ${password}</p>
+              </div>
+              <p style="color:#64748b;font-size:.88rem;">Por seguridad, te recomendamos cambiar tu contraseña después del primer acceso.</p>
+              <div style="text-align:center;margin-top:24px;">
+                <a href="https://legal.normaai.cl" style="background:#1a6cf8;color:white;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">
+                  Acceder a NormaAI →
+                </a>
+              </div>
+              <hr style="border:1px solid #e2e8f0;margin:24px 0;">
+              <p style="color:#94a3b8;font-size:.78rem;text-align:center;">NormaAI Legal · by Procesus · contacto@normaai.cl</p>
+            </div>
+          </div>`
+      });
+    } catch (emailErr) {
+      console.error('Error email bienvenida:', emailErr.message);
+      // No falla el proceso si el email falla
+    }
+
+    res.json({ ok: true, mensaje: `Usuario ${nombre} creado exitosamente. Se envió email de bienvenida a ${email}.`, user_id: userId });
+  } catch (err) {
+    console.error('[crear-cliente]', err.message);
+    res.status(500).json({ error: 'Error inesperado: ' + err.message });
+  }
+});
+
 app.get('/api/admin/clientes', verificarAdmin, async (req, res) => {
   const { data } = await supabase.from('normaai_clientes').select('*').order('created_at', { ascending: false });
   res.json(data || []);
