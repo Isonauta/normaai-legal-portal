@@ -732,7 +732,15 @@ app.get('/api/matriz/:id/informe-html', async (req, res) => {
 });
 
 // ── Admin: Ver informe HTML ───────────────────────────────────
-app.get('/api/admin/matrices/:id/informe-html', verificarAdmin, async (req, res) => {
+app.get('/api/admin/matrices/:id/informe-html', async (req, res) => {
+  const tkn = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
+  if (!tkn) return res.status(401).send('<h3>Sin autorizacion</h3>');
+  try {
+    const { data: { user }, error: authErr } = await supabase.auth.getUser(tkn);
+    if (authErr || !user) return res.status(401).send('<h3>Token invalido</h3>');
+    const { data: cl } = await supabase.from('normaai_clientes').select('rol').eq('user_id', user.id).single();
+    if (!cl || cl.rol !== 'admin') return res.status(403).send('<h3>Acceso denegado</h3>');
+  } catch(e) { return res.status(401).send('<h3>Error auth</h3>'); }
   try {
     const { data: matriz, error } = await supabase
       .from('normaai_matrices')
