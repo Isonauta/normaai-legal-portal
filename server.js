@@ -617,7 +617,7 @@ IMPORTANTE: Responde SOLO con el HTML completo. Sin texto antes ni después. Sin
         informeIA = `## RECEPCIÓN CONFIRMADA\n\nMatriz recibida el ${fechaHoy}.\n- Archivo: ${archivo.originalname}\n- Empresa: ${empresa}\n\n## PRÓXIMOS PASOS\n\nEl equipo de Procesus analizará el documento y enviará el informe certificado en 24-48 horas hábiles.`;
       }
     } catch (e) {
-      console.error('Error IA:', e.message);
+      console.error('Error IA completo:', e.message, e.stack);
       informeIA = `Matriz recibida el ${fechaHoy}. El equipo de Procesus realizará el análisis en las próximas 24-48 horas hábiles.`;
     }
 
@@ -731,19 +731,8 @@ app.get('/api/matriz/:id/informe-html', async (req, res) => {
   }
 });
 
-// ── Admin: Ver informe HTML (acepta token por query param para iframe)
-app.get('/api/admin/matrices/:id/informe-html', async (req, res) => {
-  const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
-  if (!token) return res.status(401).send('<h3>Sin autorización</h3>');
-  try {
-    const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
-    if (authErr || !user) return res.status(401).send('<h3>Token inválido</h3>');
-    // Verificar que es admin
-    const { data: cliente } = await supabase
-      .from('normaai_clientes').select('rol').eq('user_id', user.id).single();
-    if (!cliente || cliente.rol !== 'admin') return res.status(403).send('<h3>Acceso denegado</h3>');
-  } catch(e) { return res.status(401).send('<h3>Error de autenticación</h3>'); }
-
+// ── Admin: Ver informe HTML ───────────────────────────────────
+app.get('/api/admin/matrices/:id/informe-html', verificarAdmin, async (req, res) => {
   try {
     const { data: matriz, error } = await supabase
       .from('normaai_matrices')
@@ -751,13 +740,13 @@ app.get('/api/admin/matrices/:id/informe-html', async (req, res) => {
       .eq('id', req.params.id)
       .single();
 
-    if (error || !matriz) return res.status(404).send('<h3>Informe no encontrado</h3>');
-    if (!matriz.informe_ia) return res.status(404).send('<h3>Informe no generado aún</h3>');
+    if (error || !matriz) return res.status(404).json({ error: 'No encontrada' });
+    if (!matriz.informe_ia) return res.status(404).json({ error: 'Informe no generado' });
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(matriz.informe_ia);
   } catch (err) {
-    res.status(500).send('<h3>Error al cargar informe</h3>');
+    res.status(500).json({ error: 'Error al cargar informe' });
   }
 });
 
