@@ -664,9 +664,6 @@ async function abrirMatriz(id) {
   document.getElementById('detalle-cliente').textContent = data.cliente_email || data.cliente_nombre || data.user_id;
   document.getElementById('detalle-archivo').textContent = data.nombre_archivo;
   document.getElementById('detalle-fecha').textContent = new Date(data.created_at).toLocaleDateString('es-CL', {day:'2-digit',month:'long',year:'numeric'});
-  // informe_ia ahora es HTML — no se muestra en textarea
-  document.getElementById('informe-preview-wrap').style.display = 'none';
-
   const estadoLabel = { pendiente:'⏳ Pendiente revisión', en_revision:'🔍 En revisión', aprobado:'✅ Aprobado', enviado:'📨 Enviado al cliente' };
   const estadoColor = { pendiente:'badge-amarillo', en_revision:'badge-azul', aprobado:'badge-verde', enviado:'badge-verde' };
   document.getElementById('detalle-estado-badge').innerHTML = `<span class="badge ${estadoColor[data.estado]||'badge-amarillo'}">${estadoLabel[data.estado]||data.estado}</span>`;
