@@ -97,12 +97,249 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
 .sesion-card:hover{background:rgba(26,108,248,0.08);border-color:rgba(26,108,248,0.3);}
 .drop-zone{background:rgba(255,255,255,0.03);border:2px dashed rgba(255,255,255,0.1);border-radius:12px;padding:2rem;text-align:center;cursor:pointer;transition:all .2s;}
 .drop-zone:hover{border-color:var(--acento);background:rgba(26,108,248,0.05);}
-.alerta-box{background:#fef3c7;border:1px solid #fcd34d;border-left:4px solid #ca8a04;border-radius:8px;padding:.9rem 1.2rem;font-size:.85rem;color:#78350f;margin-bottom:1rem;}
 .info-box{background:rgba(26,108,248,0.08);border:1px solid rgba(26,108,248,0.2);border-radius:12px;padding:1.2rem 1.5rem;margin-bottom:1.5rem;}
+
+/* ── ONBOARDING MODAL ─────────────────────────────────────── */
+.ob-overlay{position:fixed;inset:0;z-index:9999;background:rgba(5,10,20,0.92);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:1rem;}
+.ob-card{background:#0d1f3a;border:1px solid rgba(255,255,255,0.1);border-radius:16px;width:100%;max-width:540px;padding:2rem;box-shadow:0 32px 80px rgba(0,0,0,0.6);max-height:90vh;overflow-y:auto;}
+.ob-logo{display:flex;align-items:center;gap:.7rem;margin-bottom:1.5rem;}
+.ob-logo-icon{width:36px;height:36px;background:var(--acento);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.ob-logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;}
+.ob-logo-sub{font-size:.6rem;color:var(--dorado);letter-spacing:.12em;text-transform:uppercase;}
+.ob-bienvenida{margin-bottom:1.5rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(255,255,255,0.07);}
+.ob-bienvenida h2{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:700;margin-bottom:.5rem;}
+.ob-bienvenida p{font-size:.88rem;color:#8a96a8;line-height:1.65;}
+.ob-bienvenida p strong{color:#c9d8f0;}
+.ob-progress{display:flex;gap:5px;margin-bottom:.6rem;}
+.ob-bar{height:3px;flex:1;border-radius:2px;background:rgba(255,255,255,0.08);transition:background .3s;}
+.ob-bar.done{background:var(--acento);}
+.ob-bar.active{background:rgba(26,108,248,0.45);}
+.ob-step-hint{font-size:.72rem;color:#3d4f6a;margin-bottom:1.2rem;}
+.ob-step-hint span{color:#60a5fa;}
+.ob-screen{display:none;}
+.ob-screen.active{display:block;}
+.ob-field{margin-bottom:1rem;}
+.ob-label{display:block;font-size:.75rem;color:#8a96a8;margin-bottom:.4rem;letter-spacing:.04em;}
+.ob-input{width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.88rem;font-family:'DM Sans',sans-serif;outline:none;box-sizing:border-box;transition:border-color .2s;}
+.ob-input:focus{border-color:var(--acento);background:rgba(26,108,248,0.07);}
+.ob-input::placeholder{color:#3d4f6a;}
+.ob-rubro-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.ob-rubro-card{padding:.65rem .9rem;border:1px solid rgba(255,255,255,0.08);border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:.6rem;transition:all .15s;background:rgba(255,255,255,0.02);}
+.ob-rubro-card:hover{background:rgba(26,108,248,0.08);border-color:rgba(26,108,248,0.3);}
+.ob-rubro-card.sel{border-color:var(--acento);background:rgba(26,108,248,0.15);}
+.ob-rubro-card .ob-rubro-icon{font-size:1.1rem;width:22px;text-align:center;}
+.ob-rubro-card .ob-rubro-label{font-size:.82rem;color:#c9d8f0;}
+.ob-rubro-card.sel .ob-rubro-label{color:#fff;}
+.ob-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:.3rem;}
+.ob-chip{padding:.35rem .9rem;border-radius:999px;font-size:.82rem;border:1px solid rgba(255,255,255,0.1);color:#8a96a8;cursor:pointer;background:rgba(255,255,255,0.03);transition:all .15s;}
+.ob-chip:hover{border-color:rgba(26,108,248,0.4);color:#93c5fd;}
+.ob-chip.sel{background:rgba(26,108,248,0.2);border-color:var(--acento);color:#93c5fd;font-weight:500;}
+.ob-size-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:.3rem;}
+.ob-size-chip{padding:.4rem 1rem;border-radius:8px;font-size:.82rem;border:1px solid rgba(255,255,255,0.1);color:#8a96a8;cursor:pointer;background:rgba(255,255,255,0.03);transition:all .15s;}
+.ob-size-chip:hover{border-color:rgba(26,108,248,0.4);color:#93c5fd;}
+.ob-size-chip.sel{background:rgba(26,108,248,0.2);border-color:var(--acento);color:#93c5fd;font-weight:500;}
+.ob-footer{display:flex;align-items:center;justify-content:space-between;margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid rgba(255,255,255,0.07);}
+.ob-counter{font-size:.75rem;color:#3d4f6a;}
+.ob-btns{display:flex;gap:.6rem;}
+.ob-btn-back{padding:.55rem 1.1rem;font-size:.83rem;font-family:'DM Sans',sans-serif;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#8a96a8;cursor:pointer;transition:all .15s;}
+.ob-btn-back:hover{background:rgba(255,255,255,0.08);color:#fff;}
+.ob-btn-next{padding:.55rem 1.4rem;font-size:.83rem;font-family:'DM Sans',sans-serif;background:var(--acento);border:none;border-radius:8px;color:#fff;cursor:pointer;font-weight:600;transition:all .15s;}
+.ob-btn-next:hover{background:#1558d0;}
+.ob-btn-next:disabled{opacity:.5;cursor:not-allowed;}
+.ob-error{font-size:.78rem;color:#f87171;margin-top:.5rem;display:none;}
+
+/* ── PERFIL MODAL ─────────────────────────────────────────── */
+.perfil-overlay{position:fixed;inset:0;z-index:9998;background:rgba(5,10,20,0.88);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:1rem;}
+.perfil-overlay.open{display:flex;}
+.perfil-card{background:#0d1f3a;border:1px solid rgba(255,255,255,0.1);border-radius:16px;width:100%;max-width:500px;padding:1.8rem;max-height:88vh;overflow-y:auto;}
+.perfil-titulo{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:1.2rem;display:flex;align-items:center;justify-content:space-between;}
+.perfil-close{background:none;border:none;color:#8a96a8;font-size:1.2rem;cursor:pointer;}
+
 @media(max-width:768px){.sidebar{display:none;}.main{width:100%;}.view{padding:1.2rem;}.noticias-grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
+
+<!-- ══════════════════════════════════════════════════════════
+     ONBOARDING MODAL
+════════════════════════════════════════════════════════════ -->
+<div class="ob-overlay" id="ob-overlay" style="display:none;">
+  <div class="ob-card">
+    <div class="ob-logo">
+      <div class="ob-logo-icon">⚖</div>
+      <div>
+        <div class="ob-logo-text">NormaAI Legal</div>
+        <div class="ob-logo-sub">by Procesus</div>
+      </div>
+    </div>
+
+    <div class="ob-bienvenida">
+      <h2>¡Hola, bienvenido/a! 👋</h2>
+      <p>Queremos entregarte la <strong>mejor experiencia posible</strong>. Para lograrlo, te invitamos a completar estos campos — son obligatorios y nos permitirán enfocar todas las respuestas del agente IA y la revisión de tu matriz en el contexto específico de tu organización.</p>
+    </div>
+
+    <div class="ob-progress">
+      <div class="ob-bar active" id="ob-b1"></div>
+      <div class="ob-bar" id="ob-b2"></div>
+      <div class="ob-bar" id="ob-b3"></div>
+      <div class="ob-bar" id="ob-b4"></div>
+      <div class="ob-bar" id="ob-b5"></div>
+      <div class="ob-bar" id="ob-b6"></div>
+    </div>
+    <div class="ob-step-hint">Paso <span id="ob-paso-num">1</span> de 6</div>
+
+    <!-- Paso 1: Empresa -->
+    <div class="ob-screen active" id="ob-s1">
+      <div class="ob-field">
+        <label class="ob-label">Nombre de la empresa *</label>
+        <input class="ob-input" type="text" id="ob-empresa" placeholder="Ej: Minera Los Andes S.A.">
+      </div>
+      <div class="ob-field">
+        <label class="ob-label">RUT de la empresa <span style="color:#3d4f6a;font-size:.72rem;">(opcional)</span></label>
+        <input class="ob-input" type="text" id="ob-rut" placeholder="Ej: 76.543.210-K">
+      </div>
+      <div class="ob-error" id="ob-err-1">Por favor ingresa el nombre de tu empresa.</div>
+    </div>
+
+    <!-- Paso 2: Rubro -->
+    <div class="ob-screen" id="ob-s2">
+      <div class="ob-field">
+        <label class="ob-label">Rubro o actividad económica principal *</label>
+        <div class="ob-rubro-grid" id="ob-rubro-grid">
+          <div class="ob-rubro-card" onclick="selRubro(this,'Minería y recursos naturales')"><span class="ob-rubro-icon">⛏</span><span class="ob-rubro-label">Minería y recursos</span></div>
+          <div class="ob-rubro-card" onclick="selRubro(this,'Manufactura e industria')"><span class="ob-rubro-icon">🏭</span><span class="ob-rubro-label">Manufactura / industria</span></div>
+          <div class="ob-rubro-card" onclick="selRubro(this,'Agroindustria y alimentos')"><span class="ob-rubro-icon">🌿</span><span class="ob-rubro-label">Agroindustria / alimentos</span></div>
+          <div class="ob-rubro-card" onclick="selRubro(this,'Construcción')"><span class="ob-rubro-icon">🏗</span><span class="ob-rubro-label">Construcción</span></div>
+          <div class="ob-rubro-card" onclick="selRubro(this,'Logística y transporte')"><span class="ob-rubro-icon">🚛</span><span class="ob-rubro-label">Logística / transporte</span></div>
+          <div class="ob-rubro-card" onclick="selRubro(this,'Salud')"><span class="ob-rubro-icon">🏥</span><span class="ob-rubro-label">Salud</span></div>
+          <div class="ob-rubro-card" onclick="selRubro(this,'Tecnología y servicios')"><span class="ob-rubro-icon">💻</span><span class="ob-rubro-label">Tecnología / servicios</span></div>
+          <div class="ob-rubro-card" onclick="selRubro(this,'Otro')"><span class="ob-rubro-icon">⋯</span><span class="ob-rubro-label">Otro</span></div>
+        </div>
+        <input class="ob-input" type="text" id="ob-rubro-otro" placeholder="Especifica tu rubro" style="display:none;margin-top:.7rem;">
+      </div>
+      <div class="ob-error" id="ob-err-2">Por favor selecciona o especifica tu rubro.</div>
+    </div>
+
+    <!-- Paso 3: Trabajadores -->
+    <div class="ob-screen" id="ob-s3">
+      <div class="ob-field">
+        <label class="ob-label">Número de trabajadores *</label>
+        <div style="font-size:.8rem;color:#4a5568;margin-bottom:.8rem;line-height:1.5;">Esto determina qué obligaciones legales específicas aplican a tu organización (comités paritarios, protocolos, etc.).</div>
+        <div class="ob-size-row" id="ob-size-row">
+          <div class="ob-size-chip" onclick="selSize(this,'1 - 9')">1 – 9</div>
+          <div class="ob-size-chip" onclick="selSize(this,'10 - 49')">10 – 49</div>
+          <div class="ob-size-chip" onclick="selSize(this,'50 - 199')">50 – 199</div>
+          <div class="ob-size-chip" onclick="selSize(this,'200 - 999')">200 – 999</div>
+          <div class="ob-size-chip" onclick="selSize(this,'1.000+')">1.000+</div>
+        </div>
+      </div>
+      <div class="ob-error" id="ob-err-3">Por favor selecciona el rango de trabajadores.</div>
+    </div>
+
+    <!-- Paso 4: Normas ISO -->
+    <div class="ob-screen" id="ob-s4">
+      <div class="ob-field">
+        <label class="ob-label">Normas ISO certificadas o en implementación *</label>
+        <div class="ob-chips" id="ob-normas-chips">
+          <div class="ob-chip" onclick="toggleChip(this,'ISO 9001')">ISO 9001</div>
+          <div class="ob-chip" onclick="toggleChip(this,'ISO 14001')">ISO 14001</div>
+          <div class="ob-chip" onclick="toggleChip(this,'ISO 45001')">ISO 45001</div>
+          <div class="ob-chip" onclick="toggleChip(this,'ISO 27001')">ISO 27001</div>
+          <div class="ob-chip" onclick="toggleChip(this,'ISO 37001')">ISO 37001</div>
+          <div class="ob-chip" onclick="toggleChip(this,'ISO 37301')">ISO 37301</div>
+          <div class="ob-chip" onclick="toggleChip(this,'ISO 22000')">ISO 22000</div>
+          <div class="ob-chip" onclick="toggleChip(this,'ISO 50001')">ISO 50001</div>
+          <div class="ob-chip" onclick="toggleChip(this,'ISO 39001')">ISO 39001</div>
+        </div>
+        <input class="ob-input" type="text" id="ob-normas-otras" placeholder="Otras normas (opcional)" style="margin-top:.8rem;">
+      </div>
+      <div class="ob-field" style="margin-top:.5rem;">
+        <label class="ob-label">Estado actual</label>
+        <div class="ob-size-row" id="ob-cert-row">
+          <div class="ob-size-chip" onclick="selCert(this,'Certificada')">Certificada ✓</div>
+          <div class="ob-size-chip" onclick="selCert(this,'En proceso de certificación')">En proceso</div>
+          <div class="ob-size-chip" onclick="selCert(this,'Ambas')">Ambas</div>
+        </div>
+      </div>
+      <div class="ob-error" id="ob-err-4">Selecciona al menos una norma ISO.</div>
+    </div>
+
+    <!-- Paso 5: Alcance -->
+    <div class="ob-screen" id="ob-s5">
+      <div class="ob-field">
+        <label class="ob-label">Alcance del sistema de gestión *</label>
+        <div style="font-size:.8rem;color:#4a5568;margin-bottom:.7rem;line-height:1.5;">Describe brevemente qué procesos o actividades cubre tu sistema de gestión.</div>
+        <textarea class="ob-input" id="ob-alcance" rows="3" placeholder="Ej: Diseño, producción y comercialización de equipos industriales para el sector minero en la Región de Antofagasta" style="resize:vertical;font-family:'DM Sans',sans-serif;"></textarea>
+      </div>
+      <div class="ob-error" id="ob-err-5">Por favor describe el alcance de tu sistema de gestión.</div>
+    </div>
+
+    <!-- Paso 6: Sitios -->
+    <div class="ob-screen" id="ob-s6">
+      <div class="ob-field">
+        <label class="ob-label">Sitios o lugares de trabajo incluidos en el alcance *</label>
+        <div style="font-size:.8rem;color:#4a5568;margin-bottom:.7rem;line-height:1.5;">Separa los sitios con comas. Esto permite al agente aplicar normativa regional y sectorial específica a cada ubicación.</div>
+        <input class="ob-input" type="text" id="ob-sitios" placeholder="Ej: Planta Santiago, Faena Norte, Oficina Valparaíso">
+      </div>
+      <div class="ob-error" id="ob-err-6">Por favor ingresa al menos un sitio de trabajo.</div>
+    </div>
+
+    <div class="ob-footer">
+      <div class="ob-counter" id="ob-counter">Paso 1 de 6</div>
+      <div class="ob-btns">
+        <button class="ob-btn-back" id="ob-btn-back" onclick="obBack()" style="display:none;">← Anterior</button>
+        <button class="ob-btn-next" id="ob-btn-next" onclick="obNext()">Continuar →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL MI PERFIL
+════════════════════════════════════════════════════════════ -->
+<div class="perfil-overlay" id="perfil-overlay">
+  <div class="perfil-card">
+    <div class="perfil-titulo">
+      Mi perfil de organización
+      <button class="perfil-close" onclick="cerrarPerfil()">✕</button>
+    </div>
+    <div id="perfil-form-content">
+      <div class="ob-field">
+        <label class="ob-label">Empresa</label>
+        <input class="ob-input" type="text" id="pf-empresa" placeholder="Nombre de la empresa">
+      </div>
+      <div class="ob-field">
+        <label class="ob-label">Rubro</label>
+        <input class="ob-input" type="text" id="pf-rubro" placeholder="Rubro o actividad económica">
+      </div>
+      <div class="ob-field">
+        <label class="ob-label">Número de trabajadores</label>
+        <input class="ob-input" type="text" id="pf-trabajadores" placeholder="Ej: 50 - 199">
+      </div>
+      <div class="ob-field">
+        <label class="ob-label">Normas ISO</label>
+        <input class="ob-input" type="text" id="pf-normas" placeholder="Ej: ISO 9001, ISO 14001">
+      </div>
+      <div class="ob-field">
+        <label class="ob-label">Alcance del sistema de gestión</label>
+        <textarea class="ob-input" id="pf-alcance" rows="2" style="resize:vertical;font-family:'DM Sans',sans-serif;" placeholder="Describe el alcance de tu SG"></textarea>
+      </div>
+      <div class="ob-field">
+        <label class="ob-label">Sitios de trabajo</label>
+        <input class="ob-input" type="text" id="pf-sitios" placeholder="Ej: Planta Santiago, Faena Norte">
+      </div>
+      <div id="pf-msg" style="font-size:.82rem;margin-top:.5rem;display:none;"></div>
+      <div style="display:flex;gap:.7rem;margin-top:1.2rem;">
+        <button onclick="cerrarPerfil()" style="flex:1;padding:.7rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:#8a96a8;cursor:pointer;font-size:.85rem;font-family:'DM Sans',sans-serif;">Cancelar</button>
+        <button onclick="guardarPerfil()" style="flex:2;padding:.7rem;background:var(--acento);border:none;border-radius:8px;color:#fff;cursor:pointer;font-size:.85rem;font-weight:600;font-family:'DM Sans',sans-serif;">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     LAYOUT PRINCIPAL
+════════════════════════════════════════════════════════════ -->
 <div class="layout">
   <aside class="sidebar">
     <div class="logo">
@@ -123,9 +360,12 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
     </div>
     <div class="nav-section" style="margin-top:1rem">
       <div class="nav-label">Recursos</div>
-
       <button class="nav-item" onclick="mostrarVista('matriz',this)"><span class="nav-icon">📊</span> Revisar tu Matriz</button>
       <button class="nav-item" onclick="mostrarVista('videos',this)"><span class="nav-icon">🎥</span> Videos</button>
+    </div>
+    <div class="nav-section" style="margin-top:1rem">
+      <div class="nav-label">Cuenta</div>
+      <button class="nav-item" onclick="abrirPerfil()"><span class="nav-icon">👤</span> Mi Perfil</button>
     </div>
     <div class="sidebar-footer">
       <div class="user-info">
@@ -157,7 +397,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
           <div class="agente-avatar">⚖</div>
           <div class="agente-info">
             <h3 id="chat-titulo">NormaAI — Agente Legal</h3>
-            <p>Especialista en normativa chilena · Conectado a BCN</p>
+            <p id="chat-subtitulo">Especialista en normativa chilena · Conectado a BCN</p>
           </div>
           <div style="display:flex;align-items:center;gap:.5rem;margin-left:auto;">
             <button onclick="nuevaConversacion()" title="Nueva conversación" style="background:rgba(26,108,248,0.15);border:1px solid rgba(26,108,248,0.3);border-radius:6px;padding:.3rem .7rem;font-size:.75rem;color:#60a5fa;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">+ Nueva</button>
@@ -167,16 +407,16 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
         <div class="messages" id="messages">
           <div class="msg agente">
             <div class="msg-avatar">⚖</div>
-            <div class="msg-bubble">Hola, soy <strong>NormaAI</strong>, tu agente especializado en normativa legal chilena. Estoy conectado a la Biblioteca del Congreso Nacional para darte información actualizada.<br><br>¿En qué área normativa puedo ayudarte hoy? Por ejemplo: seguridad laboral, medio ambiente, protección de datos, ISO, entre otras.</div>
+            <div class="msg-bubble" id="msg-bienvenida">Hola, soy <strong>NormaAI</strong>, tu agente especializado en normativa legal chilena. Estoy conectado a la Biblioteca del Congreso Nacional para darte información actualizada.<br><br>¿En qué área normativa puedo ayudarte hoy?</div>
           </div>
         </div>
         <div class="chat-input-area">
-          <button class="btn-adjuntar" id="btn-adjuntar" title="Adjuntar PDF o Word" onclick="document.getElementById('agente-file-input').click()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.5rem .7rem;color:#8a96a8;font-size:1rem;cursor:pointer;flex-shrink:0;transition:all .2s;" onmouseover="this.style.color='#e2e8f0'" onmouseout="this.style.color='#8a96a8'">📎</button>
+          <button id="btn-adjuntar" title="Adjuntar PDF o Word" onclick="document.getElementById('agente-file-input').click()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.5rem .7rem;color:#8a96a8;font-size:1rem;cursor:pointer;flex-shrink:0;transition:all .2s;">📎</button>
           <input type="file" id="agente-file-input" accept=".pdf,.doc,.docx" style="display:none" onchange="adjuntarDocumentoAgente(this)">
           <textarea class="chat-input" id="chat-input" placeholder="Escribe tu consulta legal aquí..." rows="2" onkeydown="handleKeyDown(event)"></textarea>
           <button class="btn-send" id="btn-send" onclick="enviarMensaje()">➤</button>
         </div>
-        <div id="doc-adjunto-preview" style="display:none;padding:.4rem 1rem .6rem;font-size:.78rem;color:#8a96a8;display:none;align-items:center;gap:.5rem;background:rgba(26,108,248,0.06);border-top:1px solid rgba(26,108,248,0.1);">
+        <div id="doc-adjunto-preview" style="display:none;padding:.4rem 1rem .6rem;font-size:.78rem;color:#8a96a8;align-items:center;gap:.5rem;background:rgba(26,108,248,0.06);border-top:1px solid rgba(26,108,248,0.1);">
           <span>📄</span><span id="doc-adjunto-nombre" style="color:#93c5fd;"></span>
           <button onclick="quitarDocumentoAdjunto()" style="background:none;border:none;color:#4a5568;cursor:pointer;font-size:.8rem;margin-left:auto;">✕ Quitar</button>
         </div>
@@ -187,8 +427,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
     <div class="view" id="vista-historial">
       <div id="historial-content"><div class="loading-state"><div class="spinner"></div><span>Cargando historial...</span></div></div>
     </div>
-
-
 
     <!-- VIDEOS -->
     <div class="view" id="vista-videos">
@@ -201,23 +439,26 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
         <div class="info-box">
           <div style="font-family:Syne,sans-serif;font-weight:700;font-size:1rem;margin-bottom:.4rem;">📊 Revisión de Matriz de Requisitos Legales</div>
           <div style="font-size:.83rem;color:#8a96a8;line-height:1.6;">
-            Sube tu matriz de requisitos legales y nuestro equipo de consultores la revisará. Recibirás un <strong style="color:#e2e8f0;">informe certificado con sello Procesus</strong> en tu correo en 24-48 horas hábiles.<br>
+            Sube tu matriz y nuestro equipo la revisará. Recibirás un <strong style="color:#e2e8f0;">informe certificado con sello Procesus</strong> en tu correo en 24-48 horas hábiles.<br>
             <strong style="color:#fcd34d;">⚠️ Este servicio incluye revisión humana. El resultado no es inmediato.</strong>
           </div>
         </div>
         <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1.5rem;margin-bottom:1rem;">
-          <div style="font-size:.88rem;font-weight:600;margin-bottom:.8rem;color:#e2e8f0;">Datos de tu empresa <span style="color:#f87171;font-size:.75rem;font-weight:400;">* Todos los campos son obligatorios</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;">
+            <div style="font-size:.88rem;font-weight:600;color:#e2e8f0;">Datos de tu empresa <span style="color:#f87171;font-size:.75rem;font-weight:400;">* Obligatorios</span></div>
+            <button onclick="abrirPerfil()" style="font-size:.72rem;color:#60a5fa;background:rgba(26,108,248,0.1);border:1px solid rgba(26,108,248,0.25);border-radius:6px;padding:.25rem .6rem;cursor:pointer;font-family:'DM Sans',sans-serif;">✏ Editar perfil</button>
+          </div>
 
-          <label style="display:block;font-size:.78rem;color:#8a96a8;margin-bottom:.3rem;">Nombre de la empresa <span style="color:#f87171;">*</span></label>
+          <label style="display:block;font-size:.78rem;color:#8a96a8;margin-bottom:.3rem;">Nombre de la empresa *</label>
           <input type="text" id="nombre-empresa-matriz" placeholder="Ej: Minera Los Andes S.A." style="width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;margin-bottom:1rem;box-sizing:border-box;outline:none;">
 
-          <label style="display:block;font-size:.78rem;color:#8a96a8;margin-bottom:.3rem;">Normas ISO certificadas o en implementación <span style="color:#f87171;">*</span></label>
+          <label style="display:block;font-size:.78rem;color:#8a96a8;margin-bottom:.3rem;">Normas ISO *</label>
           <input type="text" id="normas-iso-matriz" placeholder="Ej: ISO 9001, ISO 14001, ISO 45001" style="width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;margin-bottom:1rem;box-sizing:border-box;outline:none;">
 
-          <label style="display:block;font-size:.78rem;color:#8a96a8;margin-bottom:.3rem;">Alcance del sistema de gestión <span style="color:#f87171;">*</span></label>
-          <textarea id="alcance-sistema-matriz" placeholder="Ej: Diseño, producción y comercialización de equipos industriales" rows="2" style="width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;margin-bottom:1rem;box-sizing:border-box;outline:none;resize:vertical;font-family:inherit;"></textarea>
+          <label style="display:block;font-size:.78rem;color:#8a96a8;margin-bottom:.3rem;">Alcance del sistema de gestión *</label>
+          <textarea id="alcance-sistema-matriz" rows="2" style="width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;margin-bottom:1rem;box-sizing:border-box;outline:none;resize:vertical;font-family:inherit;" placeholder="Ej: Diseño, producción y comercialización de equipos industriales"></textarea>
 
-          <label style="display:block;font-size:.78rem;color:#8a96a8;margin-bottom:.3rem;">Sitios o lugares de trabajo <span style="color:#f87171;">*</span></label>
+          <label style="display:block;font-size:.78rem;color:#8a96a8;margin-bottom:.3rem;">Sitios o lugares de trabajo *</label>
           <input type="text" id="sitios-trabajo-matriz" placeholder="Ej: Planta Santiago, Oficina Valparaíso, Faena Norte" style="width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;margin-bottom:1.2rem;box-sizing:border-box;outline:none;">
 
           <div class="drop-zone" onclick="document.getElementById('input-matriz').click()">
@@ -228,6 +469,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
           </div>
           <div id="resultado-matriz" style="margin-top:1rem;"></div>
         </div>
+
         <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1.5rem;">
           <div style="font-size:.88rem;font-weight:600;margin-bottom:.8rem;color:#e2e8f0;">Mis matrices enviadas</div>
           <div id="matrices-contenido"><div style="color:#3d4f6a;font-size:.85rem;">Cargando...</div></div>
@@ -252,21 +494,296 @@ document.getElementById('user-avatar').textContent = nombre.charAt(0).toUpperCas
 const fecha = new Date().toLocaleDateString('es-CL', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
 document.getElementById('topbar-fecha').textContent = fecha.charAt(0).toUpperCase() + fecha.slice(1);
 
-// ── Navegación ───────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+//  ONBOARDING
+// ══════════════════════════════════════════════════════════════
+var obPaso = 1;
+var obTotal = 6;
+var obRubroSel = '';
+var obTamanioSel = '';
+var obNormasSel = [];
+var obCertSel = '';
+var obGuardando = false;
+
+function obMostrarPaso(n) {
+  for (var i = 1; i <= obTotal; i++) {
+    document.getElementById('ob-s' + i).classList.toggle('active', i === n);
+    var bar = document.getElementById('ob-b' + i);
+    bar.className = 'ob-bar' + (i < n ? ' done' : i === n ? ' active' : '');
+    var err = document.getElementById('ob-err-' + i);
+    if (err) err.style.display = 'none';
+  }
+  document.getElementById('ob-paso-num').textContent = n;
+  document.getElementById('ob-counter').textContent = 'Paso ' + n + ' de ' + obTotal;
+  document.getElementById('ob-btn-back').style.display = n > 1 ? 'inline-block' : 'none';
+  document.getElementById('ob-btn-next').textContent = n === obTotal ? '✓ Guardar y comenzar' : 'Continuar →';
+  document.getElementById('ob-btn-next').disabled = false;
+}
+
+function obValidar(n) {
+  var err = document.getElementById('ob-err-' + n);
+  if (n === 1) {
+    if (!document.getElementById('ob-empresa').value.trim()) {
+      err.style.display = 'block'; return false;
+    }
+  }
+  if (n === 2) {
+    var rubroOtro = document.getElementById('ob-rubro-otro').value.trim();
+    if (!obRubroSel && !rubroOtro) { err.style.display = 'block'; return false; }
+    if (obRubroSel === 'Otro' && !rubroOtro) { err.style.display = 'block'; return false; }
+  }
+  if (n === 3) {
+    if (!obTamanioSel) { err.style.display = 'block'; return false; }
+  }
+  if (n === 4) {
+    if (obNormasSel.length === 0 && !document.getElementById('ob-normas-otras').value.trim()) {
+      err.style.display = 'block'; return false;
+    }
+  }
+  if (n === 5) {
+    if (!document.getElementById('ob-alcance').value.trim()) { err.style.display = 'block'; return false; }
+  }
+  if (n === 6) {
+    if (!document.getElementById('ob-sitios').value.trim()) { err.style.display = 'block'; return false; }
+  }
+  return true;
+}
+
+function obNext() {
+  if (obGuardando) return;
+  if (!obValidar(obPaso)) return;
+  if (obPaso < obTotal) {
+    obPaso++;
+    obMostrarPaso(obPaso);
+  } else {
+    obGuardar();
+  }
+}
+
+function obBack() {
+  if (obPaso > 1) { obPaso--; obMostrarPaso(obPaso); }
+}
+
+function selRubro(el, valor) {
+  document.querySelectorAll('.ob-rubro-card').forEach(function(c) { c.classList.remove('sel'); });
+  el.classList.add('sel');
+  obRubroSel = valor;
+  var otroInput = document.getElementById('ob-rubro-otro');
+  otroInput.style.display = valor === 'Otro' ? 'block' : 'none';
+  if (valor !== 'Otro') otroInput.value = '';
+}
+
+function selSize(el, valor) {
+  document.querySelectorAll('#ob-size-row .ob-size-chip').forEach(function(c) { c.classList.remove('sel'); });
+  el.classList.add('sel');
+  obTamanioSel = valor;
+}
+
+function selCert(el, valor) {
+  document.querySelectorAll('#ob-cert-row .ob-size-chip').forEach(function(c) { c.classList.remove('sel'); });
+  el.classList.add('sel');
+  obCertSel = valor;
+}
+
+function toggleChip(el, valor) {
+  el.classList.toggle('sel');
+  if (el.classList.contains('sel')) {
+    if (!obNormasSel.includes(valor)) obNormasSel.push(valor);
+  } else {
+    obNormasSel = obNormasSel.filter(function(v) { return v !== valor; });
+  }
+}
+
+async function obGuardar() {
+  obGuardando = true;
+  var btn = document.getElementById('ob-btn-next');
+  btn.disabled = true;
+  btn.textContent = '⏳ Guardando...';
+
+  var rubroFinal = obRubroSel === 'Otro'
+    ? document.getElementById('ob-rubro-otro').value.trim()
+    : obRubroSel;
+
+  var normasExtra = document.getElementById('ob-normas-otras').value.trim();
+  var normasFinal = obNormasSel.slice();
+  if (normasExtra) normasFinal.push(normasExtra);
+  if (obCertSel) normasFinal.push('(' + obCertSel + ')');
+
+  var body = {
+    empresa: document.getElementById('ob-empresa').value.trim(),
+    rubro: rubroFinal,
+    trabajadores: obTamanioSel,
+    normas_iso: normasFinal.join(', '),
+    alcance: document.getElementById('ob-alcance').value.trim(),
+    sitios: document.getElementById('ob-sitios').value.trim()
+  };
+
+  try {
+    var res = await fetch('/api/perfil/guardar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(body)
+    });
+    var data = await res.json();
+    if (res.ok) {
+      // Actualizar user en localStorage
+      var u = JSON.parse(localStorage.getItem('normaai_user') || '{}');
+      u.onboarding_completado = true;
+      localStorage.setItem('normaai_user', JSON.stringify(u));
+      // Cerrar modal y pre-rellenar formulario de matriz
+      document.getElementById('ob-overlay').style.display = 'none';
+      preRellenarMatriz(body);
+      actualizarChatSubtitulo(body.empresa, body.rubro);
+    } else {
+      btn.disabled = false;
+      btn.textContent = '✓ Guardar y comenzar';
+      document.getElementById('ob-err-6').textContent = data.error || 'Error al guardar. Intenta nuevamente.';
+      document.getElementById('ob-err-6').style.display = 'block';
+    }
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '✓ Guardar y comenzar';
+  }
+  obGuardando = false;
+}
+
+function preRellenarMatriz(perfil) {
+  if (perfil.empresa) document.getElementById('nombre-empresa-matriz').value = perfil.empresa;
+  if (perfil.normas_iso) document.getElementById('normas-iso-matriz').value = perfil.normas_iso;
+  if (perfil.alcance) document.getElementById('alcance-sistema-matriz').value = perfil.alcance;
+  if (perfil.sitios) document.getElementById('sitios-trabajo-matriz').value = perfil.sitios;
+}
+
+function actualizarChatSubtitulo(empresa, rubro) {
+  if (empresa) {
+    var subtitulo = document.getElementById('chat-subtitulo');
+    if (subtitulo) subtitulo.textContent = 'Asesor legal para ' + empresa + (rubro ? ' · ' + rubro : '');
+    // Actualizar mensaje de bienvenida del agente
+    var msgBienvenida = document.getElementById('msg-bienvenida');
+    if (msgBienvenida) {
+      msgBienvenida.innerHTML = 'Hola, soy <strong>NormaAI</strong>, tu agente especializado en normativa legal chilena. Estoy configurado para responder siempre en el contexto de <strong>' + empresa + '</strong>.' +
+        (rubro ? ' Conozco tu rubro (' + rubro + ') y aplicaré la normativa sectorial correspondiente.' : '') +
+        '<br><br>¿En qué área normativa puedo ayudarte hoy?';
+    }
+  }
+}
+
+// ── Verificar si hay que mostrar onboarding ──────────────────
+async function verificarOnboarding() {
+  // Si el login ya dice que está completado, no mostrar
+  if (user.onboarding_completado) {
+    cargarPerfilSilencioso();
+    return;
+  }
+  // Verificar en servidor (por si acaso)
+  try {
+    var res = await fetch('/api/perfil', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (res.status === 401) { hacerLogout(); return; }
+    var perfil = await res.json();
+    if (perfil.onboarding_completado) {
+      preRellenarMatriz(perfil);
+      actualizarChatSubtitulo(perfil.empresa, perfil.rubro);
+    } else {
+      // Mostrar onboarding
+      document.getElementById('ob-overlay').style.display = 'flex';
+      obMostrarPaso(1);
+    }
+  } catch(e) {
+    // Si falla la verificación, mostrar onboarding igual
+    document.getElementById('ob-overlay').style.display = 'flex';
+    obMostrarPaso(1);
+  }
+}
+
+async function cargarPerfilSilencioso() {
+  try {
+    var res = await fetch('/api/perfil', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!res.ok) return;
+    var perfil = await res.json();
+    preRellenarMatriz(perfil);
+    actualizarChatSubtitulo(perfil.empresa, perfil.rubro);
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════════════
+//  MODAL MI PERFIL
+// ══════════════════════════════════════════════════════════════
+async function abrirPerfil() {
+  document.getElementById('perfil-overlay').classList.add('open');
+  try {
+    var res = await fetch('/api/perfil', { headers: { 'Authorization': 'Bearer ' + token } });
+    var perfil = await res.json();
+    document.getElementById('pf-empresa').value = perfil.empresa || '';
+    document.getElementById('pf-rubro').value = perfil.rubro || '';
+    document.getElementById('pf-trabajadores').value = perfil.trabajadores || '';
+    document.getElementById('pf-normas').value = perfil.normas_iso || '';
+    document.getElementById('pf-alcance').value = perfil.alcance || '';
+    document.getElementById('pf-sitios').value = perfil.sitios || '';
+  } catch(e) {}
+}
+
+function cerrarPerfil() {
+  document.getElementById('perfil-overlay').classList.remove('open');
+  document.getElementById('pf-msg').style.display = 'none';
+}
+
+async function guardarPerfil() {
+  var body = {
+    empresa: document.getElementById('pf-empresa').value.trim(),
+    rubro: document.getElementById('pf-rubro').value.trim(),
+    trabajadores: document.getElementById('pf-trabajadores').value.trim(),
+    normas_iso: document.getElementById('pf-normas').value.trim(),
+    alcance: document.getElementById('pf-alcance').value.trim(),
+    sitios: document.getElementById('pf-sitios').value.trim()
+  };
+  var msg = document.getElementById('pf-msg');
+  msg.style.display = 'block';
+  msg.style.color = '#8a96a8';
+  msg.textContent = '⏳ Guardando...';
+  try {
+    var res = await fetch('/api/perfil/guardar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(body)
+    });
+    var data = await res.json();
+    if (res.ok) {
+      msg.style.color = '#4ade80';
+      msg.textContent = '✅ Perfil actualizado correctamente.';
+      preRellenarMatriz(body);
+      actualizarChatSubtitulo(body.empresa, body.rubro);
+      setTimeout(cerrarPerfil, 1800);
+    } else {
+      msg.style.color = '#f87171';
+      msg.textContent = data.error || 'Error al guardar.';
+    }
+  } catch(e) {
+    msg.style.color = '#f87171';
+    msg.textContent = 'Error de conexión.';
+  }
+}
+
+// Cerrar perfil al hacer clic fuera
+document.getElementById('perfil-overlay').addEventListener('click', function(e) {
+  if (e.target === this) cerrarPerfil();
+});
+
+// ══════════════════════════════════════════════════════════════
+//  NAVEGACIÓN
+// ══════════════════════════════════════════════════════════════
 const titulos = {
   noticias: 'Noticias Legales',
   agente: 'Agente IA — Consulta Normativa',
   historial: 'Historial de Consultas',
-
   matriz: 'Revisar tu Matriz Legal',
   videos: 'Videos y Capacitación'
 };
 
 function mostrarVista(nombre_vista, el) {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
   document.getElementById('vista-' + nombre_vista).classList.add('active');
-  el.classList.add('active');
+  if (el) el.classList.add('active');
   document.getElementById('page-title').textContent = titulos[nombre_vista] || nombre_vista;
   if (nombre_vista === 'noticias') cargarNoticias();
   if (nombre_vista === 'historial') cargarHistorial();
@@ -274,7 +791,9 @@ function mostrarVista(nombre_vista, el) {
   if (nombre_vista === 'matriz') cargarMisMatrices();
 }
 
-// ── Noticias ─────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+//  NOTICIAS
+// ══════════════════════════════════════════════════════════════
 async function cargarNoticias() {
   const cont = document.getElementById('noticias-content');
   cont.innerHTML = '<div class="loading-state"><div class="spinner"></div><span>Cargando noticias...</span></div>';
@@ -294,11 +813,13 @@ async function cargarNoticias() {
       return '<div class="noticia-card">' + video + '<span class="noticia-categoria ' + catClass + '">' + (n.categoria||'General') + '</span><div class="noticia-titulo">' + n.titulo + '</div><div class="noticia-resumen">' + (n.resumen||'') + '</div><div class="noticia-meta"><span>📅 ' + fecha_n + '</span>' + (n.url ? '<a class="noticia-link" href="' + n.url + '" target="_blank">Ver fuente →</a>' : '') + '</div></div>';
     }).join('') + '</div>';
   } catch(e) {
-    cont.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Error al cargar</h3><p>Intenta recargar la página.</p></div>';
+    cont.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Error al cargar</h3></div>';
   }
 }
 
-// ── Videos ───────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+//  VIDEOS
+// ══════════════════════════════════════════════════════════════
 async function cargarVideos() {
   const cont = document.getElementById('videos-content');
   try {
@@ -307,7 +828,7 @@ async function cargarVideos() {
     const noticias = await res.json();
     const videos = noticias.filter(function(n){ return n.video_url; });
     if (!videos.length) {
-      cont.innerHTML = '<div class="empty-state"><div class="icon">🎥</div><h3>Sin videos por ahora</h3><p>Próximamente agregaremos videos de capacitación.</p></div>';
+      cont.innerHTML = '<div class="empty-state"><div class="icon">🎥</div><h3>Sin videos por ahora</h3></div>';
       return;
     }
     cont.innerHTML = '<div class="noticias-grid">' + videos.map(function(n){
@@ -318,14 +839,16 @@ async function cargarVideos() {
   }
 }
 
-// ── Chat Agente ──────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+//  AGENTE IA
+// ══════════════════════════════════════════════════════════════
 var historial = [];
 var consultasUsadas = 0;
 var limite = 100;
 var enviando = false;
 var sesionActual = 'sesion_' + Date.now();
+var docAdjunto = null;
 
-// Nueva conversación — resetea el chat y genera nueva sesión
 function nuevaConversacion() {
   sesionActual = 'sesion_' + Date.now();
   historial = [];
@@ -336,12 +859,9 @@ function nuevaConversacion() {
   document.getElementById('chat-input').value = '';
   document.getElementById('chat-titulo').textContent = 'NormaAI — Agente Legal';
   const messagesEl = document.getElementById('messages');
-  messagesEl.innerHTML = '<div class="msg agente"><div class="msg-avatar">⚖</div><div class="msg-bubble">Hola, soy <strong>NormaAI</strong>, tu agente especializado en normativa legal chilena. Estoy conectado a la Biblioteca del Congreso Nacional para darte información actualizada.<br><br>¿En qué área normativa puedo ayudarte hoy? Por ejemplo: seguridad laboral, medio ambiente, protección de datos, ISO, entre otras.</div></div>';
+  messagesEl.innerHTML = '<div class="msg agente"><div class="msg-avatar">⚖</div><div class="msg-bubble" id="msg-bienvenida">Hola, soy <strong>NormaAI</strong>, tu agente especializado en normativa legal chilena. ¿En qué área normativa puedo ayudarte hoy?</div></div>';
   document.getElementById('chat-input').focus();
 }
-
-// Documento adjunto en el agente
-var docAdjunto = null; // { nombre, base64, tipo }
 
 async function adjuntarDocumentoAgente(input) {
   const file = input.files[0];
@@ -349,30 +869,22 @@ async function adjuntarDocumentoAgente(input) {
   const ext = file.name.split('.').pop().toLowerCase();
   if (['xlsx','xls','csv'].includes(ext)) {
     alert('Los archivos Excel no están disponibles aquí. Usa "Revisar tu Matriz" para evaluación de cumplimiento.');
-    input.value = '';
-    return;
+    input.value = ''; return;
   }
-  if (file.size > 5 * 1024 * 1024) {
-    alert('El archivo supera los 5MB permitidos.');
-    input.value = '';
-    return;
-  }
+  if (file.size > 5 * 1024 * 1024) { alert('El archivo supera los 5MB permitidos.'); input.value = ''; return; }
   try {
-    const base64 = await new Promise((res, rej) => {
+    const base64 = await new Promise(function(res, rej) {
       const r = new FileReader();
-      r.onload = () => res(r.result.split(',')[1]);
-      r.onerror = () => rej(new Error('Error al leer archivo'));
+      r.onload = function() { res(r.result.split(',')[1]); };
+      r.onerror = function() { rej(new Error('Error al leer archivo')); };
       r.readAsDataURL(file);
     });
     docAdjunto = { nombre: file.name, base64: base64, tipo: file.type || 'application/octet-stream' };
-    const preview = document.getElementById('doc-adjunto-preview');
     document.getElementById('doc-adjunto-nombre').textContent = file.name;
-    preview.style.display = 'flex';
+    document.getElementById('doc-adjunto-preview').style.display = 'flex';
     document.getElementById('chat-input').placeholder = 'Pregunta sobre el documento o escribe tu consulta...';
     document.getElementById('chat-input').focus();
-  } catch(e) {
-    alert('Error al cargar el archivo: ' + e.message);
-  }
+  } catch(e) { alert('Error al cargar el archivo: ' + e.message); }
   input.value = '';
 }
 
@@ -398,29 +910,17 @@ async function enviarMensaje() {
   enviando = true;
   document.getElementById('btn-send').disabled = true;
 
-  // Mostrar mensaje del usuario (con indicador de doc si aplica)
-  const msgDisplay = docAdjunto ? `📄 <em style="font-size:.8rem;color:#93c5fd;">${docAdjunto.nombre}</em><br>${msgTexto}` : msgTexto;
+  const msgDisplay = docAdjunto ? '📄 <em style="font-size:.8rem;color:#93c5fd;">' + docAdjunto.nombre + '</em><br>' + msgTexto : msgTexto;
   agregarMensaje('user', msgDisplay);
   historial.push({ rol: 'user', contenido: msgTexto });
 
-  // Guardar y limpiar doc adjunto antes del fetch
   const docParaEnviar = docAdjunto ? { ...docAdjunto } : null;
   if (docAdjunto) quitarDocumentoAdjunto();
 
   const typingId = mostrarTyping();
   try {
-    const body = {
-      mensaje: msgTexto,
-      historial: historial.slice(-8),
-      sesion_id: sesionActual
-    };
-    if (docParaEnviar) {
-      body.documento = {
-        nombre: docParaEnviar.nombre,
-        base64: docParaEnviar.base64,
-        tipo: docParaEnviar.tipo
-      };
-    }
+    const body = { mensaje: msgTexto, historial: historial.slice(-8), sesion_id: sesionActual };
+    if (docParaEnviar) body.documento = { nombre: docParaEnviar.nombre, base64: docParaEnviar.base64, tipo: docParaEnviar.tipo };
     const res = await fetch('/api/agente', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
@@ -445,10 +945,8 @@ async function enviarMensaje() {
 }
 
 function formatearTexto(txt) {
-  if (typeof marked !== "undefined") return marked.parse(txt);
-  return txt
-    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n/g, '<br>');
+  if (typeof marked !== 'undefined') return marked.parse(txt);
+  return txt.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
 }
 
 function agregarMensaje(rol, texto) {
@@ -477,7 +975,9 @@ function quitarTyping(id) {
   if (el) el.remove();
 }
 
-// ── Historial ─────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+//  HISTORIAL
+// ══════════════════════════════════════════════════════════════
 async function cargarHistorial() {
   const cont = document.getElementById('historial-content');
   cont.innerHTML = '<div class="loading-state"><div class="spinner"></div><span>Cargando historial...</span></div>';
@@ -525,98 +1025,39 @@ async function cargarSesion(sesionId) {
   }
 }
 
-// Retomar una conversación anterior en el agente
 async function retomarConversacion(sesionId, btn) {
-  btn.disabled = true;
-  btn.textContent = '⏳ Cargando...';
+  btn.disabled = true; btn.textContent = '⏳ Cargando...';
   try {
     const res = await fetch('/api/historial/sesion/' + sesionId, { headers: { Authorization: 'Bearer ' + token } });
     const msgs = await res.json();
     if (!msgs.length) return;
-
-    // Cambiar al agente
     const navBtn = document.querySelector('.nav-item[onclick*="agente"]');
     mostrarVista('agente', navBtn);
-
-    // Limpiar chat actual
     const messagesEl = document.getElementById('messages');
     messagesEl.innerHTML = '';
-
-    // Restaurar historial en memoria
     historial = [];
     msgs.forEach(function(m) {
       agregarMensaje(m.rol === 'user' ? 'user' : 'agente', m.contenido);
       historial.push({ rol: m.rol === 'assistant' ? 'assistant' : m.rol, contenido: m.contenido });
     });
-
-    // Retomar la sesión
     sesionActual = sesionId;
     document.getElementById('chat-titulo').textContent = 'NormaAI — Conversación retomada';
-    setTimeout(() => {
-      document.getElementById('chat-titulo').textContent = 'NormaAI — Agente Legal';
-    }, 3000);
-
-    // Scroll al final
+    setTimeout(function() { document.getElementById('chat-titulo').textContent = 'NormaAI — Agente Legal'; }, 3000);
     messagesEl.scrollTop = messagesEl.scrollHeight;
     document.getElementById('chat-input').focus();
   } catch(e) {
     alert('Error al retomar conversación');
-    btn.disabled = false;
-    btn.textContent = '↩ Continuar esta conversación';
+    btn.disabled = false; btn.textContent = '↩ Continuar esta conversación';
   }
 }
 
-// ── Documentos ───────────────────────────────────────────────
-async function procesarArchivo(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const ext = file.name.split('.').pop().toLowerCase();
-  const resultado = document.getElementById('doc-resultado');
-  resultado.style.display = 'block';
-  if (ext === 'xlsx' || ext === 'xls' || ext === 'csv') {
-    resultado.innerHTML = '<div style="color:#fca5a5;background:rgba(220,38,38,0.1);border-radius:8px;padding:1rem;">⚠️ Los archivos Excel y CSV no están disponibles en el agente.<br>La evaluación de cumplimiento de matrices es un servicio separado.<br><strong>Contacta a Procesus: contacto@normaai.cl</strong></div>';
-    return;
-  }
-  resultado.innerHTML = '<div class="loading-state" style="padding:1rem;"><div class="spinner"></div><span style="margin-left:.5rem;">Analizando documento...</span></div>';
-  try {
-    var textoExtraido = '';
-    try { textoExtraido = await file.text(); } catch(e) { textoExtraido = 'Documento: ' + file.name; }
-    const res = await fetch('/api/analizar-documento', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-      body: JSON.stringify({ nombre: file.name, contenido_texto: textoExtraido, sesion_id: 'doc_' + Date.now() })
-    });
-    const data = await res.json();
-    if (!res.ok) { resultado.innerHTML = '<div style="color:#fca5a5;">' + data.error + '</div>'; return; }
-    resultado.innerHTML = '<div style="border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:.7rem;margin-bottom:.8rem;font-size:.8rem;color:#8a96a8;">📄 Análisis de: <strong style="color:#e2e8f0;">' + file.name + '</strong></div>' +
-      formatearTexto(data.respuesta) +
-      '<div style="margin-top:1rem;padding-top:.7rem;border-top:1px solid rgba(255,255,255,0.06);font-size:.75rem;color:#4a5568;font-style:italic;">Esta revisión es orientativa y no reemplaza la evaluación formal de cumplimiento.</div>';
-  } catch(e) {
-    resultado.innerHTML = '<div style="color:#fca5a5;">Error al analizar. Intenta nuevamente.</div>';
-  }
-  input.value = '';
-}
-
-// ── Logout ───────────────────────────────────────────────────
-async function hacerLogout() {
-  try {
-    await fetch('/api/logout', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
-  } catch(e) {}
-  localStorage.removeItem('normaai_token');
-  localStorage.removeItem('normaai_user');
-  window.location.href = '/login';
-}
-
-// ── Inicio ───────────────────────────────────────────────────
-cargarNoticias(); // Cargar noticias al entrar al dashboard
-
-// ── Matriz Legal ─────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+//  MATRIZ
+// ══════════════════════════════════════════════════════════════
 async function subirMatriz(input) {
   const file = input.files[0];
   if (!file) return;
   const resultado = document.getElementById('resultado-matriz');
-
-  // Validar campos obligatorios
   const empresa = document.getElementById('nombre-empresa-matriz').value.trim();
   const normasIso = document.getElementById('normas-iso-matriz').value.trim();
   const alcance = document.getElementById('alcance-sistema-matriz').value.trim();
@@ -624,8 +1065,7 @@ async function subirMatriz(input) {
 
   if (!empresa || !normasIso || !alcance || !sitios) {
     resultado.innerHTML = '<div style="color:#fcd34d;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.2);border-radius:8px;padding:1rem;font-size:.85rem;">⚠️ Por favor completa todos los campos obligatorios antes de subir tu matriz.</div>';
-    input.value = '';
-    return;
+    input.value = ''; return;
   }
 
   resultado.innerHTML = '<div style="color:#8a96a8;font-size:.85rem;padding:.8rem;background:rgba(255,255,255,0.03);border-radius:8px;">⏳ Subiendo matriz, por favor espera...</div>';
@@ -644,14 +1084,10 @@ async function subirMatriz(input) {
     const data = await res.json();
     if (!res.ok) {
       const esLimite = res.status === 429;
-      resultado.innerHTML = '<div style="color:' + (esLimite ? '#fcd34d' : '#f87171') + ';background:' + (esLimite ? 'rgba(251,191,36,0.1)' : 'rgba(220,38,38,0.1)') + ';border:1px solid ' + (esLimite ? 'rgba(251,191,36,0.3)' : 'rgba(220,38,38,0.3)') + ';border-radius:8px;padding:1rem;">' + (esLimite ? '🔒' : '⚠️') + ' ' + (data.error || 'Error al subir') + '</div>';
+      resultado.innerHTML = '<div style="color:' + (esLimite ? '#fcd34d' : '#f87171') + ';background:' + (esLimite ? 'rgba(251,191,36,0.1)' : 'rgba(220,38,38,0.1)') + ';border-radius:8px;padding:1rem;">' + (esLimite ? '🔒' : '⚠️') + ' ' + (data.error || 'Error al subir') + '</div>';
     } else {
       resultado.innerHTML = '<div style="color:#4ade80;background:rgba(22,163,74,0.1);border-radius:8px;padding:1rem;">✅ ' + data.mensaje + '</div>';
       input.value = '';
-      document.getElementById('nombre-empresa-matriz').value = '';
-      document.getElementById('normas-iso-matriz').value = '';
-      document.getElementById('alcance-sistema-matriz').value = '';
-      document.getElementById('sitios-trabajo-matriz').value = '';
       cargarMisMatrices();
     }
   } catch(e) {
@@ -671,46 +1107,27 @@ async function cargarMisMatrices() {
     }
     const estadoColor = { pendiente:'#c9a84c', en_revision:'#60a5fa', aprobado:'#4ade80', enviado:'#4ade80' };
     const estadoLabel = { pendiente:'⏳ Pendiente revisión', en_revision:'🔍 En revisión', aprobado:'✅ Aprobado', enviado:'✅ Informe disponible' };
-    const listo = m => m.estado === 'enviado' || m.estado === 'aprobado';
-    cont.innerHTML = data.map(m => `
-      <div style="padding:.8rem 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;">
-          <div>
-            <div style="font-size:.88rem;font-weight:600;color:#e2e8f0;">${m.nombre_archivo}</div>
-            <div style="font-size:.75rem;color:#8a96a8;">${m.empresa || ''} · ${new Date(m.created_at).toLocaleDateString('es-CL')}</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
-            <span style="font-size:.75rem;padding:.3rem .8rem;border-radius:20px;background:rgba(255,255,255,0.05);color:${estadoColor[m.estado]||'#8a96a8'};white-space:nowrap;">${estadoLabel[m.estado]||m.estado}</span>
-            ${listo(m) ? `<button onclick="verInformeHTML('${m.id}')" style="font-size:.75rem;padding:.3rem .8rem;border-radius:6px;background:rgba(26,108,248,0.15);color:#60a5fa;border:1px solid rgba(26,108,248,0.3);cursor:pointer;">⬇ Descargar informe</button>` : ''}
-            ${listo(m) ? `<button onclick="descargarPDF('${m.id}')" style="font-size:.75rem;padding:.3rem .8rem;border-radius:6px;background:rgba(22,163,74,0.15);color:#4ade80;border:1px solid rgba(22,163,74,0.3);cursor:pointer;">⬇ PDF</button>` : ''}
-          </div>
-        </div>
-      </div>`).join('');
+    const listo = function(m) { return m.estado === 'enviado' || m.estado === 'aprobado'; };
+    cont.innerHTML = data.map(function(m) {
+      return '<div style="padding:.8rem 0;border-bottom:1px solid rgba(255,255,255,0.05);">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;">' +
+          '<div><div style="font-size:.88rem;font-weight:600;color:#e2e8f0;">' + m.nombre_archivo + '</div>' +
+          '<div style="font-size:.75rem;color:#8a96a8;">' + (m.empresa||'') + ' · ' + new Date(m.created_at).toLocaleDateString('es-CL') + '</div></div>' +
+          '<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">' +
+            '<span style="font-size:.75rem;padding:.3rem .8rem;border-radius:20px;background:rgba(255,255,255,0.05);color:' + (estadoColor[m.estado]||'#8a96a8') + ';white-space:nowrap;">' + (estadoLabel[m.estado]||m.estado) + '</span>' +
+            (listo(m) ? '<button onclick="descargarInformeFinal(\'' + m.id + '\')" style="font-size:.75rem;padding:.3rem .8rem;border-radius:6px;background:rgba(26,108,248,0.15);color:#60a5fa;border:1px solid rgba(26,108,248,0.3);cursor:pointer;">⬇ Descargar informe</button>' : '') +
+          '</div>' +
+        '</div></div>';
+    }).join('');
   } catch(e) {
     cont.innerHTML = '<div style="color:#3d4f6a;font-size:.85rem;">Error al cargar.</div>';
   }
 }
 
-// Ver informe — descarga el Word aprobado
-async function verInformeHTML(id) {
-  await descargarInformeFinal(id);
-}
-
-// Descargar PDF — descarga el Word aprobado
-async function descargarPDF(id) {
-  await descargarInformeFinal(id);
-}
-
 async function descargarInformeFinal(id) {
   try {
-    const res = await fetch('/api/matriz/' + id + '/archivo-final', {
-      headers: { 'Authorization': 'Bearer ' + token }
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      alert(err.error || 'El informe aún no está disponible.');
-      return;
-    }
+    const res = await fetch('/api/matriz/' + id + '/archivo-final', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!res.ok) { const err = await res.json().catch(function(){return{};}); alert(err.error || 'El informe aún no está disponible.'); return; }
     const blob = await res.blob();
     const disposition = res.headers.get('Content-Disposition') || '';
     const nombreMatch = disposition.match(/filename="([^"]+)"/);
@@ -724,63 +1141,21 @@ async function descargarInformeFinal(id) {
   }
 }
 
-async function descargarInforme(id) {
-  try {
-    const res = await fetch('/api/matriz/' + id + '/archivo-final', {
-      headers: { 'Authorization': 'Bearer ' + token }
-    });
-    if (!res.ok) { const err = await res.json(); alert(err.error || 'Error al descargar'); return; }
-    const blob = await res.blob();
-    const disposition = res.headers.get('Content-Disposition') || '';
-    const nombreMatch = disposition.match(/filename="([^"]+)"/);
-    const nombre = nombreMatch ? nombreMatch[1] : 'informe_normaai.docx';
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = nombre; a.click();
-    URL.revokeObjectURL(url);
-  } catch(e) {
-    alert('Error al descargar: ' + e.message);
-  }
+// ══════════════════════════════════════════════════════════════
+//  LOGOUT
+// ══════════════════════════════════════════════════════════════
+async function hacerLogout() {
+  try { await fetch('/api/logout', { method: 'POST', headers: { Authorization: 'Bearer ' + token } }); } catch(e) {}
+  localStorage.removeItem('normaai_token');
+  localStorage.removeItem('normaai_user');
+  window.location.href = '/login';
 }
 
-async function verInforme(id) {
-  try {
-    const res = await fetch('/api/matriz/' + id + '/descargar', { headers: { 'Authorization': 'Bearer ' + token } });
-    const data = await res.json();
-    if (!res.ok) { alert(data.error || 'Error al cargar el informe'); return; }
-
-    const modal = document.createElement('div');
-    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;overflow-y:auto;padding:2rem;box-sizing:border-box;';
-    const fechaEmision = new Date(data.fecha).toLocaleDateString('es-CL', {day:'2-digit',month:'long',year:'numeric'});
-    modal.innerHTML = `
-      <div style="max-width:800px;margin:0 auto;background:#0f1e2e;border-radius:12px;padding:2rem;position:relative;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-          <div>
-            <div style="font-size:.75rem;color:#8a96a8;">INFORME DE CUMPLIMIENTO NORMATIVO</div>
-            <div style="font-size:1.1rem;font-weight:700;color:#e2e8f0;">${data.empresa}</div>
-            <div style="font-size:.8rem;color:#8a96a8;margin-top:.2rem;">Archivo: ${data.nombre_archivo} · Emitido: ${fechaEmision}</div>
-          </div>
-          <div style="display:flex;gap:.6rem;align-items:center;">
-            <button onclick="verInformeHTML('${id}')" style="background:rgba(26,108,248,0.2);color:#60a5fa;border:1px solid rgba(26,108,248,0.3);padding:.5rem 1rem;border-radius:6px;cursor:pointer;font-size:.82rem;">⬇ Descargar informe</button>
-            <button onclick="descargarPDF('${id}')" style="background:rgba(22,163,74,0.2);color:#4ade80;border:1px solid rgba(22,163,74,0.3);padding:.5rem 1rem;border-radius:6px;cursor:pointer;font-size:.82rem;">⬇ Descargar</button>
-            <button onclick="this.closest('div[style*=fixed]').remove()" style="background:rgba(255,255,255,0.1);border:none;color:#fff;padding:.5rem .9rem;border-radius:6px;cursor:pointer;">✕</button>
-          </div>
-        </div>
-        <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:1.5rem;color:#e2e8f0;line-height:1.7;font-size:.88rem;">${typeof marked !== 'undefined' ? marked.parse(data.informe) : data.informe.replace(/\n/g,'<br>')}</div>
-        <div style="margin-top:2rem;padding:1.2rem;background:rgba(22,163,74,0.1);border:1px solid rgba(22,163,74,0.3);border-radius:8px;">
-          <div style="color:#4ade80;font-weight:600;margin-bottom:.5rem;">🏆 Certificado de Revisión — Procesus</div>
-          <div style="color:#86efac;font-size:.82rem;line-height:1.6;">
-            Procesus — NormaAI Legal certifica que la Matriz de Requisitos Legales de <strong>${data.empresa}</strong> 
-            fue revisada el <strong>${fechaEmision}</strong> por consultores especializados en normativa chilena, 
-            contrastada con el Diario Oficial de la República de Chile vigente a la misma fecha.
-          </div>
-        </div>
-      </div>`;
-    document.body.appendChild(modal);
-  } catch(e) {
-    alert('Error al cargar el informe');
-  }
-}
+// ══════════════════════════════════════════════════════════════
+//  INICIO
+// ══════════════════════════════════════════════════════════════
+cargarNoticias();
+verificarOnboarding();
 </script>
 </body>
 </html>
