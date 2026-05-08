@@ -11,7 +11,6 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Rutas explícitas para páginas HTML
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
@@ -27,7 +26,7 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-// ── Multer para subida de archivos ────────────────────────────
+// ── Multer ────────────────────────────────────────────────────
 const storage = multer.memoryStorage();
 const upload = multer({
   storage,
@@ -56,9 +55,7 @@ function crearTransporter() {
 // ══════════════════════════════════════════════════════════════
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email y contraseña requeridos' });
-  }
+  if (!email || !password) return res.status(400).json({ error: 'Email y contraseña requeridos' });
   try {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return res.status(401).json({ error: 'Credenciales incorrectas' });
@@ -80,6 +77,7 @@ app.post('/api/login', async (req, res) => {
         email: data.user.email,
         nombre: cliente.nombre,
         rol: cliente.rol || 'cliente',
+        onboarding_completado: cliente.onboarding_completado || false
       }
     });
   } catch (err) {
@@ -92,9 +90,7 @@ app.post('/api/login', async (req, res) => {
 // ══════════════════════════════════════════════════════════════
 async function verificarToken(req, res, next) {
   const auth = req.headers.authorization;
-  if (!auth || !auth.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'No autorizado' });
-  }
+  if (!auth || !auth.startsWith('Bearer ')) return res.status(401).json({ error: 'No autorizado' });
   const token = auth.split(' ')[1];
   try {
     const { data: { user }, error } = await supabase.auth.getUser(token);
@@ -103,6 +99,117 @@ async function verificarToken(req, res, next) {
     next();
   } catch {
     res.status(401).json({ error: 'Token inválido' });
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  PERFIL — Guardar onboarding del cliente
+// ══════════════════════════════════════════════════════════════
+app.post('/api/perfil/guardar', verificarToken, async (req, res) => {
+  const { empresa, rubro, trabajadores, normas_iso, alcance, sitios } = req.body;
+  if (!empresa || !rubro || !normas_iso || !alcance || !sitios) {
+    return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+  }
+  try {
+    const { error } = await supabase
+      .from('normaai_clientes')
+      .update({
+        empresa,
+        rubro,
+        trabajadores: trabajadores || null,
+        normas_iso,
+        alcance,
+        sitios,
+        onboarding_completado: true,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', req.user.id);
+
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[perfil/guardar]', err.message);
+    res.status(500).json({ error: 'Error al guardar perfil' });
+  }
+});
+
+// ── Obtener perfil del cliente autenticado ────────────────────
+app.get('/api/perfil', verificarToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('normaai_clientes')
+      .select('empresa, rubro, trabajadores, normas_iso, alcance, sitios, onboarding_completado, nombre, email')
+      .eq('user_id', req.user.id)
+      .single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al cargar perfil' });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+//  HELPER — Construir contexto de empresa para el agente
+// ══════════════════════════════════════════════════════════════
+async function obtenerContextoEmpresa(userId) {
+  try {
+    // Opción A: perfil del cliente
+    const { data: cliente } = await supabase
+      .from('normaai_clientes')
+      .select('empresa, rubro, trabajadores, normas_iso, alcance, sitios')
+      .eq('user_id', userId)
+      .single();
+
+    // Opción B: última matriz aprobada/enviada
+    const { data: ultimaMatriz } = await supabase
+      .from('normaai_matrices')
+      .select('empresa, contenido_texto, created_at')
+      .eq('user_id', userId)
+      .in('estado', ['enviado', 'aprobado'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    // Combinar A + B — perfil tiene prioridad, matriz complementa
+    const empresa   = cliente?.empresa   || ultimaMatriz?.empresa || null;
+    const rubro     = cliente?.rubro     || null;
+    const trabajadores = cliente?.trabajadores || null;
+    const normas    = cliente?.normas_iso || null;
+    const alcance   = cliente?.alcance   || null;
+    const sitios    = cliente?.sitios    || null;
+
+    // Extraer datos de la última matriz si el perfil no los tiene
+    let normasMatriz = null, alcanceMatriz = null, sitiosMatriz = null;
+    if (ultimaMatriz?.contenido_texto) {
+      const txt = ultimaMatriz.contenido_texto;
+      const matchNormas  = txt.match(/Normas ISO:\s*(.+)/i);
+      const matchAlcance = txt.match(/Alcance del sistema:\s*(.+)/i);
+      const matchSitios  = txt.match(/Sitios \/ Lugares de trabajo:\s*(.+)/i);
+      if (matchNormas)  normasMatriz  = matchNormas[1].trim();
+      if (matchAlcance) alcanceMatriz = matchAlcance[1].trim();
+      if (matchSitios)  sitiosMatriz  = matchSitios[1].trim();
+    }
+
+    const normasFinal  = normas   || normasMatriz  || 'No especificadas';
+    const alcanceFinal = alcance  || alcanceMatriz || 'No especificado';
+    const sitiosFinal  = sitios   || sitiosMatriz  || 'No especificados';
+
+    if (!empresa) return null;
+
+    let contexto = `
+CONTEXTO DE LA EMPRESA (OBLIGATORIO — usa siempre este contexto para contextualizar tus respuestas):
+- Empresa: ${empresa}`;
+    if (rubro)        contexto += `\n- Rubro / Actividad económica: ${rubro}`;
+    if (trabajadores) contexto += `\n- Número de trabajadores: ${trabajadores}`;
+    contexto += `\n- Normas ISO: ${normasFinal}`;
+    contexto += `\n- Alcance del sistema de gestión: ${alcanceFinal}`;
+    contexto += `\n- Sitios / Lugares de trabajo: ${sitiosFinal}`;
+    if (ultimaMatriz) contexto += `\n- Última matriz revisada: ${new Date(ultimaMatriz.created_at).toLocaleDateString('es-CL')}`;
+
+    return contexto;
+  } catch (e) {
+    console.error('[contextoEmpresa]', e.message);
+    return null;
   }
 }
 
@@ -125,7 +232,7 @@ app.get('/api/noticias', verificarToken, async (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════════
-//  AGENTE IA
+//  AGENTE IA — Con contexto de empresa
 // ══════════════════════════════════════════════════════════════
 app.post('/api/agente', verificarToken, async (req, res) => {
   const { mensaje, historial = [], documento } = req.body;
@@ -149,6 +256,10 @@ app.post('/api/agente', verificarToken, async (req, res) => {
   }
 
   try {
+    // ── Obtener contexto de la empresa ───────────────────────
+    const contextoEmpresa = await obtenerContextoEmpresa(req.user.id);
+
+    // ── RAG: base de conocimiento por norma detectada ────────
     let contexto_bcn = 'Biblioteca del Congreso Nacional de Chile: bcn.cl/leychile';
     let contexto_kb = '';
     try {
@@ -180,7 +291,7 @@ app.post('/api/agente', verificarToken, async (req, res) => {
       console.error('Error KB:', e);
     }
 
-    // Construir contenido del mensaje del usuario (con o sin documento adjunto)
+    // ── Construir contenido del mensaje del usuario ──────────
     let contenidoUsuario;
     if (documento && documento.base64 && documento.nombre) {
       const ext = documento.nombre.split('.').pop().toLowerCase();
@@ -190,11 +301,8 @@ app.post('/api/agente', verificarToken, async (req, res) => {
           { type: 'text', text: mensaje || 'Por favor revisa este documento desde el punto de vista de la normativa legal chilena aplicable.' }
         ];
       } else {
-        // DOCX u otros: enviar como texto indicando el nombre
         contenidoUsuario = [
-          { type: 'text', text: `[Documento adjunto: ${documento.nombre}]
-
-${mensaje || 'Por favor revisa este documento desde el punto de vista de la normativa legal chilena aplicable.'}` }
+          { type: 'text', text: `[Documento adjunto: ${documento.nombre}]\n\n${mensaje || 'Por favor revisa este documento desde el punto de vista de la normativa legal chilena aplicable.'}` }
         ];
       }
     } else {
@@ -202,34 +310,43 @@ ${mensaje || 'Por favor revisa este documento desde el punto de vista de la norm
     }
 
     const mensajes = [
-      ...historial.slice(-6).map(m => ({
-        role: m.rol,
-        content: m.contenido
-      })),
+      ...historial.slice(-6).map(m => ({ role: m.rol, content: m.contenido })),
       { role: 'user', content: contenidoUsuario }
     ];
 
-    const respuesta = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1500,
-      system: `Eres NormaAI, un agente legal especializado en normativa chilena vigente.
+    // ── System prompt con contexto de empresa ────────────────
+    const systemPrompt = `Eres NormaAI, un agente legal especializado en normativa chilena vigente.
 Apoyas a empresas con sistemas de gestión ISO (9001, 14001, 45001, 27001, 37001, 37301 y otras) a entender y cumplir sus requisitos legales en Chile.
+${contextoEmpresa ? `
+${contextoEmpresa}
 
+INSTRUCCIÓN CRÍTICA DE CONTEXTO: Todas tus respuestas deben estar enfocadas en la realidad específica de esta empresa. Cuando respondas:
+- Menciona explícitamente cómo aplica la normativa a su rubro y actividad
+- Considera el tamaño de la empresa (número de trabajadores) para determinar obligaciones específicas
+- Referencia los sitios de trabajo cuando la normativa tenga implicaciones regionales o por tipo de faena
+- Relaciona siempre con las normas ISO que tienen implementadas o en proceso
+- Habla de "su empresa" o "su organización", no de forma genérica
+` : ''}
 ROL Y LÍMITES — MUY IMPORTANTE:
 - Eres un ASESOR LEGAL, no un consultor de implementación ISO
 - NUNCA ofrezcas ni menciones: capacitaciones, auditorías, implementación de normas, planes de acción, consultorías o servicios de Procesus
 - NUNCA generes informes formales, certificados ni documentos con sello
-- Tu función es EXCLUSIVAMENTE orientar en la normativa legal chilena aplicable: qué leyes aplican, qué exigen, cómo se interpretan
+- Tu función es EXCLUSIVAMENTE orientar en la normativa legal chilena aplicable
 
 INSTRUCCIONES:
 - Responde SIEMPRE en español
 - Cita leyes y reglamentos chilenos específicos con su número (Ej: Ley N°16.744, DS N°594, Ley N°21.719)
 - Señala artículos específicos cuando sea relevante
-- Si recibes un documento adjunto, analiza su contenido desde el punto de vista legal: identifica qué normativa aplica, qué cumple y qué podría mejorar desde la perspectiva legal
+- Si recibes un documento adjunto, analiza su contenido desde el punto de vista legal
 - Agrega siempre al final de análisis de documentos: "Esta revisión es orientativa y no reemplaza la evaluación formal de cumplimiento legal."
 - Si no tienes certeza de algo, indícalo y sugiere consultar bcn.cl/leychile
 - Mantén un tono profesional y directo
-- Fuente de normativa: ${contexto_bcn}${contexto_kb}`,
+- Fuente de normativa: ${contexto_bcn}${contexto_kb}`;
+
+    const respuesta = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1500,
+      system: systemPrompt,
       messages: mensajes,
     });
 
@@ -328,12 +445,8 @@ app.get('/api/historial/sesion/:sesion_id', verificarToken, async (req, res) => 
 });
 
 // ══════════════════════════════════════════════════════════════
+//  MATRIZ
 // ══════════════════════════════════════════════════════════════
-//  MATRIZ — Subir y analizar matriz legal del cliente
-// ══════════════════════════════════════════════════════════════
-
-
-// ── Leer Excel ───────────────────────────────────────────────
 function leerExcel(buffer) {
   const XLSX = require('xlsx');
   const wb = XLSX.read(buffer, { type: 'buffer' });
@@ -356,7 +469,6 @@ function leerExcel(buffer) {
   }).filter(h => h.articulos.length > 0);
 }
 
-// ── Generador de informe HTML ─────────────────────────────────
 function generarInformeHTML({ datosExcel, totalCuerpos, totalRequisitos, cumplen, noCumplen, parcial, pctCumplimiento, empresa, normas_iso, alcance_sistema, sitios_trabajo, fechaHoy }) {
   const pct = parseFloat(pctCumplimiento);
   const nivel = pct >= 80 ? 'ALTO' : pct >= 50 ? 'MEDIO' : 'BAJO';
@@ -401,7 +513,6 @@ function generarInformeHTML({ datosExcel, totalCuerpos, totalRequisitos, cumplen
           ? '<span style="background:#fef9c3;color:#a16207;padding:.1rem .4rem;border-radius:3px;font-size:.68rem;font-weight:700;">RIESGO MEDIO</span>'
           : '';
       const respHtml = r.responsable ? '<span style="font-size:.68rem;color:#6b7280;margin-left:auto;">👤 ' + r.responsable + '</span>' : '';
-
       return '<div style="background:#fafafa;border-radius:6px;padding:.7rem .9rem;border-left:3px solid ' + estColor + ';margin-bottom:.5rem;">' +
         '<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.35rem;">' +
           '<span style="font-weight:700;font-size:.82rem;color:' + estColor + ';">Art. ' + (r.art || 'N/A') + '</span>' +
@@ -416,10 +527,7 @@ function generarInformeHTML({ datosExcel, totalCuerpos, totalRequisitos, cumplen
 
     return '<div style="margin-bottom:1.3rem;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;page-break-inside:avoid;">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:.7rem 1rem;flex-wrap:wrap;gap:.4rem;background:' + bg + ';border-left:4px solid ' + c + ';">' +
-        '<div>' +
-          '<div style="font-weight:700;font-size:.9rem;font-family:Arial,sans-serif;color:' + c + ';">' + sem + ' ' + hoja.cuerpoLegal + '</div>' +
-          '<div style="font-size:.72rem;color:#6b7280;margin-top:.1rem;">' + reqs.length + ' requisitos</div>' +
-        '</div>' +
+        '<div><div style="font-weight:700;font-size:.9rem;font-family:Arial,sans-serif;color:' + c + ';">' + sem + ' ' + hoja.cuerpoLegal + '</div><div style="font-size:.72rem;color:#6b7280;margin-top:.1rem;">' + reqs.length + ' requisitos</div></div>' +
         '<div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;">' +
           '<span style="background:#dcfce7;color:#15803d;padding:.18rem .5rem;border-radius:4px;font-size:.68rem;font-weight:600;">✓ ' + leyC + '</span>' +
           '<span style="background:#fee2e2;color:#b91c1c;padding:.18rem .5rem;border-radius:4px;font-size:.68rem;font-weight:600;">✗ ' + leyNC + '</span>' +
@@ -444,24 +552,9 @@ function generarInformeHTML({ datosExcel, totalCuerpos, totalRequisitos, cumplen
     '</div>';
   }).join('');
 
-  return '<!DOCTYPE html>\n<html lang="es">\n<head>\n' +
-    '<meta charset="UTF-8">\n' +
-    '<meta name="viewport" content="width=device-width,initial-scale=1.0">\n' +
-    '<title>Informe Cumplimiento — ' + empresa + '</title>\n' +
-    '<style>\n' +
-    '*{box-sizing:border-box;margin:0;padding:0;}\n' +
-    'body{font-family:Arial,Helvetica,sans-serif;font-size:10pt;color:#1f2937;background:#fff;line-height:1.6;}\n' +
-    '.page{max-width:900px;margin:0 auto;padding:1.5cm;}\n' +
-    '@media print{.portada{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.kpi{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}\n' +
-    '@page{margin:1.2cm 1.5cm;size:A4;}\n' +
-    '</style>\n</head>\n<body>\n<div class="page">\n\n' +
-
-    // PORTADA
+  return '<!DOCTYPE html>\n<html lang="es">\n<head>\n<meta charset="UTF-8">\n<title>Informe Cumplimiento — ' + empresa + '</title>\n<style>\n*{box-sizing:border-box;margin:0;padding:0;}\nbody{font-family:Arial,Helvetica,sans-serif;font-size:10pt;color:#1f2937;background:#fff;line-height:1.6;}\n.page{max-width:900px;margin:0 auto;padding:1.5cm;}\n@media print{.portada{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}\n@page{margin:1.2cm 1.5cm;size:A4;}\n</style>\n</head>\n<body>\n<div class="page">\n\n' +
     '<div style="background:#0d2144;color:white;border-radius:10px;padding:2.5rem;margin-bottom:2rem;">' +
-      '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:1.8rem;">' +
-        '<div style="width:38px;height:38px;background:#1a6cf8;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">⚖</div>' +
-        '<div><div style="font-weight:700;font-size:1.1rem;">NormaAI Legal</div><div style="font-size:.62rem;color:#c9a84c;text-transform:uppercase;letter-spacing:.1em;">by Procesus</div></div>' +
-      '</div>' +
+      '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:1.8rem;"><div style="width:38px;height:38px;background:#1a6cf8;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">⚖</div><div><div style="font-weight:700;font-size:1.1rem;">NormaAI Legal</div><div style="font-size:.62rem;color:#c9a84c;text-transform:uppercase;letter-spacing:.1em;">by Procesus</div></div></div>' +
       '<h1 style="font-size:1.8rem;font-weight:700;line-height:1.2;margin-bottom:.5rem;">Informe de Cumplimiento<br><span style="color:#c9a84c;">Normativo</span></h1>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem 1.5rem;margin-top:1.5rem;font-size:.82rem;">' +
         '<div><div style="color:#8a96a8;font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;">Empresa</div><div style="color:#e2e8f0;margin-top:.1rem;">' + empresa + '</div></div>' +
@@ -473,46 +566,18 @@ function generarInformeHTML({ datosExcel, totalCuerpos, totalRequisitos, cumplen
       '</div>' +
       '<div style="display:inline-block;margin-top:1.2rem;border:1px solid rgba(201,168,76,0.5);color:#c9a84c;padding:.25rem .7rem;border-radius:4px;font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;">🔒 Confidencial · NormaAI Legal · Procesus</div>' +
     '</div>' +
-
-    // KPIs
     '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.7rem;margin-bottom:1.5rem;">' + kpisHTML + '</div>' +
-
-    // GAUGE
     '<div style="display:flex;align-items:center;gap:1.5rem;background:' + nivelBg + ';border:1px solid ' + nivelColor + '40;border-radius:8px;padding:1.2rem 1.5rem;margin-bottom:1.5rem;flex-wrap:wrap;">' +
-      '<svg width="110" height="110" viewBox="0 0 110 110">' +
-        '<circle cx="55" cy="55" r="48" fill="none" stroke="#e5e7eb" stroke-width="9"/>' +
-        '<circle cx="55" cy="55" r="48" fill="none" stroke="' + nivelColor + '" stroke-width="9" stroke-dasharray="' + circum + '" stroke-dashoffset="' + offset + '" stroke-linecap="round" transform="rotate(-90 55 55)"/>' +
-        '<text x="55" y="51" text-anchor="middle" font-size="18" font-weight="700" fill="' + nivelColor + '" font-family="Arial">' + pctCumplimiento + '%</text>' +
-        '<text x="55" y="65" text-anchor="middle" font-size="7.5" fill="#6b7280" font-family="Arial">cumplimiento</text>' +
-      '</svg>' +
-      '<div style="flex:1;min-width:200px;">' +
-        '<div style="font-size:1.2rem;font-weight:700;color:' + nivelColor + ';margin-bottom:.3rem;">Nivel ' + nivel + '</div>' +
-        '<p style="font-size:.85rem;color:#374151;line-height:1.6;">' + resumenTxt + '</p>' +
-      '</div>' +
+      '<svg width="110" height="110" viewBox="0 0 110 110"><circle cx="55" cy="55" r="48" fill="none" stroke="#e5e7eb" stroke-width="9"/><circle cx="55" cy="55" r="48" fill="none" stroke="' + nivelColor + '" stroke-width="9" stroke-dasharray="' + circum + '" stroke-dashoffset="' + offset + '" stroke-linecap="round" transform="rotate(-90 55 55)"/><text x="55" y="51" text-anchor="middle" font-size="18" font-weight="700" fill="' + nivelColor + '" font-family="Arial">' + pctCumplimiento + '%</text><text x="55" y="65" text-anchor="middle" font-size="7.5" fill="#6b7280" font-family="Arial">cumplimiento</text></svg>' +
+      '<div style="flex:1;min-width:200px;"><div style="font-size:1.2rem;font-weight:700;color:' + nivelColor + ';margin-bottom:.3rem;">Nivel ' + nivel + '</div><p style="font-size:.85rem;color:#374151;line-height:1.6;">' + resumenTxt + '</p></div>' +
     '</div>' +
-
-    // RESUMEN
     '<div style="font-size:.95rem;font-weight:700;color:#0d2144;border-bottom:2px solid #1a6cf8;padding-bottom:.35rem;margin:1.8rem 0 1rem;">1. Resumen Ejecutivo</div>' +
-    '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1rem 1.2rem;font-size:.87rem;line-height:1.7;margin-bottom:1.5rem;">' +
-      '<p>' + resumenTxt + '</p>' +
-      '<p style="font-weight:700;margin-top:.7rem;font-size:.82rem;">Recomendaciones generales:</p>' +
-      '<ul style="padding-left:1.2rem;margin-top:.5rem;">' + recHTML + '</ul>' +
-    '</div>' +
-
-    // DETALLE
+    '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1rem 1.2rem;font-size:.87rem;line-height:1.7;margin-bottom:1.5rem;"><p>' + resumenTxt + '</p><p style="font-weight:700;margin-top:.7rem;font-size:.82rem;">Recomendaciones generales:</p><ul style="padding-left:1.2rem;margin-top:.5rem;">' + recHTML + '</ul></div>' +
     '<div style="font-size:.95rem;font-weight:700;color:#0d2144;border-bottom:2px solid #1a6cf8;padding-bottom:.35rem;margin:1.8rem 0 1rem;">2. Análisis Detallado por Cuerpo Legal</div>' +
     seccionesLeyes +
-
-    // PIE
-    '<div style="margin-top:2rem;padding-top:1rem;border-top:1px solid #e5e7eb;text-align:center;font-size:.68rem;color:#9ca3af;">' +
-      'Informe generado por <strong>NormaAI Legal · Procesus</strong> · ' + fechaHoy + ' · Confidencial<br>' +
-      'Este documento es de carácter orientativo. Para validación oficial contacte a Procesus.' +
-    '</div>' +
-
+    '<div style="margin-top:2rem;padding-top:1rem;border-top:1px solid #e5e7eb;text-align:center;font-size:.68rem;color:#9ca3af;">Informe generado por <strong>NormaAI Legal · Procesus</strong> · ' + fechaHoy + ' · Confidencial<br>Este documento es de carácter orientativo. Para validación oficial contacte a Procesus.</div>' +
     '\n</div>\n</body>\n</html>';
 }
-
-
 
 // ── Cliente: Subir matriz ─────────────────────────────────────
 app.post('/api/matriz/subir', verificarToken, upload.single('archivo'), async (req, res) => {
@@ -532,7 +597,6 @@ app.post('/api/matriz/subir', verificarToken, upload.single('archivo'), async (r
 
     const empresa = nombre_empresa || cliente?.empresa || 'Sin nombre';
 
-    // Verificar límite de matrices anuales
     const matricesPermitidas = cliente?.matrices_permitidas ?? 2;
     const anioActual = new Date().getFullYear();
     const inicioAnio = new Date(anioActual, 0, 1).toISOString();
@@ -547,13 +611,15 @@ app.post('/api/matriz/subir', verificarToken, upload.single('archivo'), async (r
         error: `Has alcanzado el límite de ${matricesPermitidas} matrices anuales incluidas en tu plan. Para aumentar tu cuota contacta a contacto@normaai.cl`
       });
     }
+
     const contextoEmpresa = `
 DATOS DE LA EMPRESA:
 - Empresa: ${empresa}
-- Normas ISO: ${normas_iso || 'No especificadas'}
-- Alcance del sistema: ${alcance_sistema || 'No especificado'}
-- Sitios / Lugares de trabajo: ${sitios_trabajo || 'No especificados'}
-`
+- Normas ISO: ${normas_iso || cliente?.normas_iso || 'No especificadas'}
+- Alcance del sistema: ${alcance_sistema || cliente?.alcance || 'No especificado'}
+- Sitios / Lugares de trabajo: ${sitios_trabajo || cliente?.sitios || 'No especificados'}
+${cliente?.rubro ? `- Rubro: ${cliente.rubro}` : ''}
+${cliente?.trabajadores ? `- Trabajadores: ${cliente.trabajadores}` : ''}`;
 
     let informeIA = '';
     try {
@@ -572,25 +638,18 @@ DATOS DE LA EMPRESA:
         const parcial = Math.max(0, totalRequisitos - cumplen - noCumplen);
         const pctCumplimiento = totalRequisitos > 0 ? ((cumplen / totalRequisitos) * 100).toFixed(1) : '0.0';
 
-        // Construir contenido completo artículo por artículo
         const contenidoCompleto = datosExcel.map(hoja => {
           const leyC = hoja.articulos.filter(a => ['SI','SÍ','X','TRUE'].includes(a.cumple.toUpperCase())).length;
           const leyNC = hoja.articulos.filter(a => ['NO','FALSE'].includes(a.cumple.toUpperCase())).length;
           const leySD = hoja.articulos.length - leyC - leyNC;
           const leyPct = hoja.articulos.length > 0 ? ((leyC / hoja.articulos.length) * 100).toFixed(1) : '0.0';
           const estado = leyNC > 0 ? 'NO CUMPLE' : leySD > 0 ? 'PARCIAL' : 'CUMPLE';
-
-          return `=== ${hoja.cuerpoLegal} ===
-Resumen: ${hoja.articulos.length} requisitos | ${leyC} cumplen | ${leyNC} no cumplen | ${leySD} sin verificar | ${leyPct}% | Estado: ${estado}
-
-` + hoja.articulos.map(a => {
-            const cumpleStr = ['SI','SÍ','X','TRUE'].includes(a.cumple.toUpperCase()) ? 'SI' :
-                              ['NO','FALSE'].includes(a.cumple.toUpperCase()) ? 'NO' : 'SIN DATO';
-            const evidencia = a.como && a.como.trim() ? a.como.trim() : 'No especificado — requiere documentar evidencia';
-            return `Artículo ${a.art || 'N/A'} | ${cumpleStr} | Responsable: ${a.responsable || 'No asignado'}
-Requisito: ${a.desc}
-Cómo se cumple / Evidencia: ${evidencia}`;
-          }).join('\n\n');
+          return `=== ${hoja.cuerpoLegal} ===\nResumen: ${hoja.articulos.length} requisitos | ${leyC} cumplen | ${leyNC} no cumplen | ${leySD} sin verificar | ${leyPct}% | Estado: ${estado}\n\n` +
+            hoja.articulos.map(a => {
+              const cumpleStr = ['SI','SÍ','X','TRUE'].includes(a.cumple.toUpperCase()) ? 'SI' : ['NO','FALSE'].includes(a.cumple.toUpperCase()) ? 'NO' : 'SIN DATO';
+              const evidencia = a.como && a.como.trim() ? a.como.trim() : 'No especificado — requiere documentar evidencia';
+              return `Artículo ${a.art || 'N/A'} | ${cumpleStr} | Responsable: ${a.responsable || 'No asignado'}\nRequisito: ${a.desc}\nCómo se cumple / Evidencia: ${evidencia}`;
+            }).join('\n\n');
         }).join('\n\n');
 
         const mensajeIA = await anthropic.messages.create({
@@ -600,11 +659,7 @@ Cómo se cumple / Evidencia: ${evidencia}`;
             role: 'user',
             content: `Eres Cristián Cordero, consultor ISO senior de Procesus. Genera el INFORME DE CUMPLIMIENTO NORMATIVO completo basado en los datos exactos de la matriz. NO inventes información — usa únicamente los datos proporcionados.
 
-DATOS DE LA EMPRESA:
-- Empresa: ${empresa}
-- Normas ISO: ${normas_iso || 'No especificadas'}
-- Alcance: ${alcance_sistema || 'No especificado'}
-- Sitios: ${sitios_trabajo || 'No especificados'}
+${contextoEmpresa}
 - Fecha de emisión: ${fechaHoy}
 - Folio: NormaAI-${Date.now().toString(36).toUpperCase().slice(-8)}
 
@@ -647,16 +702,16 @@ Para cada cuerpo legal en la matriz, incluye:
   * Si no cumple o sin dato: OBSERVACIÓN: [recomendación específica de qué hacer]
 
 ## 4. BRECHAS Y RECOMENDACIONES PRIORITARIAS
-Lista las brechas críticas (NO CUMPLE) y sin dato, con recomendación específica de acción correctiva para cada una. Si no hay brechas, confirmar cumplimiento total y dar 4 recomendaciones de mejora continua.
+Lista las brechas críticas (NO CUMPLE) y sin dato, con recomendación específica de acción correctiva para cada una.
 
 ## 5. VALIDEZ PARA AUDITORÍA ISO
 Evalúa si la matriz está lista para una auditoría ISO. Señala ajustes específicos requeridos.
 
 ## CERTIFICADO DE REVISIÓN — PROCESUS
-Procesus — NormaAI Legal certifica que la Matriz de Requisitos Legales de ${empresa} fue revisada el ${fechaHoy} por consultores especializados en normativa chilena, contrastada con el Diario Oficial de la República de Chile vigente a la misma fecha y verificada según los estándares de los sistemas de gestión ISO aplicables.
+Procesus — NormaAI Legal certifica que la Matriz de Requisitos Legales de ${empresa} fue revisada el ${fechaHoy}.
 Folio: NormaAI-${Date.now().toString(36).toUpperCase().slice(-8)} | Válido por 12 meses.
 
-Usa formato Markdown con encabezados ##, tablas y listas. Sé exhaustivo — incluye TODOS los artículos de TODOS los cuerpos legales.`
+Usa formato Markdown con encabezados ##, tablas y listas. Sé exhaustivo.`
           }]
         });
         informeIA = mensajeIA.content[0].text;
@@ -670,69 +725,18 @@ Usa formato Markdown con encabezados ##, tablas y listas. Sé exhaustivo — inc
             role: 'user',
             content: [
               { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: archivoBase64 } },
-              { type: 'text', text: `Eres un analizador experto de matrices de requisitos legales. Analiza el PDF adjunto que contiene una matriz de cumplimiento legal y extrae TODOS los datos para generar un informe HTML completo.
-
-${contextoEmpresa}
-Fecha de revisión: ${fechaHoy}
-
-INSTRUCCIONES CRÍTICAS:
-1. Lee cada fila de la matriz e identifica: cuerpo legal, artículo, descripción del requisito, cómo se cumple/evidencia, estado de cumplimiento (SI/NO/vacío), y responsable.
-2. Agrupa los requisitos por cuerpo legal.
-3. Para cada requisito sin evidencia documentada, márcalo como riesgo medio. Para cada NO cumple, marca como riesgo alto.
-4. Genera el informe ÚNICAMENTE como HTML válido, sin markdown, sin explicaciones adicionales.
-
-El HTML debe seguir EXACTAMENTE esta estructura:
-
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<title>Informe Cumplimiento — EMPRESA</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:Arial,Helvetica,sans-serif;font-size:10pt;color:#1f2937;background:#fff;line-height:1.6;}
-.page{max-width:900px;margin:0 auto;padding:1.5cm;}
-@media print{.portada{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
-@page{margin:1.2cm 1.5cm;size:A4;}
-</style>
-</head>
-<body>
-<div class="page">
-
-[PORTADA con fondo #0d2144, logo NormaAI Legal by Procesus, título "Informe de Cumplimiento Normativo", datos de empresa/normas/alcance/sitios/fecha/nivel]
-
-[5 KPIs en grid: total requisitos, cumplen, brechas, sin verificar, cuerpos legales]
-
-[Gauge SVG circular con % de cumplimiento y nivel ALTO/MEDIO/BAJO]
-
-[Sección "1. Resumen Ejecutivo" con análisis y recomendaciones]
-
-[Sección "2. Análisis Detallado por Cuerpo Legal" — para cada cuerpo legal:
-  - Header con semáforo 🔴🟡🟢, nombre, estadísticas y % 
-  - Para cada artículo: tarjeta con Art.X, badge estado (✓ Cumple / ✗ No cumple / ⚠ Sin verificar), badge riesgo si aplica, descripción del requisito, y evidencia/cómo se cumple]
-
-[Pie de página: "Informe generado por NormaAI Legal · Procesus · [fecha] · Confidencial"]
-
-</div>
-</body>
-</html>
-
-IMPORTANTE: Responde SOLO con el HTML completo. Sin texto antes ni después. Sin bloques de código markdown.` }
+              { type: 'text', text: `Eres un analizador experto de matrices de requisitos legales. Analiza el PDF adjunto y genera un informe HTML completo.\n\n${contextoEmpresa}\nFecha de revisión: ${fechaHoy}\n\nResponde SOLO con HTML válido completo.` }
             ]
           }]
         });
-        // Limpiar posibles bloques markdown que el modelo pueda agregar
         let htmlRaw = mensajeIA.content[0].text.trim();
-        if (htmlRaw.startsWith('\`\`\`')) {
-          htmlRaw = htmlRaw.replace(/^```html?\n?/m, '').replace(/\n?```$/m, '').trim();
-        }
+        if (htmlRaw.startsWith('```')) htmlRaw = htmlRaw.replace(/^```html?\n?/m, '').replace(/\n?```$/m, '').trim();
         informeIA = htmlRaw;
-
       } else {
-        informeIA = `## RECEPCIÓN CONFIRMADA\n\nMatriz recibida el ${fechaHoy}.\n- Archivo: ${archivo.originalname}\n- Empresa: ${empresa}\n\n## PRÓXIMOS PASOS\n\nEl equipo de Procesus analizará el documento y enviará el informe certificado en 24-48 horas hábiles.`;
+        informeIA = `## RECEPCIÓN CONFIRMADA\n\nMatriz recibida el ${fechaHoy}.\n- Archivo: ${archivo.originalname}\n- Empresa: ${empresa}`;
       }
     } catch (e) {
-      console.error('Error IA completo:', e.message, e.stack);
+      console.error('Error IA completo:', e.message);
       informeIA = `Matriz recibida el ${fechaHoy}. El equipo de Procesus realizará el análisis en las próximas 24-48 horas hábiles.`;
     }
 
@@ -754,33 +758,24 @@ IMPORTANTE: Responde SOLO con el HTML completo. Sin texto antes ni después. Sin
 
     if (error) throw error;
 
-    // Notificar a Cristián
     try {
       const transporter = crearTransporter();
       await transporter.sendMail({
         from: `"NormaAI Legal" <${process.env.GMAIL_USER}>`,
         to: process.env.GMAIL_USER,
         subject: `📋 Nueva matriz recibida — ${empresa}`,
-        html: `
-          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-            <div style="background:#0f2a4a;padding:20px;border-radius:8px 8px 0 0;">
-              <h2 style="color:white;margin:0;">NormaAI Legal — Nueva Matriz</h2>
-            </div>
-            <div style="background:#f8fafc;padding:24px;border:1px solid #e2e8f0;">
-              <p><strong>Empresa:</strong> ${empresa}</p>
-              <p><strong>Archivo:</strong> ${archivo.originalname}</p>
-              <p><strong>Normas ISO:</strong> ${normas_iso || 'No especificadas'}</p>
-              <p><strong>Alcance:</strong> ${alcance_sistema || 'No especificado'}</p>
-              <p><strong>Sitios:</strong> ${sitios_trabajo || 'No especificados'}</p>
-              <p><strong>Cliente:</strong> ${req.user.email}</p>
-              <p><strong>Fecha:</strong> ${fechaHoy}</p>
-              <hr style="border:1px solid #e2e8f0;margin:16px 0;">
-              <p style="color:#64748b;font-size:13px;">El análisis IA está listo para tu revisión en el panel admin.</p>
-              <a href="https://legal.normaai.cl/admin" style="background:#1e6fc8;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;margin-top:8px;">
-                Revisar en el Panel Admin →
-              </a>
-            </div>
-          </div>`
+        html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+          <div style="background:#0f2a4a;padding:20px;border-radius:8px 8px 0 0;"><h2 style="color:white;margin:0;">NormaAI Legal — Nueva Matriz</h2></div>
+          <div style="background:#f8fafc;padding:24px;border:1px solid #e2e8f0;">
+            <p><strong>Empresa:</strong> ${empresa}</p>
+            <p><strong>Archivo:</strong> ${archivo.originalname}</p>
+            <p><strong>Normas ISO:</strong> ${normas_iso || cliente?.normas_iso || 'No especificadas'}</p>
+            <p><strong>Rubro:</strong> ${cliente?.rubro || 'No especificado'}</p>
+            <p><strong>Cliente:</strong> ${req.user.email}</p>
+            <p><strong>Fecha:</strong> ${fechaHoy}</p>
+            <a href="https://legal.normaai.cl/admin" style="background:#1e6fc8;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;margin-top:8px;">Revisar en el Panel Admin →</a>
+          </div>
+        </div>`
       });
     } catch (emailErr) {
       console.error('Error email:', emailErr.message);
@@ -798,7 +793,7 @@ IMPORTANTE: Responde SOLO con el HTML completo. Sin texto antes ni después. Sin
   }
 });
 
-// ── Cliente: Ver estado de sus matrices ───────────────────────
+// ── Cliente: Mis matrices ─────────────────────────────────────
 app.get('/api/matriz/mis-matrices', verificarToken, async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -806,7 +801,6 @@ app.get('/api/matriz/mis-matrices', verificarToken, async (req, res) => {
       .select('id, empresa, nombre_archivo, estado, created_at, updated_at')
       .eq('user_id', req.user.id)
       .order('created_at', { ascending: false });
-
     if (error) throw error;
     res.json(data || []);
   } catch (err) {
@@ -814,8 +808,7 @@ app.get('/api/matriz/mis-matrices', verificarToken, async (req, res) => {
   }
 });
 
-// ── Cliente: Descargar informe aprobado ───────────────────────
-// ── Cliente: Ver informe HTML (acepta token por query param para iframe/nueva pestaña)
+// ── Cliente: Ver informe HTML ─────────────────────────────────
 app.get('/api/matriz/:id/informe-html', async (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
   if (!token) return res.status(401).send('<h3>Sin autorización</h3>');
@@ -832,13 +825,9 @@ app.get('/api/matriz/:id/informe-html', async (req, res) => {
       .eq('id', req.params.id)
       .eq('user_id', userId)
       .single();
-
     if (error || !matriz) return res.status(404).send('<h3>Informe no encontrado</h3>');
-    if (matriz.estado !== 'enviado' && matriz.estado !== 'aprobado') {
-      return res.status(400).send('<h3>El informe aún no está disponible</h3>');
-    }
+    if (matriz.estado !== 'enviado' && matriz.estado !== 'aprobado') return res.status(400).send('<h3>El informe aún no está disponible</h3>');
     if (!matriz.informe_ia) return res.status(404).send('<h3>Informe no generado</h3>');
-
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(matriz.informe_ia);
   } catch (err) {
@@ -857,15 +846,9 @@ app.get('/api/admin/matrices/:id/informe-html', async (req, res) => {
     if (!cl || cl.rol !== 'admin') return res.status(403).send('<h3>Acceso denegado</h3>');
   } catch(e) { return res.status(401).send('<h3>Error auth</h3>'); }
   try {
-    const { data: matriz, error } = await supabase
-      .from('normaai_matrices')
-      .select('informe_ia, empresa, id, estado')
-      .eq('id', req.params.id)
-      .single();
-
+    const { data: matriz, error } = await supabase.from('normaai_matrices').select('informe_ia, empresa, id, estado').eq('id', req.params.id).single();
     if (error || !matriz) return res.status(404).json({ error: 'No encontrada' });
     if (!matriz.informe_ia) return res.status(404).json({ error: 'Informe no generado' });
-
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(matriz.informe_ia);
   } catch (err) {
@@ -873,20 +856,12 @@ app.get('/api/admin/matrices/:id/informe-html', async (req, res) => {
   }
 });
 
+// ── Cliente: Descargar informe ────────────────────────────────
 app.get('/api/matriz/:id/descargar', verificarToken, async (req, res) => {
   try {
-    const { data: matriz, error } = await supabase
-      .from('normaai_matrices')
-      .select('*')
-      .eq('id', req.params.id)
-      .eq('user_id', req.user.id)
-      .single();
-
+    const { data: matriz, error } = await supabase.from('normaai_matrices').select('*').eq('id', req.params.id).eq('user_id', req.user.id).single();
     if (error || !matriz) return res.status(404).json({ error: 'Matriz no encontrada' });
-    if (matriz.estado !== 'enviado' && matriz.estado !== 'aprobado') {
-      return res.status(400).json({ error: 'El informe aún no está disponible' });
-    }
-
+    if (matriz.estado !== 'enviado' && matriz.estado !== 'aprobado') return res.status(400).json({ error: 'El informe aún no está disponible' });
     res.json({
       informe: matriz.informe_ia,
       nombre_archivo: matriz.nombre_archivo,
@@ -900,7 +875,7 @@ app.get('/api/matriz/:id/descargar', verificarToken, async (req, res) => {
   }
 });
 
-// ── Cliente: Descargar archivo final del informe ──────────────
+// ── Cliente: Archivo final ────────────────────────────────────
 app.get('/api/matriz/:id/archivo-final', verificarToken, async (req, res) => {
   try {
     const { data: matriz, error } = await supabase
@@ -909,11 +884,8 @@ app.get('/api/matriz/:id/archivo-final', verificarToken, async (req, res) => {
       .eq('id', req.params.id)
       .eq('user_id', req.user.id)
       .single();
-
     if (error || !matriz) return res.status(404).json({ error: 'No encontrada' });
-    if (matriz.estado !== 'enviado' && matriz.estado !== 'aprobado') {
-      return res.status(400).json({ error: 'Informe no disponible aún' });
-    }
+    if (matriz.estado !== 'enviado' && matriz.estado !== 'aprobado') return res.status(400).json({ error: 'Informe no disponible aún' });
 
     let buffer, nombre, tipo;
     if (matriz.informe_final_base64) {
@@ -921,13 +893,11 @@ app.get('/api/matriz/:id/archivo-final', verificarToken, async (req, res) => {
       nombre = matriz.informe_final_nombre || `Informe_${(matriz.empresa||'NormaAI').replace(/[^a-zA-Z0-9]/g,'_')}.docx`;
       tipo = nombre.endsWith('.pdf') ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
     } else {
-      // Generar Word del borrador si no hay archivo final
       const fechaEmision = new Date(matriz.updated_at).toLocaleDateString('es-CL', { day:'2-digit', month:'long', year:'numeric' });
       buffer = await generarWordBuffer(matriz, fechaEmision);
       nombre = `Informe_${(matriz.empresa||'NormaAI').replace(/[^a-zA-Z0-9]/g,'_')}_NormaAI.docx`;
       tipo = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
     }
-
     res.setHeader('Content-Type', tipo);
     res.setHeader('Content-Disposition', `attachment; filename="${nombre}"`);
     res.send(buffer);
@@ -946,42 +916,24 @@ async function verificarAdmin(req, res, next) {
   try {
     const { data: { user }, error } = await supabase.auth.getUser(token);
     if (error || !user) return res.status(401).json({ error: 'Token inválido' });
-    const { data: cliente } = await supabase
-      .from('normaai_clientes')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
+    const { data: cliente } = await supabase.from('normaai_clientes').select('*').eq('user_id', user.id).single();
     if (!cliente || cliente.rol !== 'admin') return res.status(403).json({ error: 'Acceso denegado' });
     req.user = user;
     next();
   } catch { res.status(401).json({ error: 'Token inválido' }); }
 }
 
-// ── Admin: Clientes ──────────────────────────────────────────
-// ── Admin: Crear usuario ─────────────────────────────────────
+// ── Admin: Crear usuario ──────────────────────────────────────
 app.post('/api/admin/clientes/crear', verificarAdmin, async (req, res) => {
   const { nombre, email, password, empresa, rol, fecha_fin } = req.body;
-  if (!nombre || !email || !password) {
-    return res.status(400).json({ error: 'Nombre, email y contraseña son obligatorios' });
-  }
+  if (!nombre || !email || !password) return res.status(400).json({ error: 'Nombre, email y contraseña son obligatorios' });
   try {
-    // 1. Crear usuario en Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true
-    });
-
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({ email, password, email_confirm: true });
     if (authError) {
-      if (authError.message.includes('already registered')) {
-        return res.status(400).json({ error: 'Ya existe un usuario con ese email' });
-      }
+      if (authError.message.includes('already registered')) return res.status(400).json({ error: 'Ya existe un usuario con ese email' });
       return res.status(400).json({ error: 'Error al crear usuario: ' + authError.message });
     }
-
     const userId = authData.user.id;
-
-    // 2. Registrar en normaai_clientes
     const { error: clienteError } = await supabase.from('normaai_clientes').insert({
       user_id: userId,
       nombre,
@@ -989,177 +941,123 @@ app.post('/api/admin/clientes/crear', verificarAdmin, async (req, res) => {
       email,
       rol: rol || 'cliente',
       activo: true,
-      fecha_fin: fecha_fin || null
+      fecha_fin: fecha_fin || null,
+      onboarding_completado: false
     });
-
     if (clienteError) {
-      // Revertir: eliminar el usuario de Auth si falla el insert
       await supabase.auth.admin.deleteUser(userId);
       return res.status(500).json({ error: 'Error al registrar cliente: ' + clienteError.message });
     }
-
-    // 3. Enviar email de bienvenida
     try {
       const transporter = crearTransporter();
       await transporter.sendMail({
         from: `"NormaAI Legal" <${process.env.GMAIL_USER}>`,
         to: email,
         subject: '🎉 Bienvenido a NormaAI Legal — Tus credenciales de acceso',
-        html: `
-          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-            <div style="background:#0f2a4a;padding:24px;border-radius:8px 8px 0 0;text-align:center;">
-              <h1 style="color:white;margin:0;font-size:1.5rem;">⚖ NormaAI Legal</h1>
-              <p style="color:#c9a84c;margin:4px 0 0;font-size:.85rem;">by Procesus</p>
+        html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+          <div style="background:#0f2a4a;padding:24px;border-radius:8px 8px 0 0;text-align:center;"><h1 style="color:white;margin:0;font-size:1.5rem;">⚖ NormaAI Legal</h1><p style="color:#c9a84c;margin:4px 0 0;font-size:.85rem;">by Procesus</p></div>
+          <div style="background:#f8fafc;padding:28px;border:1px solid #e2e8f0;border-radius:0 0 8px 8px;">
+            <h2 style="color:#0f2a4a;margin:0 0 16px;">Hola ${nombre}, bienvenido/a 👋</h2>
+            <p style="color:#475569;">Tu acceso a <strong>NormaAI Legal</strong> ha sido activado. Aquí están tus credenciales:</p>
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:20px 0;">
+              <p style="margin:0 0 8px;"><strong>🌐 Plataforma:</strong> <a href="https://legal.normaai.cl" style="color:#1a6cf8;">legal.normaai.cl</a></p>
+              <p style="margin:0 0 8px;"><strong>📧 Email:</strong> ${email}</p>
+              <p style="margin:0;"><strong>🔑 Contraseña:</strong> ${password}</p>
             </div>
-            <div style="background:#f8fafc;padding:28px;border:1px solid #e2e8f0;border-radius:0 0 8px 8px;">
-              <h2 style="color:#0f2a4a;margin:0 0 16px;">Hola ${nombre}, bienvenido/a 👋</h2>
-              <p style="color:#475569;">Tu acceso a <strong>NormaAI Legal</strong> ha sido activado. Aquí están tus credenciales:</p>
-              <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:20px 0;">
-                <p style="margin:0 0 8px;"><strong>🌐 Plataforma:</strong> <a href="https://legal.normaai.cl" style="color:#1a6cf8;">legal.normaai.cl</a></p>
-                <p style="margin:0 0 8px;"><strong>📧 Email:</strong> ${email}</p>
-                <p style="margin:0;"><strong>🔑 Contraseña:</strong> ${password}</p>
-              </div>
-              <p style="color:#64748b;font-size:.88rem;">Por seguridad, te recomendamos cambiar tu contraseña después del primer acceso.</p>
-              <div style="text-align:center;margin-top:24px;">
-                <a href="https://legal.normaai.cl" style="background:#1a6cf8;color:white;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">
-                  Acceder a NormaAI →
-                </a>
-              </div>
-              <hr style="border:1px solid #e2e8f0;margin:24px 0;">
-              <p style="color:#94a3b8;font-size:.78rem;text-align:center;">NormaAI Legal · by Procesus · contacto@normaai.cl</p>
+            <p style="color:#64748b;font-size:.88rem;">Al ingresar por primera vez te pediremos algunos datos de tu organización para personalizar tu experiencia.</p>
+            <div style="text-align:center;margin-top:24px;">
+              <a href="https://legal.normaai.cl" style="background:#1a6cf8;color:white;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">Acceder a NormaAI →</a>
             </div>
-          </div>`
+            <hr style="border:1px solid #e2e8f0;margin:24px 0;">
+            <p style="color:#94a3b8;font-size:.78rem;text-align:center;">NormaAI Legal · by Procesus · contacto@normaai.cl</p>
+          </div>
+        </div>`
       });
-    } catch (emailErr) {
-      console.error('Error email bienvenida:', emailErr.message);
-      // No falla el proceso si el email falla
-    }
-
+    } catch (emailErr) { console.error('Error email bienvenida:', emailErr.message); }
     res.json({ ok: true, mensaje: `Usuario ${nombre} creado exitosamente. Se envió email de bienvenida a ${email}.`, user_id: userId });
   } catch (err) {
-    console.error('[crear-cliente]', err.message);
     res.status(500).json({ error: 'Error inesperado: ' + err.message });
   }
 });
 
+// ── Admin: Listar clientes ────────────────────────────────────
 app.get('/api/admin/clientes', verificarAdmin, async (req, res) => {
   const { data: clientes } = await supabase.from('normaai_clientes').select('*').order('created_at', { ascending: false });
   if (!clientes) return res.json([]);
-  // Agregar conteo de matrices del año actual por cliente
   const anioActual = new Date().getFullYear();
   const inicioAnio = new Date(anioActual, 0, 1).toISOString();
   const clientesConMatrices = await Promise.all(clientes.map(async (c) => {
-    const { count } = await supabase
-      .from('normaai_matrices')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', c.user_id)
-      .gte('created_at', inicioAnio);
+    const { count } = await supabase.from('normaai_matrices').select('id', { count: 'exact', head: true }).eq('user_id', c.user_id).gte('created_at', inicioAnio);
     return { ...c, matrices_usadas: count || 0, matrices_permitidas: c.matrices_permitidas ?? 2 };
   }));
   res.json(clientesConMatrices);
 });
 
-// ── Admin: Actualizar límite de matrices de un cliente ────────
+// ── Admin: Límite de matrices ─────────────────────────────────
 app.post('/api/admin/clientes/limite', verificarAdmin, async (req, res) => {
   const { user_id, matrices_permitidas } = req.body;
   if (!user_id || matrices_permitidas === undefined) return res.status(400).json({ error: 'Datos incompletos' });
-  const { error } = await supabase.from('normaai_clientes')
-    .update({ matrices_permitidas: parseInt(matrices_permitidas) })
-    .eq('user_id', user_id);
+  const { error } = await supabase.from('normaai_clientes').update({ matrices_permitidas: parseInt(matrices_permitidas) }).eq('user_id', user_id);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
 });
 
+// ── Admin: Toggle cliente ─────────────────────────────────────
 app.post('/api/admin/clientes/toggle', verificarAdmin, async (req, res) => {
   const { id, activo } = req.body;
   await supabase.from('normaai_clientes').update({ activo }).eq('id', id);
   res.json({ ok: true });
 });
 
-// ── Admin: Noticias ──────────────────────────────────────────
+// ── Admin: Noticias ───────────────────────────────────────────
 app.get('/api/admin/noticias', verificarAdmin, async (req, res) => {
   const { data } = await supabase.from('normaai_noticias').select('*').order('created_at', { ascending: false });
   res.json(data || []);
 });
-
 app.post('/api/admin/noticias/crear', verificarAdmin, async (req, res) => {
   const { titulo, resumen, categoria, url, video_url, publicada } = req.body;
   const { error } = await supabase.from('normaai_noticias').insert({ titulo, resumen, categoria, url, video_url, publicada });
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
 });
-
 app.post('/api/admin/noticias/toggle', verificarAdmin, async (req, res) => {
   const { id, publicada } = req.body;
   await supabase.from('normaai_noticias').update({ publicada }).eq('id', id);
   res.json({ ok: true });
 });
-
 app.post('/api/admin/noticias/eliminar', verificarAdmin, async (req, res) => {
   const { id } = req.body;
   await supabase.from('normaai_noticias').delete().eq('id', id);
   res.json({ ok: true });
 });
 
-// ── Admin: Uso agente ────────────────────────────────────────
+// ── Admin: Uso agente ─────────────────────────────────────────
 app.get('/api/admin/uso', verificarAdmin, async (req, res) => {
-  const { data: uso } = await supabase
-    .from('normaai_uso_agente')
-    .select('*')
-    .order('updated_at', { ascending: false });
-
-  const { data: clientes } = await supabase
-    .from('normaai_clientes')
-    .select('user_id, email, nombre');
-
+  const { data: uso } = await supabase.from('normaai_uso_agente').select('*').order('updated_at', { ascending: false });
+  const { data: clientes } = await supabase.from('normaai_clientes').select('user_id, email, nombre');
   const clienteMap = {};
   (clientes || []).forEach(c => { clienteMap[c.user_id] = c.email; });
-
-  const resultado = (uso || []).map(u => ({
-    ...u,
-    email: clienteMap[u.user_id] || u.user_id
-  }));
-
-  res.json(resultado);
+  res.json((uso || []).map(u => ({ ...u, email: clienteMap[u.user_id] || u.user_id })));
 });
 
-// ── Admin: Ver todas las matrices ─────────────────────────────
+// ── Admin: Todas las matrices ─────────────────────────────────
 app.get('/api/admin/matrices', verificarAdmin, async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from('normaai_matrices')
-      .select('*')
-      .order('created_at', { ascending: false });
-
+    const { data, error } = await supabase.from('normaai_matrices').select('*').order('created_at', { ascending: false });
     if (error) throw error;
-
-    const { data: clientes } = await supabase
-      .from('normaai_clientes')
-      .select('user_id, email, nombre');
-
+    const { data: clientes } = await supabase.from('normaai_clientes').select('user_id, email, nombre');
     const clienteMap = {};
     (clientes || []).forEach(c => { clienteMap[c.user_id] = { email: c.email, nombre: c.nombre }; });
-
-    const resultado = (data || []).map(m => ({
-      ...m,
-      cliente_email: clienteMap[m.user_id]?.email || m.user_id,
-      cliente_nombre: clienteMap[m.user_id]?.nombre || 'Sin nombre'
-    }));
-
-    res.json(resultado);
+    res.json((data || []).map(m => ({ ...m, cliente_email: clienteMap[m.user_id]?.email || m.user_id, cliente_nombre: clienteMap[m.user_id]?.nombre || 'Sin nombre' })));
   } catch (err) {
     res.status(500).json({ error: 'Error al cargar matrices' });
   }
 });
 
-// ── Admin: Ver detalle de una matriz ─────────────────────────
+// ── Admin: Detalle de matriz ──────────────────────────────────
 app.get('/api/admin/matrices/:id', verificarAdmin, async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from('normaai_matrices')
-      .select('*')
-      .eq('id', req.params.id)
-      .single();
+    const { data, error } = await supabase.from('normaai_matrices').select('*').eq('id', req.params.id).single();
     if (error || !data) return res.status(404).json({ error: 'No encontrada' });
     res.json(data);
   } catch (err) {
@@ -1167,334 +1065,158 @@ app.get('/api/admin/matrices/:id', verificarAdmin, async (req, res) => {
   }
 });
 
-// ── Generar documento Word del informe ───────────────────────
+// ── Generar Word ──────────────────────────────────────────────
 function generarWordBuffer(matriz, fechaEmision) {
   const lineas = (matriz.informe_ia || '').split('\n');
   const children = [];
-
-  // Portada
-  children.push(new Paragraph({
-    children: [new TextRun({ text: 'PROCESUS — NormaAI Legal', bold: true, size: 32, color: '0f2a4a' })],
-    alignment: AlignmentType.CENTER, spacing: { after: 200 }
-  }));
-  children.push(new Paragraph({
-    children: [new TextRun({ text: 'INFORME DE CUMPLIMIENTO NORMATIVO', bold: true, size: 28, color: '1e6fc8' })],
-    alignment: AlignmentType.CENTER, spacing: { after: 200 }
-  }));
-  children.push(new Paragraph({
-    children: [new TextRun({ text: `Empresa: ${matriz.empresa}`, bold: true, size: 24 })],
-    alignment: AlignmentType.CENTER, spacing: { after: 100 }
-  }));
-  children.push(new Paragraph({
-    children: [new TextRun({ text: `Archivo analizado: ${matriz.nombre_archivo}`, size: 20, color: '64748b' })],
-    alignment: AlignmentType.CENTER, spacing: { after: 100 }
-  }));
-  children.push(new Paragraph({
-    children: [new TextRun({ text: `Fecha de emisión: ${fechaEmision}`, size: 20, color: '64748b' })],
-    alignment: AlignmentType.CENTER, spacing: { after: 100 }
-  }));
-  children.push(new Paragraph({
-    children: [new TextRun({ text: `Folio: NormaAI-${matriz.id.substring(0,8).toUpperCase()}`, size: 18, color: '94a3b8' })],
-    alignment: AlignmentType.CENTER, spacing: { after: 400 }
-  }));
+  children.push(new Paragraph({ children: [new TextRun({ text: 'PROCESUS — NormaAI Legal', bold: true, size: 32, color: '0f2a4a' })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }));
+  children.push(new Paragraph({ children: [new TextRun({ text: 'INFORME DE CUMPLIMIENTO NORMATIVO', bold: true, size: 28, color: '1e6fc8' })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }));
+  children.push(new Paragraph({ children: [new TextRun({ text: `Empresa: ${matriz.empresa}`, bold: true, size: 24 })], alignment: AlignmentType.CENTER, spacing: { after: 100 } }));
+  children.push(new Paragraph({ children: [new TextRun({ text: `Archivo analizado: ${matriz.nombre_archivo}`, size: 20, color: '64748b' })], alignment: AlignmentType.CENTER, spacing: { after: 100 } }));
+  children.push(new Paragraph({ children: [new TextRun({ text: `Fecha de emisión: ${fechaEmision}`, size: 20, color: '64748b' })], alignment: AlignmentType.CENTER, spacing: { after: 100 } }));
+  children.push(new Paragraph({ children: [new TextRun({ text: `Folio: NormaAI-${matriz.id.substring(0,8).toUpperCase()}`, size: 18, color: '94a3b8' })], alignment: AlignmentType.CENTER, spacing: { after: 400 } }));
   children.push(new Paragraph({ children: [new TextRun({ text: '─'.repeat(60), color: 'e2e8f0' })], spacing: { after: 400 } }));
 
-  // Contenido del informe
   for (const linea of lineas) {
     const trim = linea.trim();
-    if (!trim) {
-      children.push(new Paragraph({ spacing: { after: 100 } }));
-      continue;
-    }
+    if (!trim) { children.push(new Paragraph({ spacing: { after: 100 } })); continue; }
     if (trim.startsWith('# ') && !trim.startsWith('## ')) {
-      children.push(new Paragraph({
-        children: [new TextRun({ text: trim.replace(/^# /, ''), bold: true, size: 28, color: '0f2a4a' })],
-        heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 }
-      }));
+      children.push(new Paragraph({ children: [new TextRun({ text: trim.replace(/^# /, ''), bold: true, size: 28, color: '0f2a4a' })], heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 } }));
     } else if (trim.startsWith('## ')) {
-      children.push(new Paragraph({
-        children: [new TextRun({ text: trim.replace(/^## /, ''), bold: true, size: 24, color: '1e6fc8' })],
-        heading: HeadingLevel.HEADING_2, spacing: { before: 300, after: 150 }
-      }));
+      children.push(new Paragraph({ children: [new TextRun({ text: trim.replace(/^## /, ''), bold: true, size: 24, color: '1e6fc8' })], heading: HeadingLevel.HEADING_2, spacing: { before: 300, after: 150 } }));
     } else if (trim.startsWith('### ')) {
-      children.push(new Paragraph({
-        children: [new TextRun({ text: trim.replace(/^### /, ''), bold: true, size: 22, color: '334155' })],
-        heading: HeadingLevel.HEADING_3, spacing: { before: 200, after: 100 }
-      }));
+      children.push(new Paragraph({ children: [new TextRun({ text: trim.replace(/^### /, ''), bold: true, size: 22, color: '334155' })], heading: HeadingLevel.HEADING_3, spacing: { before: 200, after: 100 } }));
     } else if (trim.startsWith('- ') || trim.startsWith('* ')) {
-      children.push(new Paragraph({
-        children: [new TextRun({ text: trim.replace(/^[-*] /, ''), size: 20 })],
-        bullet: { level: 0 }, spacing: { after: 80 }
-      }));
+      children.push(new Paragraph({ children: [new TextRun({ text: trim.replace(/^[-*] /, ''), size: 20 })], bullet: { level: 0 }, spacing: { after: 80 } }));
     } else if (/^\d+\./.test(trim)) {
-      children.push(new Paragraph({
-        children: [new TextRun({ text: trim, size: 20 })],
-        numbering: { reference: 'default-numbering', level: 0 }, spacing: { after: 80 }
-      }));
+      children.push(new Paragraph({ children: [new TextRun({ text: trim, size: 20 })], numbering: { reference: 'default-numbering', level: 0 }, spacing: { after: 80 } }));
     } else {
-      // Procesar negritas inline
       const partes = trim.split(/\*\*([^*]+)\*\*/);
       const runs = partes.map((p, i) => new TextRun({ text: p, bold: i % 2 === 1, size: 20 }));
       children.push(new Paragraph({ children: runs, spacing: { after: 120 } }));
     }
   }
 
-  // Certificado
   children.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { before: 400 } }));
-  children.push(new Paragraph({
-    children: [new TextRun({ text: '🏆 CERTIFICADO DE REVISIÓN — PROCESUS', bold: true, size: 24, color: '15803d' })],
-    spacing: { before: 200, after: 200 }
-  }));
-  children.push(new Paragraph({
-    children: [new TextRun({
-      text: `Procesus — NormaAI Legal certifica que la Matriz de Requisitos Legales de ${matriz.empresa} fue revisada el ${fechaEmision} por consultores especializados en normativa chilena, contrastada con el Diario Oficial de la República de Chile vigente a la misma fecha y verificada según los estándares de los sistemas de gestión ISO aplicables.`,
-      size: 20, color: '166534'
-    })],
-    spacing: { after: 150 }
-  }));
-  children.push(new Paragraph({
-    children: [new TextRun({ text: `Este certificado es válido por 12 meses desde su emisión. Folio: NormaAI-${matriz.id.substring(0,8).toUpperCase()}`, size: 18, color: '64748b', italics: true })],
-    spacing: { after: 200 }
-  }));
-  children.push(new Paragraph({
-    children: [new TextRun({ text: 'Procesus — NormaAI Legal · legal.normaai.cl · contacto@normaai.cl', size: 18, color: '94a3b8' })],
-    alignment: AlignmentType.CENTER, spacing: { before: 400 }
-  }));
+  children.push(new Paragraph({ children: [new TextRun({ text: '🏆 CERTIFICADO DE REVISIÓN — PROCESUS', bold: true, size: 24, color: '15803d' })], spacing: { before: 200, after: 200 } }));
+  children.push(new Paragraph({ children: [new TextRun({ text: `Procesus — NormaAI Legal certifica que la Matriz de Requisitos Legales de ${matriz.empresa} fue revisada el ${fechaEmision} por consultores especializados en normativa chilena, contrastada con el Diario Oficial de la República de Chile vigente a la misma fecha y verificada según los estándares de los sistemas de gestión ISO aplicables.`, size: 20, color: '166534' })], spacing: { after: 150 } }));
+  children.push(new Paragraph({ children: [new TextRun({ text: `Este certificado es válido por 12 meses desde su emisión. Folio: NormaAI-${matriz.id.substring(0,8).toUpperCase()}`, size: 18, color: '64748b', italics: true })], spacing: { after: 200 } }));
+  children.push(new Paragraph({ children: [new TextRun({ text: 'Procesus — NormaAI Legal · legal.normaai.cl · contacto@normaai.cl', size: 18, color: '94a3b8' })], alignment: AlignmentType.CENTER, spacing: { before: 400 } }));
 
   const doc = new Document({
-    numbering: {
-      config: [{
-        reference: 'default-numbering',
-        levels: [{ level: 0, format: 'decimal', text: '%1.', alignment: AlignmentType.LEFT }]
-      }]
-    },
+    numbering: { config: [{ reference: 'default-numbering', levels: [{ level: 0, format: 'decimal', text: '%1.', alignment: AlignmentType.LEFT }] }] },
     sections: [{ properties: {}, children }]
   });
-
   return Packer.toBuffer(doc);
 }
 
-// ── Admin: Descargar Word del informe ─────────────────────────
+// ── Admin: Descargar Word ─────────────────────────────────────
 app.get('/api/admin/matrices/:id/word', verificarAdmin, async (req, res) => {
   try {
-    const { data: matriz, error } = await supabase
-      .from('normaai_matrices').select('*').eq('id', req.params.id).single();
+    const { data: matriz, error } = await supabase.from('normaai_matrices').select('*').eq('id', req.params.id).single();
     if (error || !matriz) return res.status(404).json({ error: 'No encontrada' });
-
     const fechaEmision = new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' });
     const buffer = await generarWordBuffer(matriz, fechaEmision);
     const filename = `Informe_${(matriz.empresa||'Procesus').replace(/[^a-zA-Z0-9]/g,'_')}_NormaAI.docx`;
-
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(buffer);
   } catch (err) {
-    console.error('Error generando Word:', err);
     res.status(500).json({ error: 'Error al generar Word: ' + err.message });
   }
 });
 
-// ── Admin: Diagnóstico de archivo original (debug endpoint) ──
+// ── Admin: Diagnóstico archivo original ───────────────────────
 app.get('/api/admin/matrices/:id/archivo-original/diagnostico', verificarAdmin, async (req, res) => {
   try {
-    const { data: meta, error: metaErr } = await supabase
-      .from('normaai_matrices')
-      .select('id, empresa, nombre_archivo, archivo_original_nombre, archivo_original_tipo, created_at')
-      .eq('id', req.params.id)
-      .single();
-
-    if (metaErr) return res.json({ ok: false, supabase_error: metaErr.message });
+    const { data: meta } = await supabase.from('normaai_matrices').select('id, empresa, nombre_archivo, archivo_original_nombre, archivo_original_tipo, created_at').eq('id', req.params.id).single();
     if (!meta) return res.json({ ok: false, razon: 'Registro no encontrado' });
-
-    const { data: check, error: checkErr } = await supabase
-      .from('normaai_matrices')
-      .select('archivo_original_base64')
-      .eq('id', req.params.id)
-      .single();
-
+    const { data: check, error: checkErr } = await supabase.from('normaai_matrices').select('archivo_original_base64').eq('id', req.params.id).single();
     const tieneBase64 = !checkErr && check && !!check.archivo_original_base64;
     const longitudBase64 = tieneBase64 ? check.archivo_original_base64.length : 0;
-
-    res.json({
-      ok: tieneBase64,
-      id: meta.id,
-      empresa: meta.empresa,
-      nombre_archivo: meta.nombre_archivo,
-      archivo_original_nombre: meta.archivo_original_nombre,
-      archivo_original_tipo: meta.archivo_original_tipo,
-      tiene_base64: tieneBase64,
-      longitud_base64: longitudBase64,
-      tamano_kb: longitudBase64 ? Math.round(longitudBase64 * 0.75 / 1024) : 0,
-      created_at: meta.created_at,
-      supabase_error: checkErr ? checkErr.message : null
-    });
+    res.json({ ok: tieneBase64, ...meta, tiene_base64: tieneBase64, longitud_base64: longitudBase64, tamano_kb: longitudBase64 ? Math.round(longitudBase64 * 0.75 / 1024) : 0 });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
   }
 });
 
-// ── Admin: Descargar archivo original del cliente ─────────────
+// ── Admin: Descargar archivo original ────────────────────────
 app.get('/api/admin/matrices/:id/archivo-original', verificarAdmin, async (req, res) => {
   try {
-    const { data: matriz, error } = await supabase
-      .from('normaai_matrices')
-      .select('archivo_original_base64, archivo_original_nombre, archivo_original_tipo, empresa, nombre_archivo')
-      .eq('id', req.params.id)
-      .single();
-
-    if (error) {
-      console.error(`[archivo-original] Supabase error id=${req.params.id}:`, error.message);
-      return res.status(500).json({ error: 'Error en base de datos: ' + error.message });
-    }
-    if (!matriz) {
-      return res.status(404).json({ error: 'Registro no encontrado' });
-    }
-    if (!matriz.archivo_original_base64) {
-      console.warn(`[archivo-original] id=${req.params.id} (${matriz.empresa}) sin archivo_original_base64`);
-      return res.status(404).json({
-        error: 'Archivo original no disponible',
-        detalle: 'Esta matriz fue subida antes de implementar el almacenamiento del archivo original.',
-        empresa: matriz.empresa,
-        nombre_archivo: matriz.nombre_archivo
-      });
-    }
-
-    let buffer;
-    try {
-      buffer = Buffer.from(matriz.archivo_original_base64, 'base64');
-    } catch (e) {
-      console.error(`[archivo-original] Error decodificando base64 id=${req.params.id}:`, e.message);
-      return res.status(500).json({ error: 'Error al decodificar archivo: ' + e.message });
-    }
-
+    const { data: matriz, error } = await supabase.from('normaai_matrices').select('archivo_original_base64, archivo_original_nombre, archivo_original_tipo, empresa, nombre_archivo').eq('id', req.params.id).single();
+    if (error) return res.status(500).json({ error: 'Error en base de datos: ' + error.message });
+    if (!matriz) return res.status(404).json({ error: 'Registro no encontrado' });
+    if (!matriz.archivo_original_base64) return res.status(404).json({ error: 'Archivo original no disponible', empresa: matriz.empresa, nombre_archivo: matriz.nombre_archivo });
+    const buffer = Buffer.from(matriz.archivo_original_base64, 'base64');
     const nombre = matriz.archivo_original_nombre || matriz.nombre_archivo || 'matriz_cliente';
     const tipo = matriz.archivo_original_tipo || 'application/octet-stream';
-
     res.setHeader('Content-Type', tipo);
     res.setHeader('Content-Disposition', `attachment; filename="${nombre}"`);
     res.send(buffer);
   } catch (err) {
-    console.error(`[archivo-original] Error inesperado id=${req.params.id}:`, err.message);
     res.status(500).json({ error: 'Error al descargar archivo: ' + err.message });
   }
 });
 
-// ── Admin: Subir informe final editado ────────────────────────
+// ── Admin: Subir informe final ────────────────────────────────
 app.post('/api/admin/matrices/:id/informe-final', verificarAdmin, upload.single('archivo'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No se recibió archivo' });
-
     const archivo = req.file;
-    const base64 = archivo.buffer.toString('base64');
-
-    await supabase
-      .from('normaai_matrices')
-      .update({
-        informe_final_base64: base64,
-        informe_final_nombre: archivo.originalname,
-        estado: 'en_revision',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', req.params.id);
-
+    await supabase.from('normaai_matrices').update({ informe_final_base64: archivo.buffer.toString('base64'), informe_final_nombre: archivo.originalname, estado: 'en_revision', updated_at: new Date().toISOString() }).eq('id', req.params.id);
     res.json({ ok: true, nombre: archivo.originalname });
   } catch (err) {
     res.status(500).json({ error: 'Error al subir informe final' });
   }
 });
 
-// ── Admin: Editar informe antes de aprobar ────────────────────
+// ── Admin: Editar informe ─────────────────────────────────────
 app.post('/api/admin/matrices/:id/editar', verificarAdmin, async (req, res) => {
   try {
     const { informe_ia } = req.body;
-    await supabase
-      .from('normaai_matrices')
-      .update({ informe_ia, estado: 'en_revision', updated_at: new Date().toISOString() })
-      .eq('id', req.params.id);
+    await supabase.from('normaai_matrices').update({ informe_ia, estado: 'en_revision', updated_at: new Date().toISOString() }).eq('id', req.params.id);
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: 'Error al actualizar' });
   }
 });
 
-// ── Admin: Aprobar y enviar informe al cliente ────────────────
+// ── Admin: Aprobar y enviar ───────────────────────────────────
 app.post('/api/admin/matrices/:id/aprobar', verificarAdmin, async (req, res) => {
   try {
-    const { data: matriz, error } = await supabase
-      .from('normaai_matrices')
-      .select('*')
-      .eq('id', req.params.id)
-      .single();
-
+    const { data: matriz, error } = await supabase.from('normaai_matrices').select('*').eq('id', req.params.id).single();
     if (error || !matriz) return res.status(404).json({ error: 'Matriz no encontrada' });
-
     const { data: { user } } = await supabase.auth.admin.getUserById(matriz.user_id);
     const emailCliente = user?.email;
     if (!emailCliente) return res.status(400).json({ error: 'No se encontró el email del cliente' });
-
-    const fechaEmision = new Date().toLocaleDateString('es-CL', {
-      day: '2-digit', month: 'long', year: 'numeric'
-    });
-
+    const fechaEmision = new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' });
     const transporter = crearTransporter();
-
     await transporter.sendMail({
       from: `"NormaAI Legal — Procesus" <${process.env.GMAIL_USER}>`,
       to: emailCliente,
       subject: `✅ Informe de Cumplimiento Normativo listo — ${matriz.empresa}`,
-      html: `
-        <div style="font-family:Arial,sans-serif;max-width:650px;margin:0 auto;">
-          <div style="background:linear-gradient(135deg,#0f2a4a,#1e6fc8);padding:28px 32px;border-radius:8px 8px 0 0;">
-            <h1 style="color:white;margin:0;font-size:22px;">NormaAI Legal</h1>
-            <p style="color:#93c5fd;margin:4px 0 0;font-size:14px;">by Procesus — Laboratorio de Comunicación Social y Artificial</p>
+      html: `<div style="font-family:Arial,sans-serif;max-width:650px;margin:0 auto;">
+        <div style="background:linear-gradient(135deg,#0f2a4a,#1e6fc8);padding:28px 32px;border-radius:8px 8px 0 0;">
+          <h1 style="color:white;margin:0;font-size:22px;">NormaAI Legal</h1>
+          <p style="color:#93c5fd;margin:4px 0 0;font-size:14px;">by Procesus</p>
+        </div>
+        <div style="background:#f8fafc;padding:28px 32px;border:1px solid #e2e8f0;">
+          <p style="font-size:16px;color:#1e293b;">Estimado/a cliente de <strong>${matriz.empresa}</strong>,</p>
+          <p style="color:#475569;">La revisión de su <strong>Matriz de Requisitos Legales</strong> ha sido completada.</p>
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px;margin:20px 0;">
+            <p style="color:#1e40af;font-size:13px;margin:0;">📎 Tu Informe está disponible en la plataforma. Ingresa con tus credenciales y descárgalo desde "Revisar tu Matriz".</p>
           </div>
-          <div style="background:#f8fafc;padding:28px 32px;border:1px solid #e2e8f0;">
-            <p style="font-size:16px;color:#1e293b;">Estimado/a cliente de <strong>${matriz.empresa}</strong>,</p>
-            <p style="color:#475569;">La revisión de su <strong>Matriz de Requisitos Legales</strong> ha sido completada por nuestro equipo de consultores especializados.</p>
-            <div style="background:white;border-radius:8px;padding:20px;border:1px solid #e2e8f0;margin:20px 0;">
-              <h2 style="color:#0f2a4a;font-size:15px;margin-top:0;border-bottom:2px solid #e2e8f0;padding-bottom:10px;">📋 Detalles del Informe</h2>
-              <p style="color:#64748b;font-size:13px;margin:6px 0;"><strong>Empresa:</strong> ${matriz.empresa}</p>
-              <p style="color:#64748b;font-size:13px;margin:6px 0;"><strong>Archivo analizado:</strong> ${matriz.nombre_archivo}</p>
-              <p style="color:#64748b;font-size:13px;margin:6px 0;"><strong>Fecha de emisión:</strong> ${fechaEmision}</p>
-              <p style="color:#64748b;font-size:13px;margin:6px 0;"><strong>Folio:</strong> NormaAI-${matriz.id.substring(0,8).toUpperCase()}</p>
-            </div>
-            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px;margin:20px 0;">
-              <p style="color:#1e40af;font-size:13px;margin:0;">📎 <strong>Tu Informe de Cumplimiento Normativo está disponible en la plataforma.</strong> Ingresa con tus credenciales, ve a "Revisar tu Matriz" y haz clic en "👁 Ver informe" para verlo y descargarlo como PDF.</p>
-            </div>
-            <div style="background:#f0fdf4;border:2px solid #16a34a;border-radius:8px;padding:20px;margin:20px 0;">
-              <h2 style="color:#15803d;font-size:15px;margin-top:0;">🏆 Certificado de Revisión — Procesus</h2>
-              <p style="color:#166534;font-size:13px;line-height:1.6;margin:0;">
-                <strong>Procesus — NormaAI Legal</strong> certifica que la Matriz de Requisitos Legales 
-                de <strong>${matriz.empresa}</strong> fue revisada el <strong>${fechaEmision}</strong> 
-                por consultores especializados en normativa chilena, contrastada con el 
-                <strong>Diario Oficial de la República de Chile</strong> vigente a la misma fecha 
-                y verificada según los estándares de los sistemas de gestión ISO aplicables.
-              </p>
-              <p style="color:#166534;font-size:12px;margin:12px 0 0;font-style:italic;">
-                Este certificado es válido por 12 meses desde su emisión. 
-                Folio: NormaAI-${matriz.id.substring(0,8).toUpperCase()}
-              </p>
-            </div>
-            <a href="https://legal.normaai.cl/dashboard"
-               style="background:#1e6fc8;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;font-size:14px;">
-              Ver en la Plataforma →
-            </a>
+          <div style="background:#f0fdf4;border:2px solid #16a34a;border-radius:8px;padding:20px;margin:20px 0;">
+            <h2 style="color:#15803d;font-size:15px;margin-top:0;">🏆 Certificado de Revisión — Procesus</h2>
+            <p style="color:#166534;font-size:13px;line-height:1.6;margin:0;">Procesus — NormaAI Legal certifica que la Matriz de Requisitos Legales de <strong>${matriz.empresa}</strong> fue revisada el <strong>${fechaEmision}</strong> por consultores especializados en normativa chilena. Folio: NormaAI-${matriz.id.substring(0,8).toUpperCase()} | Válido por 12 meses.</p>
           </div>
-          <div style="background:#0f2a4a;padding:16px 32px;border-radius:0 0 8px 8px;text-align:center;">
-            <p style="color:#6b8ab0;font-size:12px;margin:0;">Procesus — NormaAI Legal · legal.normaai.cl</p>
-          </div>
-        </div>`
+          <a href="https://legal.normaai.cl/dashboard" style="background:#1e6fc8;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;font-size:14px;">Ver en la Plataforma →</a>
+        </div>
+      </div>`
     });
-
-    await supabase
-      .from('normaai_matrices')
-      .update({ estado: 'enviado', updated_at: new Date().toISOString() })
-      .eq('id', req.params.id);
-
+    await supabase.from('normaai_matrices').update({ estado: 'enviado', updated_at: new Date().toISOString() }).eq('id', req.params.id);
     res.json({ ok: true, mensaje: `Informe enviado a ${emailCliente}` });
-
   } catch (err) {
-    console.error('Error aprobar matriz:', err);
     res.status(500).json({ error: 'Error al aprobar y enviar: ' + err.message });
   }
 });
@@ -1510,5 +1232,4 @@ app.post('/api/logout', verificarToken, async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`NormaAI Legal Portal corriendo en puerto ${PORT}`));
-
 module.exports = app;
