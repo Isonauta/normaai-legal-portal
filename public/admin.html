@@ -62,6 +62,7 @@ tr:last-child td{border-bottom:none;}
 .badge-rojo{background:rgba(220,38,38,0.15);color:#f87171;}
 .badge-amarillo{background:rgba(202,138,4,0.15);color:#fbbf24;}
 .badge-azul{background:rgba(26,108,248,0.15);color:#60a5fa;}
+.badge-gris{background:rgba(255,255,255,0.06);color:#8a96a8;}
 
 /* Botones */
 .btn{padding:.45rem .9rem;border-radius:7px;font-size:.82rem;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s;}
@@ -73,7 +74,7 @@ tr:last-child td{border-bottom:none;}
 .btn-success:hover{background:rgba(22,163,74,0.25);}
 .btn-sm{padding:.3rem .7rem;font-size:.75rem;}
 
-/* Formulario noticias */
+/* Formularios */
 .form-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;}
 .form-title{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:1.2rem;display:flex;align-items:center;gap:.5rem;}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
@@ -86,7 +87,7 @@ input::placeholder,textarea::placeholder{color:#4a5568;}
 select option{background:#0d2144;color:#fff;}
 textarea{resize:vertical;min-height:80px;}
 
-/* Toggle publicada */
+/* Toggle */
 .toggle-wrap{display:flex;align-items:center;gap:.6rem;}
 .toggle{width:40px;height:22px;background:rgba(255,255,255,0.1);border-radius:999px;cursor:pointer;position:relative;transition:background .2s;border:none;}
 .toggle.on{background:var(--verde);}
@@ -97,10 +98,14 @@ textarea{resize:vertical;min-height:80px;}
 .loading{display:flex;align-items:center;justify-content:center;padding:3rem;color:var(--gris);}
 .spinner{width:24px;height:24px;border:2px solid rgba(26,108,248,0.2);border-top-color:var(--acento);border-radius:50%;animation:spin .8s linear infinite;margin-right:.7rem;}
 @keyframes spin{to{transform:rotate(360deg)}}
-
 .empty{text-align:center;padding:3rem;color:var(--gris);font-size:.88rem;}
 .success-msg{background:rgba(22,163,74,0.1);border:1px solid rgba(22,163,74,0.2);border-radius:8px;padding:.8rem 1rem;font-size:.85rem;color:#4ade80;margin-bottom:1rem;display:none;}
 .error-msg{background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.2);border-radius:8px;padding:.8rem 1rem;font-size:.85rem;color:#f87171;margin-bottom:1rem;display:none;}
+
+/* Perfil expandido de cliente */
+.cliente-perfil{background:rgba(26,108,248,0.05);border:1px solid rgba(26,108,248,0.15);border-radius:8px;padding:.8rem 1rem;margin-top:.4rem;font-size:.78rem;line-height:1.7;color:#8a96a8;display:none;}
+.cliente-perfil.open{display:block;}
+.cliente-perfil strong{color:#c9d8f0;}
 </style>
 </head>
 <body>
@@ -141,8 +146,6 @@ textarea{resize:vertical;min-height:80px;}
     <div class="view" id="vista-noticias">
       <div class="success-msg" id="noticia-ok">✅ Noticia guardada correctamente.</div>
       <div class="error-msg" id="noticia-err">❌ Error al guardar. Intenta nuevamente.</div>
-
-      <!-- Formulario nueva noticia -->
       <div class="form-card">
         <div class="form-title">➕ Nueva Noticia</div>
         <div class="form-grid">
@@ -184,8 +187,6 @@ textarea{resize:vertical;min-height:80px;}
           <button class="btn btn-primary" onclick="guardarNoticia()">💾 Guardar Noticia</button>
         </div>
       </div>
-
-      <!-- Lista de noticias -->
       <div class="tabla-container">
         <div class="tabla-header">
           <div class="tabla-titulo">📰 Noticias publicadas</div>
@@ -196,9 +197,8 @@ textarea{resize:vertical;min-height:80px;}
     </div>
 
     <!-- CLIENTES -->
-    <!-- MODAL CREAR USUARIO -->
     <div id="modal-crear-usuario" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
-      <div style="background:#0d2144;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:2rem;width:100%;max-width:480px;margin:1rem;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+      <div style="background:#0d2144;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:2rem;width:100%;max-width:480px;margin:1rem;box-shadow:0 24px 64px rgba(0,0,0,0.5);max-height:90vh;overflow-y:auto;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
           <div style="font-family:Syne,sans-serif;font-size:1.1rem;font-weight:700;">👤 Nuevo Usuario</div>
           <button onclick="cerrarModalUsuario()" style="background:none;border:none;color:#8a96a8;font-size:1.3rem;cursor:pointer;">✕</button>
@@ -206,40 +206,40 @@ textarea{resize:vertical;min-height:80px;}
         <div style="display:flex;flex-direction:column;gap:.9rem;">
           <div>
             <label style="display:block;font-size:.75rem;color:#8a96a8;margin-bottom:.3rem;">Nombre completo *</label>
-            <input id="nu-nombre" type="text" placeholder="María González" style="width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;box-sizing:border-box;outline:none;">
+            <input id="nu-nombre" type="text" placeholder="María González">
           </div>
           <div>
             <label style="display:block;font-size:.75rem;color:#8a96a8;margin-bottom:.3rem;">Email *</label>
-            <input id="nu-email" type="email" placeholder="maria@empresa.cl" style="width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;box-sizing:border-box;outline:none;">
+            <input id="nu-email" type="email" placeholder="maria@empresa.cl">
           </div>
           <div>
             <label style="display:block;font-size:.75rem;color:#8a96a8;margin-bottom:.3rem;">Contraseña inicial *</label>
             <div style="display:flex;gap:.5rem;">
-              <input id="nu-password" type="text" placeholder="Mínimo 8 caracteres" style="flex:1;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;box-sizing:border-box;outline:none;">
-              <button onclick="generarPassword()" style="padding:.7rem .9rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#8a96a8;cursor:pointer;font-size:.8rem;white-space:nowrap;">🎲 Generar</button>
+              <input id="nu-password" type="text" placeholder="Mínimo 8 caracteres" style="flex:1;">
+              <button onclick="generarPassword()" style="padding:.65rem .9rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#8a96a8;cursor:pointer;font-size:.8rem;white-space:nowrap;font-family:'DM Sans',sans-serif;">🎲 Generar</button>
             </div>
           </div>
           <div>
             <label style="display:block;font-size:.75rem;color:#8a96a8;margin-bottom:.3rem;">Empresa</label>
-            <input id="nu-empresa" type="text" placeholder="Nombre de la empresa" style="width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;box-sizing:border-box;outline:none;">
+            <input id="nu-empresa" type="text" placeholder="Nombre de la empresa">
           </div>
           <div style="display:flex;gap:.8rem;">
             <div style="flex:1;">
               <label style="display:block;font-size:.75rem;color:#8a96a8;margin-bottom:.3rem;">Rol</label>
-              <select id="nu-rol" style="width:100%;padding:.7rem 1rem;background:rgba(13,33,68,0.9);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;box-sizing:border-box;outline:none;">
+              <select id="nu-rol">
                 <option value="cliente">Cliente</option>
                 <option value="admin">Admin</option>
               </select>
             </div>
             <div style="flex:1;">
               <label style="display:block;font-size:.75rem;color:#8a96a8;margin-bottom:.3rem;">Fecha de vencimiento</label>
-              <input id="nu-fecha-fin" type="date" style="width:100%;padding:.7rem 1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:.85rem;box-sizing:border-box;outline:none;">
+              <input id="nu-fecha-fin" type="date">
             </div>
           </div>
           <div id="nu-resultado" style="display:none;"></div>
           <div style="display:flex;gap:.7rem;margin-top:.5rem;">
-            <button onclick="cerrarModalUsuario()" style="flex:1;padding:.8rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#8a96a8;cursor:pointer;font-size:.88rem;">Cancelar</button>
-            <button id="nu-btn-crear" onclick="crearUsuario()" style="flex:2;padding:.8rem;background:linear-gradient(135deg,#1a6cf8,#3d84fa);border:none;border-radius:8px;color:#fff;cursor:pointer;font-size:.88rem;font-weight:600;">✓ Crear Usuario y Enviar Email</button>
+            <button onclick="cerrarModalUsuario()" style="flex:1;padding:.8rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#8a96a8;cursor:pointer;font-size:.88rem;font-family:'DM Sans',sans-serif;">Cancelar</button>
+            <button id="nu-btn-crear" onclick="crearUsuario()" style="flex:2;padding:.8rem;background:linear-gradient(135deg,#1a6cf8,#3d84fa);border:none;border-radius:8px;color:#fff;cursor:pointer;font-size:.88rem;font-weight:600;font-family:'DM Sans',sans-serif;">✓ Crear Usuario y Enviar Email</button>
           </div>
         </div>
       </div>
@@ -248,7 +248,7 @@ textarea{resize:vertical;min-height:80px;}
     <div class="view" id="vista-clientes">
       <div class="tabla-container">
         <div class="tabla-header">
-          <div class="tabla-titulo">👥 Clientes activos</div>
+          <div class="tabla-titulo">👥 Clientes</div>
           <div style="display:flex;gap:.5rem;">
             <button class="btn btn-primary btn-sm" onclick="abrirModalUsuario()">+ Nuevo Usuario</button>
             <button class="btn btn-sm" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);" onclick="cargarClientes()">🔄 Actualizar</button>
@@ -267,8 +267,6 @@ textarea{resize:vertical;min-height:80px;}
         </div>
         <div id="matrices-lista"><div class="loading"><div class="spinner"></div>Cargando...</div></div>
       </div>
-
-      <!-- Panel detalle de matriz -->
       <div id="matriz-detalle" style="display:none;margin-top:1.5rem;">
         <div class="form-card">
           <div class="form-title" id="detalle-titulo">📄 Detalle de Matriz</div>
@@ -278,8 +276,6 @@ textarea{resize:vertical;min-height:80px;}
             <div><span style="font-size:.72rem;color:var(--gris);text-transform:uppercase;letter-spacing:.06em;">Archivo</span><div id="detalle-archivo" style="font-size:.85rem;margin-top:.2rem;"></div></div>
             <div><span style="font-size:.72rem;color:var(--gris);text-transform:uppercase;letter-spacing:.06em;">Recibida</span><div id="detalle-fecha" style="font-size:.85rem;margin-top:.2rem;"></div></div>
           </div>
-
-          <!-- Acciones principales -->
           <div style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem;">
             <button class="btn" style="background:rgba(99,102,241,0.15);color:#818cf8;border:1px solid rgba(99,102,241,0.3);" onclick="descargarWord()">📝 Descargar Word borrador</button>
             <button class="btn" style="background:rgba(14,165,233,0.15);color:#38bdf8;border:1px solid rgba(14,165,233,0.3);" onclick="descargarMatrizOriginal()">📥 Descargar matriz cliente</button>
@@ -315,8 +311,8 @@ const titulos = { resumen:'Resumen', matrices:'Matrices de Clientes', noticias:'
 var publicadaActual = false;
 
 function mostrarVista(nombre, el) {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
   document.getElementById('vista-' + nombre).classList.add('active');
   el.classList.add('active');
   document.getElementById('page-title').textContent = titulos[nombre];
@@ -361,59 +357,38 @@ async function cargarResumen() {
     ]);
     if (!clientes) return;
 
-    const activos = clientes.filter(c => c.activo).length;
-    const publicadas = noticias.filter(n => n.publicada).length;
+    const activos = clientes.filter(function(c) { return c.activo; }).length;
+    const publicadas = noticias.filter(function(n) { return n.publicada; }).length;
+    const conPerfil = clientes.filter(function(c) { return c.onboarding_completado; }).length;
     const mesActual = new Date().toISOString().slice(0,7);
-    const consultasMes = uso.filter(u => u.mes === mesActual).reduce((a,b) => a + b.consultas, 0);
-    const porVencer = clientes.filter(c => {
+    const consultasMes = uso.filter(function(u) { return u.mes === mesActual; }).reduce(function(a,b) { return a + b.consultas; }, 0);
+    const porVencer = clientes.filter(function(c) {
       if (!c.fecha_fin) return false;
       const dias = (new Date(c.fecha_fin) - new Date()) / (1000*60*60*24);
       return dias <= 30 && dias > 0;
     }).length;
 
-    cont.innerHTML = `
-      <div class="kpi-grid">
-        <div class="kpi-card verde">
-          <div class="kpi-label">Clientes Activos</div>
-          <div class="kpi-value">${activos}</div>
-          <div class="kpi-sub">${clientes.length} total registrados</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Consultas este mes</div>
-          <div class="kpi-value">${consultasMes}</div>
-          <div class="kpi-sub">en ${new Date().toLocaleString('es-CL',{month:'long'})}</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Noticias publicadas</div>
-          <div class="kpi-value">${publicadas}</div>
-          <div class="kpi-sub">${noticias.length} total</div>
-        </div>
-        <div class="kpi-card ${porVencer > 0 ? 'amarillo' : 'verde'}">
-          <div class="kpi-label">Vencen en 30 días</div>
-          <div class="kpi-value">${porVencer}</div>
-          <div class="kpi-sub">clientes a renovar</div>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
-        <div class="tabla-container">
-          <div class="tabla-header"><div class="tabla-titulo">Últimos clientes</div></div>
-          <table>
-            <thead><tr><th>Empresa</th><th>Estado</th><th>Vence</th></tr></thead>
-            <tbody>${clientes.slice(0,5).map(c => {
-              const dias = c.fecha_fin ? Math.ceil((new Date(c.fecha_fin)-new Date())/(1000*60*60*24)) : null;
-              const vence = dias ? (dias < 30 ? '<span class="badge badge-amarillo">'+dias+'d</span>' : '<span class="badge badge-verde">'+dias+'d</span>') : '—';
-              return '<tr><td>'+(c.empresa||c.nombre)+'</td><td><span class="badge '+(c.activo?'badge-verde':'badge-rojo')+'">'+(c.activo?'Activo':'Inactivo')+'</span></td><td>'+vence+'</td></tr>';
-            }).join('')}</tbody>
-          </table>
-        </div>
-        <div class="tabla-container">
-          <div class="tabla-header"><div class="tabla-titulo">Top uso agente</div></div>
-          <table>
-            <thead><tr><th>Usuario</th><th>Mes</th><th>Consultas</th></tr></thead>
-            <tbody>${uso.slice(0,5).map(u => '<tr><td style="font-size:.78rem;">'+u.email+'</td><td>'+u.mes+'</td><td><span class="badge badge-azul">'+u.consultas+'</span></td></tr>').join('')}</tbody>
-          </table>
-        </div>
-      </div>`;
+    cont.innerHTML = '<div class="kpi-grid">' +
+      '<div class="kpi-card verde"><div class="kpi-label">Clientes Activos</div><div class="kpi-value">' + activos + '</div><div class="kpi-sub">' + clientes.length + ' total registrados</div></div>' +
+      '<div class="kpi-card"><div class="kpi-label">Consultas este mes</div><div class="kpi-value">' + consultasMes + '</div><div class="kpi-sub">en ' + new Date().toLocaleString('es-CL',{month:'long'}) + '</div></div>' +
+      '<div class="kpi-card"><div class="kpi-label">Perfiles completados</div><div class="kpi-value">' + conPerfil + '</div><div class="kpi-sub">de ' + clientes.length + ' clientes</div></div>' +
+      '<div class="kpi-card ' + (porVencer > 0 ? 'amarillo' : 'verde') + '"><div class="kpi-label">Vencen en 30 días</div><div class="kpi-value">' + porVencer + '</div><div class="kpi-sub">clientes a renovar</div></div>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">' +
+        '<div class="tabla-container"><div class="tabla-header"><div class="tabla-titulo">Últimos clientes</div></div>' +
+        '<table><thead><tr><th>Empresa</th><th>Rubro</th><th>Perfil</th><th>Vence</th></tr></thead><tbody>' +
+        clientes.slice(0,6).map(function(c) {
+          const dias = c.fecha_fin ? Math.ceil((new Date(c.fecha_fin)-new Date())/(1000*60*60*24)) : null;
+          const vence = dias ? (dias < 30 ? '<span class="badge badge-amarillo">'+dias+'d</span>' : '<span class="badge badge-verde">'+dias+'d</span>') : '—';
+          const perfil = c.onboarding_completado ? '<span class="badge badge-verde">✓</span>' : '<span class="badge badge-gris">Pendiente</span>';
+          return '<tr><td>' + (c.empresa||c.nombre) + '</td><td style="font-size:.75rem;color:#8a96a8;">' + (c.rubro ? c.rubro.split(' ')[0] : '—') + '</td><td>' + perfil + '</td><td>' + vence + '</td></tr>';
+        }).join('') +
+        '</tbody></table></div>' +
+        '<div class="tabla-container"><div class="tabla-header"><div class="tabla-titulo">Top uso agente</div></div>' +
+        '<table><thead><tr><th>Usuario</th><th>Mes</th><th>Consultas</th></tr></thead><tbody>' +
+        uso.slice(0,5).map(function(u) { return '<tr><td style="font-size:.78rem;">' + u.email + '</td><td>' + u.mes + '</td><td><span class="badge badge-azul">' + u.consultas + '</span></td></tr>'; }).join('') +
+        '</tbody></table></div>' +
+      '</div>';
   } catch(e) {
     cont.innerHTML = '<div class="empty">Error al cargar resumen.</div>';
   }
@@ -426,16 +401,16 @@ async function cargarNoticias() {
   if (!data) return;
   if (!data.length) { cont.innerHTML = '<div class="empty">No hay noticias aún.</div>'; return; }
   cont.innerHTML = '<table><thead><tr><th>Título</th><th>Categoría</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody>' +
-    data.map(n => `<tr>
-      <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${n.titulo}</td>
-      <td><span class="badge badge-azul">${n.categoria||'General'}</span></td>
-      <td><span class="badge ${n.publicada?'badge-verde':'badge-amarillo'}">${n.publicada?'Publicada':'Borrador'}</span></td>
-      <td style="font-size:.78rem;color:var(--gris);">${new Date(n.created_at).toLocaleDateString('es-CL')}</td>
-      <td style="display:flex;gap:.4rem;">
-        <button class="btn btn-sm ${n.publicada?'btn-danger':'btn-success'}" onclick="toggleNoticia('${n.id}',${n.publicada})">${n.publicada?'Despublicar':'Publicar'}</button>
-        <button class="btn btn-danger btn-sm" onclick="eliminarNoticia('${n.id}')">🗑</button>
-      </td>
-    </tr>`).join('') + '</tbody></table>';
+    data.map(function(n) {
+      return '<tr><td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + n.titulo + '</td>' +
+        '<td><span class="badge badge-azul">' + (n.categoria||'General') + '</span></td>' +
+        '<td><span class="badge ' + (n.publicada?'badge-verde':'badge-amarillo') + '">' + (n.publicada?'Publicada':'Borrador') + '</span></td>' +
+        '<td style="font-size:.78rem;color:var(--gris);">' + new Date(n.created_at).toLocaleDateString('es-CL') + '</td>' +
+        '<td style="display:flex;gap:.4rem;">' +
+          '<button class="btn btn-sm ' + (n.publicada?'btn-danger':'btn-success') + '" onclick="toggleNoticia(\'' + n.id + '\',' + n.publicada + ')">' + (n.publicada?'Despublicar':'Publicar') + '</button>' +
+          '<button class="btn btn-danger btn-sm" onclick="eliminarNoticia(\'' + n.id + '\')">🗑</button>' +
+        '</td></tr>';
+    }).join('') + '</tbody></table>';
 }
 
 async function guardarNoticia() {
@@ -461,7 +436,7 @@ async function guardarNoticia() {
     publicadaActual = false;
     document.getElementById('n-publicada').className = 'toggle';
     document.getElementById('n-publicada-label').textContent = 'No publicada';
-    setTimeout(() => okEl.style.display = 'none', 3000);
+    setTimeout(function() { okEl.style.display = 'none'; }, 3000);
     cargarNoticias();
   } else {
     errEl.style.display = 'block'; okEl.style.display = 'none';
@@ -485,36 +460,55 @@ async function cargarClientes() {
   const data = await apiGet('/api/admin/clientes');
   if (!data) return;
   if (!data.length) { cont.innerHTML = '<div class="empty">No hay clientes registrados.</div>'; return; }
-  cont.innerHTML = '<table><thead><tr><th>Nombre</th><th>Empresa</th><th>Email</th><th>Estado</th><th>Vence</th><th>Acción</th></tr></thead><tbody>' +
-    data.map(c => {
+
+  cont.innerHTML = '<table><thead><tr>' +
+    '<th>Nombre</th><th>Empresa</th><th>Rubro</th><th>Trabajadores</th><th>Normas ISO</th>' +
+    '<th>Perfil</th><th>Estado</th><th>Vence</th><th>Acción</th>' +
+    '</tr></thead><tbody>' +
+    data.map(function(c) {
       const dias = c.fecha_fin ? Math.ceil((new Date(c.fecha_fin)-new Date())/(1000*60*60*24)) : null;
-      const vence = dias ? (dias < 0 ? '<span class="badge badge-rojo">Vencido</span>' : dias < 30 ? '<span class="badge badge-amarillo">'+dias+'d</span>' : '<span class="badge badge-verde">'+dias+'d</span>') : '—';
-      return `<tr>
-        <td>${c.nombre}</td>
-        <td>${c.empresa||'—'}</td>
-        <td style="font-size:.78rem;">${c.email}</td>
-        <td><span class="badge ${c.activo?'badge-verde':'badge-rojo'}">${c.activo?'Activo':'Inactivo'}</span></td>
-        <td>${vence}</td>
-        <td><button class="btn btn-sm ${c.activo?'btn-danger':'btn-success'}" onclick="toggleCliente('${c.id}',${c.activo})">${c.activo?'Desactivar':'Activar'}</button></td>
-      </tr>`;
+      const vence = dias
+        ? (dias < 0 ? '<span class="badge badge-rojo">Vencido</span>'
+          : dias < 30 ? '<span class="badge badge-amarillo">'+dias+'d</span>'
+          : '<span class="badge badge-verde">'+dias+'d</span>')
+        : '—';
+      const perfilBadge = c.onboarding_completado
+        ? '<span class="badge badge-verde">✓ Completo</span>'
+        : '<span class="badge badge-gris">⚠ Pendiente</span>';
+      const rubro = c.rubro || '<span style="color:#3d4f6a;">—</span>';
+      const trabajadores = c.trabajadores || '<span style="color:#3d4f6a;">—</span>';
+      const normas = c.normas_iso
+        ? '<span style="font-size:.72rem;color:#93c5fd;">' + c.normas_iso.split(',').slice(0,2).join(', ') + (c.normas_iso.split(',').length > 2 ? '…' : '') + '</span>'
+        : '<span style="color:#3d4f6a;">—</span>';
+
+      return '<tr id="row-' + c.id + '">' +
+        '<td>' + c.nombre + '</td>' +
+        '<td>' + (c.empresa||'—') + '</td>' +
+        '<td style="font-size:.78rem;">' + rubro + '</td>' +
+        '<td style="font-size:.78rem;text-align:center;">' + trabajadores + '</td>' +
+        '<td>' + normas + '</td>' +
+        '<td>' + perfilBadge + '</td>' +
+        '<td><span class="badge ' + (c.activo?'badge-verde':'badge-rojo') + '">' + (c.activo?'Activo':'Inactivo') + '</span></td>' +
+        '<td>' + vence + '</td>' +
+        '<td style="display:flex;gap:.4rem;flex-wrap:wrap;">' +
+          '<button class="btn btn-sm ' + (c.activo?'btn-danger':'btn-success') + '" onclick="toggleCliente(\'' + c.id + '\',' + c.activo + ')">' + (c.activo?'Desactivar':'Activar') + '</button>' +
+          '<button class="btn btn-sm" style="background:rgba(26,108,248,0.1);color:#60a5fa;border:1px solid rgba(26,108,248,0.2);" onclick="verPerfilCliente(\'' + c.id + '\')">👤 Perfil</button>' +
+        '</td></tr>' +
+        // Fila expandida del perfil
+        '<tr><td colspan="9" style="padding:0;">' +
+          '<div class="cliente-perfil" id="perfil-' + c.id + '">' +
+            (c.onboarding_completado
+              ? '<strong>Alcance:</strong> ' + (c.alcance||'No especificado') + '<br>' +
+                '<strong>Sitios:</strong> ' + (c.sitios||'No especificados')
+              : '<em>Este cliente aún no ha completado su perfil de onboarding.</em>') +
+          '</div>' +
+        '</td></tr>';
     }).join('') + '</tbody></table>';
 }
 
-// ── Ver informe HTML en admin ────────────────────────────────
-async function verInformeAdmin() {
-  if (!matrizActualId) return;
-  const wrap = document.getElementById('informe-preview-wrap');
-  const iframe = document.getElementById('informe-iframe');
-  wrap.style.display = 'block';
-  iframe.src = '/api/admin/matrices/' + matrizActualId + '/informe-html?token=' + encodeURIComponent(token);
-  iframe.onload = () => {
-    // Inyectar token via postMessage si es necesario
-  };
-}
-
-function abrirInformeNuevaPestana() {
-  if (!matrizActualId) return;
-  window.open('/api/admin/matrices/' + matrizActualId + '/informe-html?token=' + encodeURIComponent(token), '_blank');
+function verPerfilCliente(id) {
+  var el = document.getElementById('perfil-' + id);
+  if (el) el.classList.toggle('open');
 }
 
 async function toggleCliente(id, activo) {
@@ -524,17 +518,13 @@ async function toggleCliente(id, activo) {
 
 // ── Crear Usuario ─────────────────────────────────────────────
 function abrirModalUsuario() {
-  document.getElementById('nu-nombre').value = '';
-  document.getElementById('nu-email').value = '';
-  document.getElementById('nu-password').value = '';
-  document.getElementById('nu-empresa').value = '';
+  ['nu-nombre','nu-email','nu-password','nu-empresa'].forEach(function(id) { document.getElementById(id).value = ''; });
   document.getElementById('nu-rol').value = 'cliente';
   document.getElementById('nu-fecha-fin').value = '';
   document.getElementById('nu-resultado').style.display = 'none';
   document.getElementById('nu-btn-crear').disabled = false;
   document.getElementById('nu-btn-crear').textContent = '✓ Crear Usuario y Enviar Email';
-  const modal = document.getElementById('modal-crear-usuario');
-  modal.style.display = 'flex';
+  document.getElementById('modal-crear-usuario').style.display = 'flex';
 }
 
 function cerrarModalUsuario() {
@@ -543,8 +533,8 @@ function cerrarModalUsuario() {
 
 function generarPassword() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#$!';
-  let pwd = '';
-  for (let i = 0; i < 10; i++) pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+  var pwd = '';
+  for (var i = 0; i < 10; i++) pwd += chars.charAt(Math.floor(Math.random() * chars.length));
   document.getElementById('nu-password').value = pwd;
 }
 
@@ -569,8 +559,7 @@ async function crearUsuario() {
     return;
   }
 
-  btn.disabled = true;
-  btn.textContent = '⏳ Creando usuario...';
+  btn.disabled = true; btn.textContent = '⏳ Creando usuario...';
   resultado.style.display = 'none';
 
   try {
@@ -588,18 +577,15 @@ async function crearUsuario() {
       setTimeout(cerrarModalUsuario, 2500);
     } else {
       resultado.innerHTML = '<div style="color:#fca5a5;background:rgba(220,38,38,0.1);border-radius:8px;padding:.8rem;font-size:.83rem;">⚠️ ' + (data.error || 'Error al crear usuario') + '</div>';
-      btn.disabled = false;
-      btn.textContent = '✓ Crear Usuario y Enviar Email';
+      btn.disabled = false; btn.textContent = '✓ Crear Usuario y Enviar Email';
     }
   } catch(e) {
     resultado.style.display = 'block';
     resultado.innerHTML = '<div style="color:#fca5a5;background:rgba(220,38,38,0.1);border-radius:8px;padding:.8rem;font-size:.83rem;">⚠️ Error de conexión.</div>';
-    btn.disabled = false;
-    btn.textContent = '✓ Crear Usuario y Enviar Email';
+    btn.disabled = false; btn.textContent = '✓ Crear Usuario y Enviar Email';
   }
 }
 
-// Cerrar modal al hacer clic fuera
 document.getElementById('modal-crear-usuario').addEventListener('click', function(e) {
   if (e.target === this) cerrarModalUsuario();
 });
@@ -611,28 +597,22 @@ async function cargarUso() {
   if (!data) return;
   if (!data.length) { cont.innerHTML = '<div class="empty">Sin registros de uso aún.</div>'; return; }
   cont.innerHTML = '<table><thead><tr><th>Usuario</th><th>Mes</th><th>Consultas</th><th>% del límite</th></tr></thead><tbody>' +
-    data.map(u => {
+    data.map(function(u) {
       const pct = Math.min(100, Math.round(u.consultas / 100 * 100));
       const color = pct > 80 ? 'badge-rojo' : pct > 50 ? 'badge-amarillo' : 'badge-verde';
-      return `<tr>
-        <td>${u.email}</td>
-        <td>${u.mes}</td>
-        <td><span class="badge badge-azul">${u.consultas}</span></td>
-        <td><span class="badge ${color}">${pct}%</span></td>
-      </tr>`;
+      return '<tr><td>' + u.email + '</td><td>' + u.mes + '</td><td><span class="badge badge-azul">' + u.consultas + '</span></td><td><span class="badge ' + color + '">' + pct + '%</span></td></tr>';
     }).join('') + '</tbody></table>';
 }
 
 // ── Matrices ─────────────────────────────────────────────────
-let matrizActualId = null;
+var matrizActualId = null;
 
 async function cargarMatrices() {
   const cont = document.getElementById('matrices-lista');
   const data = await apiGet('/api/admin/matrices');
   if (!data) return;
 
-  // Badge con pendientes
-  const pendientes = data.filter(m => m.estado === 'pendiente' || m.estado === 'en_revision').length;
+  const pendientes = data.filter(function(m) { return m.estado === 'pendiente' || m.estado === 'en_revision'; }).length;
   const badge = document.getElementById('badge-matrices');
   if (pendientes > 0) { badge.style.display = 'inline'; badge.textContent = pendientes; }
   else { badge.style.display = 'none'; }
@@ -643,14 +623,16 @@ async function cargarMatrices() {
   const estadoLabel = { pendiente:'⏳ Pendiente', en_revision:'🔍 En revisión', aprobado:'✅ Aprobado', enviado:'📨 Enviado' };
 
   cont.innerHTML = '<table><thead><tr><th>Empresa</th><th>Cliente</th><th>Archivo</th><th>Estado</th><th>Fecha</th><th>Acción</th></tr></thead><tbody>' +
-    data.map(m => `<tr>
-      <td><strong>${m.empresa||'—'}</strong></td>
-      <td style="font-size:.78rem;color:var(--gris);">${m.cliente_email||'—'}</td>
-      <td style="font-size:.78rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.nombre_archivo}</td>
-      <td><span class="badge ${estadoColor[m.estado]||'badge-amarillo'}">${estadoLabel[m.estado]||m.estado}</span></td>
-      <td style="font-size:.78rem;color:var(--gris);">${new Date(m.created_at).toLocaleDateString('es-CL')}</td>
-      <td><button class="btn btn-primary btn-sm" onclick="abrirMatriz('${m.id}')">Revisar →</button></td>
-    </tr>`).join('') + '</tbody></table>';
+    data.map(function(m) {
+      return '<tr>' +
+        '<td><strong>' + (m.empresa||'—') + '</strong></td>' +
+        '<td style="font-size:.78rem;color:var(--gris);">' + (m.cliente_email||'—') + '</td>' +
+        '<td style="font-size:.78rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + m.nombre_archivo + '</td>' +
+        '<td><span class="badge ' + (estadoColor[m.estado]||'badge-amarillo') + '">' + (estadoLabel[m.estado]||m.estado) + '</span></td>' +
+        '<td style="font-size:.78rem;color:var(--gris);">' + new Date(m.created_at).toLocaleDateString('es-CL') + '</td>' +
+        '<td><button class="btn btn-primary btn-sm" onclick="abrirMatriz(\'' + m.id + '\')">Revisar →</button></td>' +
+      '</tr>';
+    }).join('') + '</tbody></table>';
 }
 
 async function abrirMatriz(id) {
@@ -664,9 +646,10 @@ async function abrirMatriz(id) {
   document.getElementById('detalle-cliente').textContent = data.cliente_email || data.cliente_nombre || data.user_id;
   document.getElementById('detalle-archivo').textContent = data.nombre_archivo;
   document.getElementById('detalle-fecha').textContent = new Date(data.created_at).toLocaleDateString('es-CL', {day:'2-digit',month:'long',year:'numeric'});
+
   const estadoLabel = { pendiente:'⏳ Pendiente revisión', en_revision:'🔍 En revisión', aprobado:'✅ Aprobado', enviado:'📨 Enviado al cliente' };
   const estadoColor = { pendiente:'badge-amarillo', en_revision:'badge-azul', aprobado:'badge-verde', enviado:'badge-verde' };
-  document.getElementById('detalle-estado-badge').innerHTML = `<span class="badge ${estadoColor[data.estado]||'badge-amarillo'}">${estadoLabel[data.estado]||data.estado}</span>`;
+  document.getElementById('detalle-estado-badge').innerHTML = '<span class="badge ' + (estadoColor[data.estado]||'badge-amarillo') + '">' + (estadoLabel[data.estado]||data.estado) + '</span>';
 
   const btnEnviar = document.getElementById('btn-enviar');
   btnEnviar.disabled = data.estado === 'enviado';
@@ -676,55 +659,22 @@ async function abrirMatriz(id) {
   document.getElementById('detalle-msg').style.display = 'none';
 }
 
-async function guardarBorrador() {
-  if (!matrizActualId) return;
-  const informe = document.getElementById('detalle-informe').value;
-  const btn = document.querySelector('button[onclick="guardarBorrador()"]');
-  const msg = document.getElementById('detalle-msg');
-  btn.disabled = true;
-  btn.textContent = '⏳ Guardando...';
-  const { ok } = await apiPost('/api/admin/matrices/' + matrizActualId + '/editar', { informe_ia: informe });
-  btn.disabled = false;
-  btn.textContent = '💾 Guardar borrador';
-  msg.style.display = 'block';
-  if (ok) {
-    msg.style.color = '#4ade80';
-    msg.textContent = '✅ Borrador guardado correctamente.';
-  } else {
-    msg.style.color = '#f87171';
-    msg.textContent = '❌ Error al guardar. Intenta nuevamente.';
-  }
-  setTimeout(() => msg.style.display = 'none', 3000);
-}
-
 async function descargarWord() {
   if (!matrizActualId) return;
   const btn = document.querySelector('button[onclick="descargarWord()"]');
-  btn.disabled = true;
-  btn.textContent = '⏳ Generando Word...';
+  btn.disabled = true; btn.textContent = '⏳ Generando Word...';
   try {
-    const res = await fetch('/api/admin/matrices/' + matrizActualId + '/word', {
-      headers: { Authorization: 'Bearer ' + token }
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      alert(err.error || 'Error al generar Word');
-      return;
-    }
+    const res = await fetch('/api/admin/matrices/' + matrizActualId + '/word', { headers: { Authorization: 'Bearer ' + token } });
+    if (!res.ok) { const err = await res.json(); alert(err.error || 'Error al generar Word'); return; }
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    const empresa = document.getElementById('detalle-empresa').textContent || 'informe';
-    a.download = `Informe_${empresa.replace(/\s+/g,'_')}_Procesus.docx`;
+    a.download = 'Informe_' + (document.getElementById('detalle-empresa').textContent||'NormaAI').replace(/\s+/g,'_') + '_Procesus.docx';
     a.click();
     URL.revokeObjectURL(url);
-  } catch(e) {
-    alert('Error al descargar: ' + e.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '📝 Descargar Word';
-  }
+  } catch(e) { alert('Error al descargar: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = '📝 Descargar Word borrador'; }
 }
 
 async function confirmarEnvio() {
@@ -732,9 +682,7 @@ async function confirmarEnvio() {
   if (!confirm('¿Enviar el informe al cliente? Esta acción no se puede deshacer.')) return;
 
   const msg = document.getElementById('detalle-msg');
-  msg.style.display = 'block';
-  msg.style.color = '#8a96a8';
-  msg.textContent = '⏳ Enviando informe al cliente...';
+  msg.style.display = 'block'; msg.style.color = '#8a96a8'; msg.textContent = '⏳ Enviando informe al cliente...';
 
   const { ok, data } = await apiPost('/api/admin/matrices/' + matrizActualId + '/aprobar', {});
   if (ok) {
@@ -753,22 +701,13 @@ async function confirmarEnvio() {
 async function descargarMatrizOriginal() {
   if (!matrizActualId) return;
   const btn = document.querySelector('button[onclick="descargarMatrizOriginal()"]');
-  btn.disabled = true;
-  btn.textContent = '⏳ Descargando...';
+  btn.disabled = true; btn.textContent = '⏳ Descargando...';
   try {
-    const res = await fetch('/api/admin/matrices/' + matrizActualId + '/archivo-original', {
-      headers: { Authorization: 'Bearer ' + token }
-    });
+    const res = await fetch('/api/admin/matrices/' + matrizActualId + '/archivo-original', { headers: { Authorization: 'Bearer ' + token } });
     if (!res.ok) {
-      let msg = 'Error al descargar la matriz original';
-      try {
-        const errData = await res.json();
-        msg = errData.error || msg;
-        if (errData.detalle) msg += '\n\n' + errData.detalle;
-        if (errData.empresa) msg += '\nEmpresa: ' + errData.empresa;
-      } catch(_) {}
-      alert(msg);
-      return;
+      var msgErr = 'Error al descargar la matriz original';
+      try { const e = await res.json(); msgErr = e.error || msgErr; } catch(_) {}
+      alert(msgErr); return;
     }
     const blob = await res.blob();
     const disposition = res.headers.get('Content-Disposition') || '';
@@ -778,33 +717,15 @@ async function descargarMatrizOriginal() {
     const a = document.createElement('a');
     a.href = url; a.download = nombre; a.click();
     URL.revokeObjectURL(url);
-  } catch(e) {
-    alert('Error: ' + e.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '📥 Descargar matriz cliente';
-  }
-}
-
-// Diagnóstico de archivo original (para debug desde consola del admin)
-async function diagnosticoArchivoOriginal(id) {
-  const mid = id || matrizActualId;
-  if (!mid) return console.warn('No hay matrizActualId');
-  const res = await fetch('/api/admin/matrices/' + mid + '/archivo-original/diagnostico', {
-    headers: { Authorization: 'Bearer ' + token }
-  });
-  const data = await res.json();
-  console.table(data);
-  return data;
+  } catch(e) { alert('Error: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = '📥 Descargar matriz cliente'; }
 }
 
 async function subirInformeFinal(input) {
   const file = input.files[0];
   if (!file) return;
   const status = document.getElementById('informe-final-status');
-  status.style.display = 'block';
-  status.style.color = '#8a96a8';
-  status.textContent = '⏳ Subiendo informe final...';
+  status.style.display = 'block'; status.style.color = '#8a96a8'; status.textContent = '⏳ Subiendo informe final...';
   const formData = new FormData();
   formData.append('archivo', file);
   try {
@@ -819,13 +740,9 @@ async function subirInformeFinal(input) {
       status.textContent = '✅ Informe final subido: ' + file.name + ' — listo para enviar al cliente.';
       document.getElementById('btn-enviar').style.background = '#16a34a';
     } else {
-      status.style.color = '#f87171';
-      status.textContent = '❌ ' + (data.error || 'Error al subir');
+      status.style.color = '#f87171'; status.textContent = '❌ ' + (data.error || 'Error al subir');
     }
-  } catch(e) {
-    status.style.color = '#f87171';
-    status.textContent = '❌ Error de conexión';
-  }
+  } catch(e) { status.style.color = '#f87171'; status.textContent = '❌ Error de conexión'; }
   input.value = '';
 }
 
