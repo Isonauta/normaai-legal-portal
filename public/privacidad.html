@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Política de Privacidad y Protección de Datos — NormaAI Legal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --azul:#0a1628;
+  --azul-med:#0d2144;
+  --acento:#1a6cf8;
+  --dorado:#c9a84c;
+  --gris:#8a96a8;
+  --blanco:#ffffff;
+  --texto:#e2e8f0;
+  --texto-sec:#8a96a8;
+  --borde:rgba(255,255,255,0.07);
+  --card:rgba(255,255,255,0.03);
+}
+html{scroll-behavior:smooth;}
+body{font-family:'DM Sans',sans-serif;background:#0a1628;color:var(--texto);line-height:1.7;font-size:16px;}
+
+/* NAV */
+.nav{position:sticky;top:0;z-index:100;background:rgba(10,22,40,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--borde);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;}
+.nav-logo{display:flex;align-items:center;gap:.7rem;text-decoration:none;}
+.nav-logo-icon{width:34px;height:34px;background:var(--acento);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;}
+.nav-logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:var(--blanco);}
+.nav-logo-sub{font-size:.6rem;color:var(--dorado);letter-spacing:.12em;text-transform:uppercase;}
+.nav-back{font-size:.82rem;color:var(--gris);text-decoration:none;transition:color .15s;}
+.nav-back:hover{color:var(--blanco);}
+
+/* HERO */
+.hero{background:linear-gradient(180deg,#0d2144 0%,#0a1628 100%);border-bottom:1px solid var(--borde);padding:4rem 2rem 3rem;}
+.hero-inner{max-width:800px;margin:0 auto;}
+.hero-tag{display:inline-block;font-size:.7rem;text-transform:uppercase;letter-spacing:.15em;color:var(--dorado);border:1px solid rgba(201,168,76,0.3);padding:.3rem .8rem;border-radius:4px;margin-bottom:1.2rem;}
+.hero h1{font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;line-height:1.15;margin-bottom:1rem;}
+.hero h1 span{color:var(--acento);}
+.hero-meta{display:flex;gap:2rem;font-size:.82rem;color:var(--gris);flex-wrap:wrap;}
+.hero-meta strong{color:#c9d8f0;}
+
+/* TABS */
+.tabs-wrap{background:rgba(13,33,68,0.6);border-bottom:1px solid var(--borde);position:sticky;top:65px;z-index:50;backdrop-filter:blur(8px);}
+.tabs{max-width:800px;margin:0 auto;display:flex;gap:0;padding:0 2rem;}
+.tab{padding:.9rem 1.4rem;font-size:.85rem;font-weight:500;color:var(--gris);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;border:none;background:none;font-family:'DM Sans',sans-serif;}
+.tab:hover{color:var(--blanco);}
+.tab.active{color:var(--acento);border-bottom-color:var(--acento);}
+
+/* CONTENT */
+.content{max-width:800px;margin:0 auto;padding:3rem 2rem 6rem;}
+.section{display:none;}
+.section.active{display:block;}
+
+/* TYPOGRAPHY */
+.section h2{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:700;margin-bottom:.5rem;color:var(--blanco);}
+.section h3{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;margin:2rem 0 .6rem;color:#c9d8f0;}
+.section p{font-size:.92rem;color:#a0b0c8;margin-bottom:1rem;line-height:1.8;}
+.section p strong{color:#c9d8f0;}
+.section ul,.section ol{padding-left:1.4rem;margin-bottom:1rem;}
+.section li{font-size:.92rem;color:#a0b0c8;margin-bottom:.4rem;line-height:1.7;}
+.section li strong{color:#c9d8f0;}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--borde);border-radius:12px;padding:1.4rem 1.6rem;margin-bottom:1rem;}
+.card-titulo{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;color:var(--blanco);margin-bottom:.5rem;display:flex;align-items:center;gap:.6rem;}
+.card-icon{font-size:1.1rem;}
+.card p{font-size:.86rem;color:#8a96a8;margin:0;line-height:1.7;}
+
+/* ARCOP CARDS */
+.arcop-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;}
+.arcop-card{background:rgba(26,108,248,0.06);border:1px solid rgba(26,108,248,0.15);border-radius:10px;padding:1.2rem;}
+.arcop-letter{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--acento);line-height:1;margin-bottom:.4rem;}
+.arcop-nombre{font-size:.82rem;font-weight:600;color:#c9d8f0;margin-bottom:.3rem;}
+.arcop-desc{font-size:.78rem;color:#8a96a8;line-height:1.6;}
+
+/* PROCESO PASOS */
+.pasos{display:flex;flex-direction:column;gap:0;}
+.paso{display:flex;gap:1rem;position:relative;padding-bottom:1.5rem;}
+.paso:last-child{padding-bottom:0;}
+.paso::before{content:'';position:absolute;left:18px;top:38px;bottom:0;width:1px;background:rgba(26,108,248,0.2);}
+.paso:last-child::before{display:none;}
+.paso-num{width:38px;height:38px;border-radius:50%;background:rgba(26,108,248,0.15);border:1px solid rgba(26,108,248,0.3);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:.85rem;color:var(--acento);flex-shrink:0;}
+.paso-content{flex:1;padding-top:.4rem;}
+.paso-titulo{font-size:.9rem;font-weight:600;color:#c9d8f0;margin-bottom:.3rem;}
+.paso-desc{font-size:.82rem;color:#8a96a8;line-height:1.6;}
+
+/* ALERT BOX */
+.alert{border-radius:10px;padding:1.2rem 1.4rem;margin:1.5rem 0;font-size:.85rem;line-height:1.7;}
+.alert-info{background:rgba(26,108,248,0.08);border:1px solid rgba(26,108,248,0.2);color:#93c5fd;}
+.alert-warn{background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);color:#c9a84c;}
+.alert-success{background:rgba(22,163,74,0.08);border:1px solid rgba(22,163,74,0.2);color:#4ade80;}
+.alert strong{display:block;margin-bottom:.3rem;}
+
+/* TABLA */
+.tabla-wrap{overflow-x:auto;margin:1rem 0 1.5rem;border-radius:10px;border:1px solid var(--borde);}
+table{width:100%;border-collapse:collapse;}
+thead{background:rgba(15,42,74,0.8);}
+th{padding:.7rem 1rem;text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gris);font-weight:600;font-family:'Syne',sans-serif;}
+td{padding:.75rem 1rem;font-size:.84rem;color:#a0b0c8;border-bottom:1px solid rgba(255,255,255,0.04);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,0.02);}
+
+/* CONTACTO */
+.contacto-box{background:linear-gradient(135deg,rgba(26,108,248,0.1),rgba(13,33,68,0.8));border:1px solid rgba(26,108,248,0.25);border-radius:12px;padding:2rem;text-align:center;margin-top:2rem;}
+.contacto-box h3{font-family:'Syne',sans-serif;font-size:1.1rem;margin-bottom:.5rem;}
+.contacto-box p{font-size:.85rem;color:#8a96a8;margin-bottom:1.2rem;}
+.contacto-email{display:inline-block;background:var(--acento);color:#fff;padding:.6rem 1.5rem;border-radius:8px;text-decoration:none;font-weight:600;font-size:.88rem;transition:background .15s;}
+.contacto-email:hover{background:#1558d0;}
+
+/* FOOTER */
+.footer{border-top:1px solid var(--borde);padding:2rem;text-align:center;font-size:.78rem;color:#3d4f6a;}
+.footer strong{color:#6b7fa0;}
+
+@media(max-width:600px){
+  .hero h1{font-size:1.5rem;}
+  .arcop-grid{grid-template-columns:1fr;}
+  .tabs{gap:0;padding:0 1rem;}
+  .tab{padding:.8rem .9rem;font-size:.78rem;}
+  .content{padding:2rem 1.2rem 4rem;}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-logo" href="/dashboard">
+    <div class="nav-logo-icon">⚖</div>
+    <div>
+      <div class="nav-logo-text">NormaAI Legal</div>
+      <div class="nav-logo-sub">by Procesus</div>
+    </div>
+  </a>
+  <a class="nav-back" href="/dashboard">← Volver al dashboard</a>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">Transparencia y cumplimiento legal</div>
+    <h1>Política de <span>Privacidad</span> y<br>Protección de Datos</h1>
+    <div class="hero-meta">
+      <span><strong>Versión:</strong> 1.0</span>
+      <span><strong>Vigencia:</strong> 08 de mayo de 2026</span>
+      <span><strong>Responsable:</strong> Procesus SpA</span>
+      <span><strong>Ley aplicable:</strong> Ley N°21.719 (Chile)</span>
+    </div>
+  </div>
+</div>
+
+<div class="tabs-wrap">
+  <div class="tabs">
+    <button class="tab active" onclick="mostrarTab('privacidad',this)">Política de Privacidad</button>
+    <button class="tab" onclick="mostrarTab('terminos',this)">Términos y Condiciones</button>
+    <button class="tab" onclick="mostrarTab('arcop',this)">Procedimiento ARCOP</button>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- ══════════════════════════════════════
+       TAB 1: POLÍTICA DE PRIVACIDAD
+  ══════════════════════════════════════ -->
+  <div class="section active" id="tab-privacidad">
+
+    <h2>Política de Privacidad</h2>
+    <p>Procesus SpA, RUT 78.200.508-1, en adelante <strong>"Procesus"</strong>, es responsable del tratamiento de los datos personales que recopila a través de la plataforma <strong>NormaAI Legal</strong> (en adelante "la Plataforma"), accesible en <strong>legal.normaai.cl</strong>.</p>
+    <p>Esta política ha sido elaborada en cumplimiento de la <strong>Ley N°21.719 sobre Protección de Datos Personales</strong> de la República de Chile y sus reglamentos complementarios.</p>
+
+    <h3>1. Responsable del tratamiento</h3>
+    <div class="card">
+      <div class="card-titulo"><span class="card-icon">🏢</span> Procesus SpA</div>
+      <p><strong>RUT:</strong> 78.200.508-1<br>
+      <strong>Representante legal:</strong> Cristián Cordero<br>
+      <strong>Correo de contacto:</strong> cristian@cristiancordero.cl<br>
+      <strong>Plataforma:</strong> legal.normaai.cl</p>
+    </div>
+
+    <h3>2. Datos personales que recopilamos</h3>
+    <p>Recopilamos únicamente los datos necesarios para la prestación del servicio:</p>
+    <div class="tabla-wrap">
+      <table>
+        <thead><tr><th>Categoría</th><th>Dato</th><th>Finalidad</th></tr></thead>
+        <tbody>
+          <tr><td>Identidad</td><td>Nombre completo</td><td>Identificación del titular</td></tr>
+          <tr><td>Contacto</td><td>Correo electrónico</td><td>Autenticación y comunicaciones</td></tr>
+          <tr><td>Organización</td><td>Empresa, RUT empresa, rubro</td><td>Contextualizar el servicio</td></tr>
+          <tr><td>Sistema de gestión</td><td>Normas ISO, alcance, sitios de trabajo, N° trabajadores</td><td>Personalización del agente IA</td></tr>
+          <tr><td>Documentos</td><td>Matrices de requisitos legales subidas</td><td>Generación del informe de cumplimiento</td></tr>
+          <tr><td>Uso</td><td>Consultas al agente IA, historial de conversaciones</td><td>Prestación del servicio y límites de uso</td></tr>
+          <tr><td>Técnicos</td><td>Tokens de sesión</td><td>Autenticación segura</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>3. Finalidades del tratamiento</h3>
+    <ul>
+      <li>Prestar el servicio de asesoría legal automatizada y revisión de matrices de cumplimiento normativo.</li>
+      <li>Personalizar las respuestas del agente IA al contexto específico de la organización del titular.</li>
+      <li>Emitir informes de cumplimiento con sello Procesus.</li>
+      <li>Enviar comunicaciones relacionadas con el servicio (informes listos, credenciales, notificaciones legales).</li>
+      <li>Cumplir obligaciones legales aplicables.</li>
+    </ul>
+
+    <h3>4. Base de legitimación</h3>
+    <ul>
+      <li><strong>Ejecución de contrato:</strong> el tratamiento es necesario para prestar el servicio contratado.</li>
+      <li><strong>Consentimiento:</strong> el titular lo otorga al aceptar esta política durante el registro.</li>
+      <li><strong>Obligación legal:</strong> cuando el tratamiento sea exigido por la normativa vigente.</li>
+    </ul>
+
+    <h3>5. Almacenamiento y transferencia internacional</h3>
+    <div class="alert alert-warn">
+      <strong>⚠ Transferencia internacional de datos</strong>
+      Los datos personales son almacenados en servidores ubicados en <strong>Estados Unidos de América</strong>, a través del proveedor Supabase Inc., plataforma que cumple con estándares de seguridad SOC 2 Tipo II. Esta transferencia es necesaria para la prestación del servicio y se realiza con las garantías adecuadas conforme al artículo 26 de la Ley N°21.719.
+    </div>
+    <p>Procesus no vende, cede ni transfiere datos personales a terceros con fines comerciales. Los datos solo son compartidos con proveedores de infraestructura tecnológica estrictamente necesarios para el servicio:</p>
+    <ul>
+      <li><strong>Supabase Inc.</strong> — base de datos y autenticación (EE.UU.)</li>
+      <li><strong>Anthropic PBC</strong> — motor de inteligencia artificial (EE.UU.)</li>
+      <li><strong>Vercel Inc.</strong> — hosting de la plataforma (EE.UU.)</li>
+      <li><strong>Google LLC</strong> — envío de correos transaccionales (EE.UU.)</li>
+    </ul>
+
+    <h3>6. Plazo de conservación</h3>
+    <p>Los datos se conservan durante la vigencia de la relación contractual y por un período adicional de <strong>5 años</strong> contados desde la terminación del contrato, salvo que una norma legal exija un plazo mayor o el titular ejerza su derecho de cancelación conforme al procedimiento ARCOP.</p>
+
+    <h3>7. Seguridad</h3>
+    <p>Procesus implementa medidas técnicas y organizativas para proteger los datos personales:</p>
+    <ul>
+      <li>Autenticación mediante tokens JWT con expiración automática.</li>
+      <li>Acceso a datos filtrado por <code>user_id</code> — cada cliente accede únicamente a sus propios datos.</li>
+      <li>Comunicaciones cifradas mediante HTTPS/TLS.</li>
+      <li>Acceso administrativo restringido a personal autorizado.</li>
+      <li>Sin almacenamiento de contraseñas en texto plano — gestionadas por Supabase Auth.</li>
+    </ul>
+
+    <h3>8. Derechos del titular</h3>
+    <p>Conforme a la Ley N°21.719, el titular tiene los derechos <strong>ARCOP</strong> (Acceso, Rectificación, Cancelación, Oposición y Portabilidad). Para ejercerlos, consulta el <button onclick="mostrarTab('arcop',document.querySelectorAll('.tab')[2])" style="background:none;border:none;color:var(--acento);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.92rem;text-decoration:underline;padding:0;">Procedimiento ARCOP</button> disponible en esta misma página.</p>
+
+    <h3>9. Modificaciones a esta política</h3>
+    <p>Procesus se reserva el derecho de modificar esta política para adaptarla a cambios normativos o del servicio. Cualquier modificación relevante será notificada por correo electrónico con al menos <strong>15 días de anticipación</strong>.</p>
+
+    <h3>10. Legislación aplicable y jurisdicción</h3>
+    <p>Esta política se rige por la legislación chilena, en particular la <strong>Ley N°21.719</strong> sobre Protección de Datos Personales. Para cualquier controversia, las partes se someten a los tribunales ordinarios de justicia de la República de Chile.</p>
+
+    <div class="contacto-box">
+      <h3>¿Preguntas sobre tus datos?</h3>
+      <p>Escríbenos directamente al correo del responsable de privacidad.</p>
+      <a class="contacto-email" href="mailto:cristian@cristiancordero.cl">cristian@cristiancordero.cl</a>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       TAB 2: TÉRMINOS Y CONDICIONES
+  ══════════════════════════════════════ -->
+  <div class="section" id="tab-terminos">
+
+    <h2>Términos y Condiciones de Uso</h2>
+    <p>Los presentes Términos y Condiciones regulan el acceso y uso de la plataforma <strong>NormaAI Legal</strong>, operada por <strong>Procesus SpA</strong> (RUT 78.200.508-1). Al acceder a la plataforma, el usuario acepta íntegramente estos términos.</p>
+
+    <h3>1. Objeto del servicio</h3>
+    <p>NormaAI Legal es una plataforma de asesoría legal automatizada que proporciona:</p>
+    <ul>
+      <li>Consultas sobre normativa legal chilena vigente mediante un agente de inteligencia artificial.</li>
+      <li>Revisión y análisis de matrices de requisitos legales bajo sistemas de gestión ISO.</li>
+      <li>Emisión de informes de cumplimiento normativo con sello Procesus.</li>
+      <li>Acceso a noticias y actualizaciones legales relevantes.</li>
+    </ul>
+
+    <div class="alert alert-warn">
+      <strong>⚠ Carácter orientativo del servicio</strong>
+      Las respuestas del agente IA y los informes generados tienen carácter <strong>orientativo e informativo</strong>. No constituyen asesoría legal formal, no reemplazan la consulta con un abogado habilitado y no generan relación abogado-cliente entre el usuario y Procesus SpA.
+    </div>
+
+    <h3>2. Acceso y registro</h3>
+    <ul>
+      <li>El acceso a la plataforma requiere credenciales otorgadas por Procesus SpA.</li>
+      <li>El usuario es responsable de mantener la confidencialidad de sus credenciales.</li>
+      <li>Está prohibido compartir credenciales con terceros.</li>
+      <li>Procesus se reserva el derecho de suspender cuentas ante uso indebido.</li>
+    </ul>
+
+    <h3>3. Límites de uso</h3>
+    <div class="tabla-wrap">
+      <table>
+        <thead><tr><th>Recurso</th><th>Límite</th><th>Período</th></tr></thead>
+        <tbody>
+          <tr><td>Consultas al agente IA</td><td>100 consultas</td><td>Por mes calendario</td></tr>
+          <tr><td>Matrices de cumplimiento</td><td>2 matrices (plan base)</td><td>Por año calendario</td></tr>
+          <tr><td>Tamaño de archivo</td><td>10 MB máximo</td><td>Por carga</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Los límites pueden ser ampliados mediante acuerdo con Procesus SpA contactando a <strong>contacto@normaai.cl</strong>.</p>
+
+    <h3>4. Propiedad intelectual</h3>
+    <p>Todo el contenido de la plataforma — incluyendo el código, diseño, metodología de análisis, informes generados y base de conocimiento legal — es propiedad de <strong>Procesus SpA</strong> y está protegido por las leyes de propiedad intelectual chilenas.</p>
+    <p>Los informes de cumplimiento emitidos son para uso exclusivo del cliente contratante. Queda prohibida su reproducción, distribución o comercialización sin autorización escrita de Procesus SpA.</p>
+
+    <h3>5. Responsabilidad</h3>
+    <ul>
+      <li>Procesus SpA no garantiza la exhaustividad ni la exactitud absoluta de las respuestas del agente IA.</li>
+      <li>La normativa legal puede cambiar. El usuario es responsable de verificar la vigencia de la información ante organismos oficiales (bcn.cl/leychile, Diario Oficial).</li>
+      <li>Procesus SpA no será responsable de decisiones empresariales adoptadas basándose exclusivamente en el contenido de la plataforma.</li>
+      <li>La responsabilidad máxima de Procesus SpA, en cualquier caso, se limita al monto pagado por el servicio en los últimos 12 meses.</li>
+    </ul>
+
+    <h3>6. Confidencialidad</h3>
+    <p>Procesus SpA se compromete a tratar con absoluta confidencialidad la información de la organización del cliente, incluyendo matrices de cumplimiento, alcances, sitios y documentos subidos a la plataforma. Esta información no será compartida con terceros salvo requerimiento judicial o legal.</p>
+
+    <h3>7. Vigencia y terminación</h3>
+    <p>El contrato de servicio está vigente durante el período contratado. Procesus SpA puede dar término al servicio con <strong>30 días de aviso previo</strong>, o de forma inmediata ante incumplimientos graves de estos términos por parte del usuario.</p>
+
+    <h3>8. Modificaciones</h3>
+    <p>Procesus SpA podrá modificar estos términos notificando al usuario por correo electrónico con al menos <strong>15 días de anticipación</strong>. El uso continuado de la plataforma después de dicho plazo implica aceptación de los términos modificados.</p>
+
+    <h3>9. Ley aplicable</h3>
+    <p>Estos términos se rigen por las leyes de la República de Chile. Cualquier controversia será sometida a los tribunales ordinarios de justicia de Santiago de Chile.</p>
+
+    <div class="contacto-box">
+      <h3>¿Consultas sobre los términos?</h3>
+      <p>Contáctanos para cualquier aclaración sobre las condiciones del servicio.</p>
+      <a class="contacto-email" href="mailto:cristian@cristiancordero.cl">cristian@cristiancordero.cl</a>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       TAB 3: PROCEDIMIENTO ARCOP
+  ══════════════════════════════════════ -->
+  <div class="section" id="tab-arcop">
+
+    <h2>Procedimiento ARCOP</h2>
+    <p>La <strong>Ley N°21.719</strong> sobre Protección de Datos Personales de Chile reconoce a los titulares de datos el derecho a ejercer los derechos conocidos como <strong>ARCOP</strong>. A continuación se detalla cada derecho y el procedimiento para ejercerlo.</p>
+
+    <h3>¿Cuáles son tus derechos?</h3>
+    <div class="arcop-grid">
+      <div class="arcop-card">
+        <div class="arcop-letter">A</div>
+        <div class="arcop-nombre">Acceso</div>
+        <div class="arcop-desc">Conocer qué datos personales tuyos tiene Procesus SpA, con qué finalidad y por cuánto tiempo serán conservados.</div>
+      </div>
+      <div class="arcop-card">
+        <div class="arcop-letter">R</div>
+        <div class="arcop-nombre">Rectificación</div>
+        <div class="arcop-desc">Solicitar la corrección de datos inexactos, incompletos o que ya no correspondan a la realidad actual.</div>
+      </div>
+      <div class="arcop-card">
+        <div class="arcop-letter">C</div>
+        <div class="arcop-nombre">Cancelación</div>
+        <div class="arcop-desc">Solicitar la eliminación de tus datos personales cuando ya no sean necesarios para la finalidad para la que fueron recopilados.</div>
+      </div>
+      <div class="arcop-card">
+        <div class="arcop-letter">O</div>
+        <div class="arcop-nombre">Oposición</div>
+        <div class="arcop-desc">Oponerte al tratamiento de tus datos para finalidades específicas, en particular para comunicaciones comerciales o perfiles automatizados.</div>
+      </div>
+    </div>
+    <div class="arcop-card" style="margin-bottom:1.5rem;">
+      <div class="arcop-letter">P</div>
+      <div class="arcop-nombre">Portabilidad</div>
+      <div class="arcop-desc">Recibir tus datos personales en un formato estructurado, de uso común y lectura mecánica (como JSON o CSV), y en su caso transmitirlos a otro responsable del tratamiento.</div>
+    </div>
+
+    <h3>¿Quién puede ejercer estos derechos?</h3>
+    <p>El propio titular de los datos, su representante legal debidamente acreditado, o sus herederos en caso de fallecimiento del titular.</p>
+
+    <h3>Procedimiento para ejercer tus derechos</h3>
+
+    <div class="pasos">
+      <div class="paso">
+        <div class="paso-num">1</div>
+        <div class="paso-content">
+          <div class="paso-titulo">Envía tu solicitud por correo electrónico</div>
+          <div class="paso-desc">Escribe a <strong>cristian@cristiancordero.cl</strong> con el asunto <strong>"Solicitud ARCOP — NormaAI Legal"</strong>. Tu correo debe incluir: tu nombre completo, el derecho que deseas ejercer (A, R, C, O o P), descripción de la solicitud y correo electrónico registrado en la plataforma.</div>
+        </div>
+      </div>
+      <div class="paso">
+        <div class="paso-num">2</div>
+        <div class="paso-content">
+          <div class="paso-titulo">Acredita tu identidad</div>
+          <div class="paso-desc">Adjunta una copia de tu cédula de identidad vigente u otro documento oficial que acredite tu identidad. Para representantes legales, adjunta además el poder notarial o documento de representación.</div>
+        </div>
+      </div>
+      <div class="paso">
+        <div class="paso-num">3</div>
+        <div class="paso-content">
+          <div class="paso-titulo">Recibe acuse de recibo</div>
+          <div class="paso-desc">Procesus SpA enviará un acuse de recibo dentro de las <strong>48 horas hábiles</strong> siguientes a la recepción de la solicitud, confirmando que está siendo tramitada.</div>
+        </div>
+      </div>
+      <div class="paso">
+        <div class="paso-num">4</div>
+        <div class="paso-content">
+          <div class="paso-titulo">Evaluación y respuesta</div>
+          <div class="paso-desc">Procesus SpA analizará la solicitud y responderá dentro del plazo legal de <strong>15 días hábiles</strong> contados desde la recepción de la solicitud completa. En casos complejos, este plazo puede extenderse por 15 días hábiles adicionales, previa notificación al titular.</div>
+        </div>
+      </div>
+      <div class="paso">
+        <div class="paso-num">5</div>
+        <div class="paso-content">
+          <div class="paso-titulo">Ejecución o respuesta fundada</div>
+          <div class="paso-desc">Si la solicitud es procedente, Procesus SpA ejecutará el derecho dentro de los plazos indicados. Si se niega total o parcialmente, se entregará una respuesta fundada en derecho con las razones de la decisión y se informará sobre los recursos disponibles.</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Plazos legales</h3>
+    <div class="tabla-wrap">
+      <table>
+        <thead><tr><th>Acción</th><th>Plazo</th><th>Base legal</th></tr></thead>
+        <tbody>
+          <tr><td>Acuse de recibo</td><td>48 horas hábiles</td><td>Art. 11 Ley N°21.719</td></tr>
+          <tr><td>Respuesta a la solicitud</td><td>15 días hábiles</td><td>Art. 11 Ley N°21.719</td></tr>
+          <tr><td>Prórroga excepcional</td><td>15 días hábiles adicionales</td><td>Art. 11 Ley N°21.719</td></tr>
+          <tr><td>Ejecución del derecho</td><td>5 días hábiles tras resolución</td><td>Art. 11 Ley N°21.719</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Causales de improcedencia</h3>
+    <p>La solicitud podrá ser rechazada fundadamente cuando:</p>
+    <ul>
+      <li>No se acredite la identidad del titular o representante.</li>
+      <li>La solicitud de cancelación afecte datos necesarios para el cumplimiento de una obligación legal o contractual vigente.</li>
+      <li>La cancelación afecte derechos de terceros o el cumplimiento de un mandato judicial.</li>
+      <li>El derecho de oposición se ejerza respecto de tratamientos amparados en base legal distinta al consentimiento.</li>
+    </ul>
+
+    <h3>Recursos ante denegación</h3>
+    <div class="alert alert-info">
+      <strong>ℹ Si tu solicitud es denegada</strong>
+      Si Procesus SpA niega tu solicitud ARCOP o no responde dentro del plazo legal, puedes recurrir ante la <strong>Agencia de Protección de Datos Personales de Chile</strong> (agenciadp.cl) o ante los tribunales de justicia competentes, conforme al procedimiento establecido en la Ley N°21.719.
+    </div>
+
+    <h3>Formato de solicitud sugerido</h3>
+    <div class="card">
+      <div class="card-titulo"><span class="card-icon">📧</span> Modelo de correo ARCOP</div>
+      <p style="margin-top:.8rem;font-family:monospace;font-size:.82rem;line-height:1.9;color:#93c5fd;white-space:pre-wrap;">Asunto: Solicitud ARCOP — NormaAI Legal
+
+Estimado/a equipo de Procesus SpA,
+
+Por medio del presente correo, yo [NOMBRE COMPLETO],
+RUT [XX.XXX.XXX-X], titular de la cuenta registrada
+con el correo [EMAIL EN LA PLATAFORMA], ejerceré mi
+derecho de [ACCESO / RECTIFICACIÓN / CANCELACIÓN /
+OPOSICIÓN / PORTABILIDAD], conforme a la Ley N°21.719.
+
+Descripción de la solicitud:
+[Detallar qué información desea acceder, corregir,
+eliminar, etc.]
+
+Adjunto copia de mi cédula de identidad.
+
+Quedo atento/a a su respuesta en el plazo legal.
+
+[FIRMA Y FECHA]</p>
+    </div>
+
+    <div class="contacto-box">
+      <h3>Ejercer mis derechos ARCOP</h3>
+      <p>Envía tu solicitud directamente al responsable del tratamiento de datos.</p>
+      <a class="contacto-email" href="mailto:cristian@cristiancordero.cl?subject=Solicitud ARCOP — NormaAI Legal">Enviar solicitud ARCOP →</a>
+    </div>
+  </div>
+
+</div>
+
+<footer class="footer">
+  <strong>NormaAI Legal · Procesus SpA</strong> · RUT 78.200.508-1 · Chile<br>
+  Política vigente desde el 08 de mayo de 2026 · Ley N°21.719 sobre Protección de Datos Personales
+</footer>
+
+<script>
+function mostrarTab(id, el) {
+  document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  document.getElementById('tab-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
