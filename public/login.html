@@ -28,10 +28,9 @@
     overflow: hidden;
   }
 
-  /* ── Fondo animado ── */
   .bg {
     position: fixed; inset: 0; z-index: 0;
-    background: 
+    background:
       radial-gradient(ellipse 80% 60% at 20% 10%, rgba(26,108,248,0.15) 0%, transparent 60%),
       radial-gradient(ellipse 60% 80% at 80% 90%, rgba(201,168,76,0.08) 0%, transparent 60%),
       linear-gradient(160deg, #0a1628 0%, #0d2144 50%, #0a1628 100%);
@@ -39,13 +38,12 @@
 
   .grid-overlay {
     position: fixed; inset: 0; z-index: 0;
-    background-image: 
+    background-image:
       linear-gradient(rgba(26,108,248,0.04) 1px, transparent 1px),
       linear-gradient(90deg, rgba(26,108,248,0.04) 1px, transparent 1px);
     background-size: 48px 48px;
   }
 
-  /* ── Layout ── */
   .container {
     position: relative; z-index: 1;
     min-height: 100vh;
@@ -53,7 +51,7 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  /* ── Panel izquierdo ── */
+  /* Panel izquierdo */
   .panel-left {
     display: flex;
     flex-direction: column;
@@ -141,7 +139,7 @@
     box-shadow: 0 0 8px rgba(26,108,248,0.6);
   }
 
-  /* ── Panel derecho (login) ── */
+  /* Panel derecho */
   .panel-right {
     display: flex;
     align-items: center;
@@ -158,6 +156,12 @@
     padding: 2.5rem;
     backdrop-filter: blur(20px);
     box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+    animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1) both;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
   .login-title {
@@ -208,6 +212,51 @@
 
   .field input::placeholder { color: #4a5568; }
 
+  /* Checkbox política */
+  .acepta-wrap {
+    margin-bottom: 1.2rem;
+    padding: .85rem 1rem;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    transition: border-color .2s;
+  }
+  .acepta-wrap.error {
+    border-color: rgba(220,38,38,0.5);
+    background: rgba(220,38,38,0.05);
+  }
+  .acepta-label {
+    display: flex;
+    align-items: flex-start;
+    gap: .6rem;
+    cursor: pointer;
+    font-size: .8rem;
+    color: #8a96a8;
+    line-height: 1.55;
+  }
+  .acepta-label input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    accent-color: var(--acento);
+    cursor: pointer;
+  }
+  .acepta-label a {
+    color: #60a5fa;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .acepta-label a:hover { text-decoration: underline; }
+  .acepta-label strong { color: #c9d8f0; }
+  .acepta-error {
+    font-size: .73rem;
+    color: #fca5a5;
+    margin-top: .4rem;
+    margin-left: 1.4rem;
+    display: none;
+  }
+
   .btn-login {
     width: 100%;
     background: linear-gradient(135deg, var(--acento), var(--acento-cl));
@@ -220,7 +269,6 @@
     font-family: 'DM Sans', sans-serif;
     cursor: pointer;
     transition: all 0.2s;
-    margin-top: 0.5rem;
     box-shadow: 0 4px 20px rgba(26,108,248,0.35);
     letter-spacing: 0.02em;
   }
@@ -263,21 +311,11 @@
 
   .contact-link a:hover { text-decoration: underline; }
 
-  /* ── Responsive ── */
   @media (max-width: 768px) {
     .container { grid-template-columns: 1fr; }
     .panel-left { display: none; }
     .panel-right { padding: 2rem 1.5rem; }
     html, body { overflow: auto; }
-  }
-
-  /* ── Animación entrada ── */
-  .login-card {
-    animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1) both;
-  }
-  @keyframes slideUp {
-    from { opacity: 0; transform: translateY(24px); }
-    to   { opacity: 1; transform: translateY(0); }
   }
 </style>
 </head>
@@ -302,27 +340,15 @@
     </h1>
 
     <p class="hero-desc">
-      Plataforma de cumplimiento normativo para empresas certificadas ISO en Chile. 
+      Plataforma de cumplimiento normativo para empresas certificadas ISO en Chile.
       Consulta la normativa vigente y resuelve dudas legales con inteligencia artificial.
     </p>
 
     <div class="features">
-      <div class="feature">
-        <div class="feature-dot"></div>
-        Agente IA especializado en normativa chilena
-      </div>
-      <div class="feature">
-        <div class="feature-dot"></div>
-        Conectado a la Biblioteca del Congreso Nacional
-      </div>
-      <div class="feature">
-        <div class="feature-dot"></div>
-        Actualizaciones de requisitos legales ISO
-      </div>
-      <div class="feature">
-        <div class="feature-dot"></div>
-        Noticias legales filtradas por relevancia
-      </div>
+      <div class="feature"><div class="feature-dot"></div>Agente IA especializado en normativa chilena</div>
+      <div class="feature"><div class="feature-dot"></div>Conectado a la Biblioteca del Congreso Nacional</div>
+      <div class="feature"><div class="feature-dot"></div>Actualizaciones de requisitos legales ISO</div>
+      <div class="feature"><div class="feature-dot"></div>Noticias legales filtradas por relevancia</div>
     </div>
   </div>
 
@@ -342,6 +368,24 @@
         <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
       </div>
 
+      <!-- Aceptación política de privacidad -->
+      <div class="acepta-wrap" id="acepta-wrap">
+        <label class="acepta-label">
+          <input type="checkbox" id="acepta-politica">
+          <span>
+            He leído y acepto la
+            <a href="/privacidad" target="_blank">Política de Privacidad</a>,
+            los
+            <a href="/privacidad" target="_blank">Términos y Condiciones</a>
+            y el tratamiento de mis datos personales conforme a la
+            <strong>Ley N°21.719</strong>.
+          </span>
+        </label>
+        <div class="acepta-error" id="acepta-error">
+          Debes aceptar la política de privacidad para continuar.
+        </div>
+      </div>
+
       <button class="btn-login" id="btn-login" onclick="login()">
         Ingresar a NormaAI
       </button>
@@ -358,9 +402,32 @@
 </div>
 
 <script>
-  // Redirigir si ya hay sesión
+  // Redirigir si ya hay sesión activa
   const token = localStorage.getItem('normaai_token');
   if (token) window.location.href = '/dashboard';
+
+  function validarAceptacion() {
+    const checkbox = document.getElementById('acepta-politica');
+    const wrap     = document.getElementById('acepta-wrap');
+    const errorEl  = document.getElementById('acepta-error');
+    if (!checkbox.checked) {
+      wrap.classList.add('error');
+      errorEl.style.display = 'block';
+      checkbox.focus();
+      return false;
+    }
+    wrap.classList.remove('error');
+    errorEl.style.display = 'none';
+    return true;
+  }
+
+  // Quitar el borde rojo al marcar el checkbox
+  document.getElementById('acepta-politica').addEventListener('change', function() {
+    if (this.checked) {
+      document.getElementById('acepta-wrap').classList.remove('error');
+      document.getElementById('acepta-error').style.display = 'none';
+    }
+  });
 
   async function login() {
     const email    = document.getElementById('email').value.trim();
@@ -374,6 +441,9 @@
       mostrarError('Por favor completa todos los campos.');
       return;
     }
+
+    // Validar aceptación de política
+    if (!validarAceptacion()) return;
 
     btn.disabled = true;
     btn.textContent = 'Ingresando...';
@@ -394,6 +464,7 @@
 
       localStorage.setItem('normaai_token', data.token);
       localStorage.setItem('normaai_user', JSON.stringify(data.user));
+
       if (data.user.rol === 'admin') {
         window.location.href = '/admin';
       } else {
@@ -414,8 +485,7 @@
     el.style.display = 'block';
   }
 
-  // Enter para login
-  document.addEventListener('keydown', e => {
+  document.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') login();
   });
 </script>
