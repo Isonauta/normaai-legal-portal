@@ -1230,6 +1230,11 @@ app.post('/api/logout', verificarToken, async (req, res) => {
   res.json({ ok: true });
 });
 
+// ── Ruta pública: Política de Privacidad, Términos y ARCOP ───
+app.get('/privacidad', (req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'privacidad.html'))
+);
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`NormaAI Legal Portal corriendo en puerto ${PORT}`));
 module.exports = app;
