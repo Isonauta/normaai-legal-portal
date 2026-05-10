@@ -3,328 +3,184 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NormaAI Legal — Acceso</title>
+<title>NormaAI Legal — Cumplimiento normativo para empresas ISO en Chile</title>
+<meta name="description" content="Plataforma de cumplimiento normativo para empresas certificadas ISO en Chile. Agente IA especializado en normativa legal chilena, revisión de matrices y noticias legales.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --azul:#0a1628;
+  --azul-med:#0d2144;
+  --acento:#1a6cf8;
+  --acento-cl:#3d84fa;
+  --dorado:#c9a84c;
+  --gris:#8a96a8;
+  --blanco:#ffffff;
+  --borde:rgba(255,255,255,0.07);
+  --card:rgba(255,255,255,0.03);
+}
+html,body{font-family:'DM Sans',sans-serif;background:var(--azul);color:var(--blanco);overflow-x:hidden;}
 
-  :root {
-    --azul:     #0a1628;
-    --azul-med: #0d2144;
-    --acento:   #1a6cf8;
-    --acento-cl:#3d84fa;
-    --dorado:   #c9a84c;
-    --gris:     #8a96a8;
-    --gris-cl:  #e8ecf2;
-    --blanco:   #ffffff;
-  }
+/* ── FONDO ── */
+.bg{position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%,rgba(26,108,248,0.15) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 80% at 80% 90%,rgba(201,168,76,0.08) 0%,transparent 60%),
+    linear-gradient(160deg,#0a1628 0%,#0d2144 50%,#0a1628 100%);}
+.grid-overlay{position:fixed;inset:0;z-index:0;
+  background-image:linear-gradient(rgba(26,108,248,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(26,108,248,0.04) 1px,transparent 1px);
+  background-size:48px 48px;}
 
-  html, body {
-    height: 100%;
-    font-family: 'DM Sans', sans-serif;
-    background: var(--azul);
-    color: var(--blanco);
-    overflow: hidden;
-  }
+/* ── HERO SPLIT ── */
+.hero{position:relative;z-index:1;min-height:100vh;display:grid;grid-template-columns:1fr 1fr;align-items:center;}
 
-  .bg {
-    position: fixed; inset: 0; z-index: 0;
-    background:
-      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(26,108,248,0.15) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 80% at 80% 90%, rgba(201,168,76,0.08) 0%, transparent 60%),
-      linear-gradient(160deg, #0a1628 0%, #0d2144 50%, #0a1628 100%);
-  }
+/* Panel izquierdo */
+.panel-left{padding:5rem 4rem;border-right:1px solid var(--borde);display:flex;flex-direction:column;justify-content:center;min-height:100vh;}
+.logo{display:flex;align-items:center;gap:.75rem;margin-bottom:3.5rem;}
+.logo-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--acento),var(--acento-cl));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 0 20px rgba(26,108,248,0.4);}
+.logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;letter-spacing:-0.02em;}
+.logo-sub{font-size:.7rem;color:var(--dorado);letter-spacing:.15em;text-transform:uppercase;margin-top:1px;}
+.hero-tag{display:inline-block;font-size:.68rem;text-transform:uppercase;letter-spacing:.15em;color:var(--dorado);border:1px solid rgba(201,168,76,0.25);padding:.3rem .8rem;border-radius:999px;margin-bottom:1.2rem;}
+.hero-title{font-family:'Syne',sans-serif;font-size:2.8rem;font-weight:800;line-height:1.1;letter-spacing:-0.03em;margin-bottom:1.2rem;}
+.hero-title span{background:linear-gradient(135deg,var(--acento-cl),var(--dorado));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero-desc{font-size:.95rem;color:var(--gris);line-height:1.75;max-width:400px;margin-bottom:2.5rem;}
+.features{display:flex;flex-direction:column;gap:.85rem;}
+.feature{display:flex;align-items:center;gap:.75rem;font-size:.87rem;color:#b0bccf;}
+.feature-dot{width:6px;height:6px;border-radius:50%;background:var(--acento);flex-shrink:0;box-shadow:0 0 8px rgba(26,108,248,0.6);}
 
-  .grid-overlay {
-    position: fixed; inset: 0; z-index: 0;
-    background-image:
-      linear-gradient(rgba(26,108,248,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(26,108,248,0.04) 1px, transparent 1px);
-    background-size: 48px 48px;
-  }
+/* Panel derecho */
+.panel-right{padding:4rem;display:flex;align-items:center;justify-content:center;min-height:100vh;overflow-y:auto;}
+.panel-right-inner{width:100%;max-width:420px;}
 
-  .container {
-    position: relative; z-index: 1;
-    min-height: 100vh;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
+/* LOGIN CARD */
+.login-card{background:var(--card);border:1px solid var(--borde);border-radius:20px;padding:2.5rem;backdrop-filter:blur(20px);box-shadow:0 24px 64px rgba(0,0,0,0.4);animation:slideUp .5s cubic-bezier(0.16,1,0.3,1) both;margin-bottom:0;}
+@keyframes slideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.login-title{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:700;margin-bottom:.4rem;}
+.login-sub{font-size:.85rem;color:var(--gris);margin-bottom:2rem;}
+.field{margin-bottom:1.2rem;}
+.field label{display:block;font-size:.8rem;font-weight:500;color:#8a96a8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem;}
+.field input{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:.85rem 1rem;font-size:.95rem;color:var(--blanco);font-family:'DM Sans',sans-serif;transition:all .2s;outline:none;}
+.field input:focus{border-color:var(--acento);background:rgba(26,108,248,0.08);box-shadow:0 0 0 3px rgba(26,108,248,0.15);}
+.field input::placeholder{color:#4a5568;}
 
-  /* Panel izquierdo */
-  .panel-left {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 4rem;
-    border-right: 1px solid rgba(255,255,255,0.06);
-  }
+/* Checkbox política */
+.acepta-wrap{margin-bottom:1.2rem;padding:.85rem 1rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;transition:border-color .2s;}
+.acepta-wrap.error{border-color:rgba(220,38,38,0.5);background:rgba(220,38,38,0.05);}
+.acepta-label{display:flex;align-items:flex-start;gap:.6rem;cursor:pointer;font-size:.8rem;color:#8a96a8;line-height:1.55;}
+.acepta-label input[type="checkbox"]{width:15px;height:15px;margin-top:2px;flex-shrink:0;accent-color:var(--acento);cursor:pointer;}
+.acepta-label a{color:#60a5fa;text-decoration:none;font-weight:500;}
+.acepta-label a:hover{text-decoration:underline;}
+.acepta-label strong{color:#c9d8f0;}
+.acepta-error{font-size:.73rem;color:#fca5a5;margin-top:.4rem;margin-left:1.4rem;display:none;}
 
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 3rem;
-  }
+.btn-login{width:100%;background:linear-gradient(135deg,var(--acento),var(--acento-cl));color:var(--blanco);border:none;border-radius:10px;padding:.9rem;font-size:.95rem;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s;box-shadow:0 4px 20px rgba(26,108,248,0.35);letter-spacing:.02em;}
+.btn-login:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(26,108,248,0.45);}
+.btn-login:active{transform:translateY(0);}
+.btn-login:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+.error-msg{background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.3);border-radius:8px;padding:.75rem 1rem;font-size:.84rem;color:#fca5a5;margin-top:1rem;display:none;}
+.divider{height:1px;background:rgba(255,255,255,0.06);margin:1.5rem 0;}
+.contact-link{text-align:center;font-size:.82rem;color:var(--gris);}
+.contact-link a{color:var(--acento-cl);text-decoration:none;}
+.contact-link a:hover{text-decoration:underline;}
 
-  .logo-icon {
-    width: 44px; height: 44px;
-    background: linear-gradient(135deg, var(--acento), var(--acento-cl));
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.3rem;
-    box-shadow: 0 0 20px rgba(26,108,248,0.4);
-  }
+/* ── LANDING SECTION (debajo del login card) ── */
+.landing{position:relative;z-index:1;border-top:1px solid var(--borde);padding:6rem 0;}
+.landing-inner{max-width:1100px;margin:0 auto;padding:0 4rem;}
 
-  .logo-text {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 1.4rem;
-    letter-spacing: -0.02em;
-    color: var(--blanco);
-  }
+/* Intro */
+.landing-intro{text-align:center;margin-bottom:5rem;}
+.landing-eyebrow{font-size:.7rem;text-transform:uppercase;letter-spacing:.18em;color:var(--dorado);margin-bottom:1rem;}
+.landing-h2{font-family:'Syne',sans-serif;font-size:2.4rem;font-weight:800;line-height:1.15;margin-bottom:1rem;}
+.landing-h2 span{background:linear-gradient(135deg,var(--acento-cl),var(--dorado));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.landing-lead{font-size:1rem;color:var(--gris);max-width:580px;margin:0 auto;line-height:1.75;}
 
-  .logo-sub {
-    font-size: 0.7rem;
-    color: var(--dorado);
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    font-weight: 500;
-    margin-top: 1px;
-  }
+/* Grid de propuesta */
+.prop-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.2rem;margin-bottom:5rem;}
+.prop-card{background:var(--card);border:1px solid var(--borde);border-radius:14px;padding:1.5rem;transition:all .2s;}
+.prop-card:hover{background:rgba(255,255,255,0.05);border-color:rgba(26,108,248,0.25);transform:translateY(-2px);}
+.prop-icon{font-size:1.6rem;margin-bottom:1rem;display:block;}
+.prop-title{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:.5rem;}
+.prop-desc{font-size:.85rem;color:#8a96a8;line-height:1.7;}
 
-  .hero-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 2.8rem;
-    font-weight: 800;
-    line-height: 1.1;
-    letter-spacing: -0.03em;
-    margin-bottom: 1.2rem;
-  }
+/* Quote */
+.landing-quote{background:linear-gradient(135deg,rgba(26,108,248,0.08),rgba(13,33,68,0.6));border:1px solid rgba(26,108,248,0.15);border-radius:16px;padding:2.5rem 3rem;margin-bottom:5rem;text-align:center;}
+.landing-quote p{font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:600;line-height:1.5;color:#c9d8f0;max-width:680px;margin:0 auto .8rem;}
+.landing-quote cite{font-size:.78rem;color:#4a5568;font-style:normal;letter-spacing:.05em;}
 
-  .hero-title span {
-    background: linear-gradient(135deg, var(--acento-cl), var(--dorado));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
+/* Cómo funciona */
+.como-wrap{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;margin-bottom:5rem;}
+.como-left h3{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:700;line-height:1.2;margin-bottom:1rem;}
+.como-left p{font-size:.9rem;color:var(--gris);line-height:1.75;margin-bottom:1.5rem;}
+.como-steps{display:flex;flex-direction:column;gap:0;}
+.como-step{display:flex;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--borde);}
+.como-step:last-child{border-bottom:none;}
+.como-num{width:32px;height:32px;border-radius:50%;background:rgba(26,108,248,0.12);border:1px solid rgba(26,108,248,0.25);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;color:var(--acento-cl);flex-shrink:0;}
+.como-step-title{font-size:.9rem;font-weight:600;color:#e2e8f0;margin-bottom:.25rem;}
+.como-step-desc{font-size:.82rem;color:#8a96a8;line-height:1.6;}
 
-  .hero-desc {
-    font-size: 0.95rem;
-    color: var(--gris);
-    line-height: 1.7;
-    max-width: 380px;
-    margin-bottom: 2.5rem;
-  }
+/* Panel derecho del como */
+.como-right{background:var(--card);border:1px solid var(--borde);border-radius:16px;padding:2rem;display:flex;flex-direction:column;gap:1rem;}
+.como-stat{padding:1rem 1.2rem;background:rgba(255,255,255,0.03);border:1px solid var(--borde);border-radius:10px;display:flex;align-items:center;gap:1rem;}
+.como-stat-icon{font-size:1.5rem;flex-shrink:0;}
+.como-stat-num{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--blanco);line-height:1;}
+.como-stat-lbl{font-size:.75rem;color:#8a96a8;margin-top:.15rem;}
 
-  .features {
-    display: flex;
-    flex-direction: column;
-    gap: 0.9rem;
-  }
+/* Fuentes normativa */
+.fuentes{margin-bottom:5rem;}
+.fuentes h3{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:1.2rem;text-align:center;}
+.fuentes-grid{display:flex;flex-wrap:wrap;gap:.7rem;justify-content:center;}
+.fuente-badge{font-size:.82rem;color:#8a96a8;background:var(--card);border:1px solid var(--borde);padding:.4rem 1rem;border-radius:999px;}
 
-  .feature {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-size: 0.87rem;
-    color: #b0bccf;
-  }
+/* CTA Final */
+.cta-final{background:linear-gradient(135deg,#0d2144,#0a1628);border:1px solid var(--borde);border-radius:20px;padding:3.5rem;text-align:center;}
+.cta-final h3{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;margin-bottom:.75rem;line-height:1.2;}
+.cta-final p{font-size:.92rem;color:var(--gris);margin-bottom:2rem;max-width:480px;margin-left:auto;margin-right:auto;line-height:1.7;}
+.cta-btns{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;}
+.btn-wa{display:inline-flex;align-items:center;gap:.5rem;background:#25d366;color:#fff;padding:.8rem 2rem;border-radius:10px;text-decoration:none;font-weight:700;font-size:.9rem;transition:all .15s;}
+.btn-wa:hover{background:#1fb659;transform:translateY(-1px);}
+.btn-mail{display:inline-flex;align-items:center;gap:.5rem;background:rgba(255,255,255,0.06);color:#c9d8f0;padding:.8rem 2rem;border-radius:10px;text-decoration:none;font-weight:500;font-size:.9rem;border:1px solid var(--borde);transition:all .15s;}
+.btn-mail:hover{background:rgba(255,255,255,0.09);}
 
-  .feature-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--acento);
-    flex-shrink: 0;
-    box-shadow: 0 0 8px rgba(26,108,248,0.6);
-  }
+/* FOOTER */
+.site-footer{position:relative;z-index:1;border-top:1px solid var(--borde);padding:2rem 4rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;}
+.footer-logo{display:flex;align-items:center;gap:.6rem;font-size:.85rem;font-weight:500;}
+.footer-logo-icon{width:28px;height:28px;background:var(--acento);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+.footer-links{display:flex;gap:1.5rem;font-size:.8rem;}
+.footer-links a{color:#4a5568;text-decoration:none;transition:color .15s;}
+.footer-links a:hover{color:var(--gris);}
+.footer-legal{font-size:.75rem;color:#3d4f6a;}
 
-  /* Panel derecho */
-  .panel-right {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4rem;
-  }
-
-  .login-card {
-    width: 100%;
-    max-width: 400px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 20px;
-    padding: 2.5rem;
-    backdrop-filter: blur(20px);
-    box-shadow: 0 24px 64px rgba(0,0,0,0.4);
-    animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1) both;
-  }
-
-  @keyframes slideUp {
-    from { opacity: 0; transform: translateY(24px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .login-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin-bottom: 0.4rem;
-  }
-
-  .login-sub {
-    font-size: 0.85rem;
-    color: var(--gris);
-    margin-bottom: 2rem;
-  }
-
-  .field {
-    margin-bottom: 1.2rem;
-  }
-
-  .field label {
-    display: block;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: #8a96a8;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 0.5rem;
-  }
-
-  .field input {
-    width: 100%;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 10px;
-    padding: 0.85rem 1rem;
-    font-size: 0.95rem;
-    color: var(--blanco);
-    font-family: 'DM Sans', sans-serif;
-    transition: all 0.2s;
-    outline: none;
-  }
-
-  .field input:focus {
-    border-color: var(--acento);
-    background: rgba(26,108,248,0.08);
-    box-shadow: 0 0 0 3px rgba(26,108,248,0.15);
-  }
-
-  .field input::placeholder { color: #4a5568; }
-
-  /* Checkbox política */
-  .acepta-wrap {
-    margin-bottom: 1.2rem;
-    padding: .85rem 1rem;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 10px;
-    transition: border-color .2s;
-  }
-  .acepta-wrap.error {
-    border-color: rgba(220,38,38,0.5);
-    background: rgba(220,38,38,0.05);
-  }
-  .acepta-label {
-    display: flex;
-    align-items: flex-start;
-    gap: .6rem;
-    cursor: pointer;
-    font-size: .8rem;
-    color: #8a96a8;
-    line-height: 1.55;
-  }
-  .acepta-label input[type="checkbox"] {
-    width: 15px;
-    height: 15px;
-    margin-top: 2px;
-    flex-shrink: 0;
-    accent-color: var(--acento);
-    cursor: pointer;
-  }
-  .acepta-label a {
-    color: #60a5fa;
-    text-decoration: none;
-    font-weight: 500;
-  }
-  .acepta-label a:hover { text-decoration: underline; }
-  .acepta-label strong { color: #c9d8f0; }
-  .acepta-error {
-    font-size: .73rem;
-    color: #fca5a5;
-    margin-top: .4rem;
-    margin-left: 1.4rem;
-    display: none;
-  }
-
-  .btn-login {
-    width: 100%;
-    background: linear-gradient(135deg, var(--acento), var(--acento-cl));
-    color: var(--blanco);
-    border: none;
-    border-radius: 10px;
-    padding: 0.9rem;
-    font-size: 0.95rem;
-    font-weight: 600;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 4px 20px rgba(26,108,248,0.35);
-    letter-spacing: 0.02em;
-  }
-
-  .btn-login:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 28px rgba(26,108,248,0.45);
-  }
-
-  .btn-login:active { transform: translateY(0); }
-  .btn-login:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-  .error-msg {
-    background: rgba(220,38,38,0.1);
-    border: 1px solid rgba(220,38,38,0.3);
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    font-size: 0.84rem;
-    color: #fca5a5;
-    margin-top: 1rem;
-    display: none;
-  }
-
-  .divider {
-    height: 1px;
-    background: rgba(255,255,255,0.06);
-    margin: 1.5rem 0;
-  }
-
-  .contact-link {
-    text-align: center;
-    font-size: 0.82rem;
-    color: var(--gris);
-  }
-
-  .contact-link a {
-    color: var(--acento-cl);
-    text-decoration: none;
-  }
-
-  .contact-link a:hover { text-decoration: underline; }
-
-  @media (max-width: 768px) {
-    .container { grid-template-columns: 1fr; }
-    .panel-left { display: none; }
-    .panel-right { padding: 2rem 1.5rem; }
-    html, body { overflow: auto; }
-  }
+/* RESPONSIVE */
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr;}
+  .panel-left{display:none;}
+  .panel-right{min-height:auto;padding:3rem 1.5rem;}
+  .landing-inner{padding:0 1.5rem;}
+  .landing-h2{font-size:1.8rem;}
+  .como-wrap{grid-template-columns:1fr;}
+  .site-footer{padding:1.5rem;}
+  .footer-links{display:none;}
+}
+@media(max-width:600px){
+  .prop-grid{grid-template-columns:1fr;}
+  .landing-quote{padding:1.5rem;}
+  .landing-quote p{font-size:1.1rem;}
+  .cta-final{padding:2rem 1.5rem;}
+  .cta-btns{flex-direction:column;}
+  .btn-wa,.btn-mail{text-align:center;justify-content:center;}
+}
 </style>
 </head>
 <body>
 <div class="bg"></div>
 <div class="grid-overlay"></div>
 
-<div class="container">
-  <!-- Panel izquierdo -->
+<!-- ══════════════════════════════════════════
+     HERO — Login + propuesta izquierda
+════════════════════════════════════════════ -->
+<div class="hero">
+  <!-- Izquierda -->
   <div class="panel-left">
     <div class="logo">
       <div class="logo-icon">⚖</div>
@@ -333,161 +189,319 @@
         <div class="logo-sub">Legal · by Procesus</div>
       </div>
     </div>
-
-    <h1 class="hero-title">
-      Tu consultor legal<br>
-      <span>disponible 24/7</span>
-    </h1>
-
-    <p class="hero-desc">
-      Plataforma de cumplimiento normativo para empresas certificadas ISO en Chile.
-      Consulta la normativa vigente y resuelve dudas legales con inteligencia artificial.
-    </p>
-
+    <div class="hero-tag">Laboratorio de Comunicación Social y Artificial</div>
+    <h1 class="hero-title">Tu consultor legal<br><span>disponible 24/7</span></h1>
+    <p class="hero-desc">Plataforma de cumplimiento normativo para empresas certificadas ISO en Chile. Normativa vigente, en el contexto real de tu organización.</p>
     <div class="features">
       <div class="feature"><div class="feature-dot"></div>Agente IA especializado en normativa chilena</div>
-      <div class="feature"><div class="feature-dot"></div>Conectado a la Biblioteca del Congreso Nacional</div>
-      <div class="feature"><div class="feature-dot"></div>Actualizaciones de requisitos legales ISO</div>
-      <div class="feature"><div class="feature-dot"></div>Noticias legales filtradas por relevancia</div>
+      <div class="feature"><div class="feature-dot"></div>Conectado a BCN y Diario Oficial en tiempo real</div>
+      <div class="feature"><div class="feature-dot"></div>Informe de cumplimiento certificado por Procesus</div>
+      <div class="feature"><div class="feature-dot"></div>Respuestas en el contexto específico de tu empresa</div>
     </div>
   </div>
 
-  <!-- Panel derecho -->
+  <!-- Derecha — Login -->
   <div class="panel-right">
-    <div class="login-card">
-      <div class="login-title">Bienvenido</div>
-      <div class="login-sub">Ingresa tus credenciales para acceder a la plataforma</div>
+    <div class="panel-right-inner">
+      <div class="login-card">
+        <div class="login-title">Bienvenido</div>
+        <div class="login-sub">Ingresa tus credenciales para acceder a la plataforma</div>
 
-      <div class="field">
-        <label>Correo electrónico</label>
-        <input type="email" id="email" placeholder="tu@empresa.cl" autocomplete="email">
-      </div>
-
-      <div class="field">
-        <label>Contraseña</label>
-        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
-      </div>
-
-      <!-- Aceptación política de privacidad -->
-      <div class="acepta-wrap" id="acepta-wrap">
-        <label class="acepta-label">
-          <input type="checkbox" id="acepta-politica">
-          <span>
-            He leído y acepto la
-            <a href="/privacidad" target="_blank">Política de Privacidad</a>,
-            los
-            <a href="/privacidad" target="_blank">Términos y Condiciones</a>
-            y el tratamiento de mis datos personales conforme a la
-            <strong>Ley N°21.719</strong>.
-          </span>
-        </label>
-        <div class="acepta-error" id="acepta-error">
-          Debes aceptar la política de privacidad para continuar.
+        <div class="field">
+          <label>Correo electrónico</label>
+          <input type="email" id="email" placeholder="tu@empresa.cl" autocomplete="email">
         </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+
+        <div class="acepta-wrap" id="acepta-wrap">
+          <label class="acepta-label">
+            <input type="checkbox" id="acepta-politica">
+            <span>He leído y acepto la <a href="/privacidad" target="_blank">Política de Privacidad</a>, los <a href="/privacidad" target="_blank">Términos y Condiciones</a> y el tratamiento de mis datos conforme a la <strong>Ley N°21.719</strong>.</span>
+          </label>
+          <div class="acepta-error" id="acepta-error">Debes aceptar la política de privacidad para continuar.</div>
+        </div>
+
+        <button class="btn-login" id="btn-login" onclick="login()">Ingresar a NormaAI</button>
+        <div class="error-msg" id="error-msg"></div>
+        <div class="divider"></div>
+        <div class="contact-link">¿No tienes acceso? <a href="https://wa.me/56981571712" target="_blank">Contáctanos</a></div>
       </div>
 
-      <button class="btn-login" id="btn-login" onclick="login()">
-        Ingresar a NormaAI
-      </button>
+      <!-- PROPUESTA DE VALOR — debajo del card -->
+      <div style="margin-top:2.5rem;padding-top:2.5rem;border-top:1px solid var(--borde);">
+        <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.15em;color:#3d4f6a;margin-bottom:1.2rem;">¿Qué es NormaAI Legal?</div>
 
-      <div class="error-msg" id="error-msg"></div>
+        <p style="font-size:.87rem;color:#8a96a8;line-height:1.75;margin-bottom:1.5rem;">Una plataforma de Procesus SpA que combina inteligencia artificial con normativa chilena vigente para que tu equipo sepa exactamente qué le aplica — sin buscar decretos, sin interpretaciones genéricas.</p>
 
-      <div class="divider"></div>
+        <div style="display:flex;flex-direction:column;gap:.7rem;margin-bottom:1.5rem;">
+          <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.8rem 1rem;background:rgba(255,255,255,0.02);border:1px solid var(--borde);border-radius:10px;">
+            <span style="font-size:1.1rem;flex-shrink:0;">⚖</span>
+            <div>
+              <div style="font-size:.85rem;font-weight:600;color:#e2e8f0;margin-bottom:.2rem;">Consultas legales instantáneas</div>
+              <div style="font-size:.78rem;color:#8a96a8;line-height:1.55;">Pregunta en lenguaje natural. Recibes la normativa exacta con número de ley y artículo — en el contexto de tu rubro.</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.8rem 1rem;background:rgba(255,255,255,0.02);border:1px solid var(--borde);border-radius:10px;">
+            <span style="font-size:1.1rem;flex-shrink:0;">📋</span>
+            <div>
+              <div style="font-size:.85rem;font-weight:600;color:#e2e8f0;margin-bottom:.2rem;">Revisión de matriz certificada</div>
+              <div style="font-size:.78rem;color:#8a96a8;line-height:1.55;">Sube tu matriz de requisitos legales y recibe un informe con sello Procesus en 24-48 horas hábiles.</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:.75rem;padding:.8rem 1rem;background:rgba(255,255,255,0.02);border:1px solid var(--borde);border-radius:10px;">
+            <span style="font-size:1.1rem;flex-shrink:0;">🏢</span>
+            <div>
+              <div style="font-size:.85rem;font-weight:600;color:#e2e8f0;margin-bottom:.2rem;">Contexto de tu organización</div>
+              <div style="font-size:.78rem;color:#8a96a8;line-height:1.55;">El agente conoce tu empresa, rubro y normas ISO. Cada respuesta es para ti, no para todos.</div>
+            </div>
+          </div>
+        </div>
 
-      <div class="contact-link">
-        ¿No tienes acceso? <a href="mailto:contacto@normaai.cl">Contáctanos</a>
+        <div style="background:rgba(26,108,248,0.06);border:1px solid rgba(26,108,248,0.15);border-radius:10px;padding:1rem 1.2rem;margin-bottom:1.5rem;">
+          <p style="font-size:.82rem;color:#93c5fd;line-height:1.65;">La normativa chilena cambia. <strong style="color:#c9d8f0;">Una empresa certificada ISO necesita saber qué le aplica hoy</strong> — no el año pasado, no en términos genéricos.</p>
+        </div>
+
+        <div style="font-size:.75rem;color:#3d4f6a;text-align:center;margin-bottom:1rem;">¿Aún no tienes acceso?</div>
+        <a href="https://wa.me/56981571712?text=Hola%20Crist%C3%A1n%2C%20me%20interesa%20NormaAI%20Legal%20para%20mi%20empresa." target="_blank"
+          style="display:flex;align-items:center;justify-content:center;gap:.5rem;background:#25d366;color:#fff;padding:.75rem;border-radius:10px;text-decoration:none;font-weight:700;font-size:.88rem;width:100%;transition:all .15s;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Hablar con Cristián — WhatsApp
+        </a>
+
+        <div style="text-align:center;margin-top:1.2rem;">
+          <a href="/riesgo" style="font-size:.8rem;color:#60a5fa;text-decoration:none;">¿Quieres saber tu nivel de riesgo legal? → Diagnóstico gratuito</a>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- ══════════════════════════════════════════
+     LANDING SECTION — Propuesta completa
+════════════════════════════════════════════ -->
+<section class="landing">
+  <div class="landing-inner">
+
+    <!-- Intro -->
+    <div class="landing-intro">
+      <p class="landing-eyebrow">Procesus SpA · Chile</p>
+      <h2 class="landing-h2">Cumplimiento normativo que<br><span>trabaja mientras tú trabajas.</span></h2>
+      <p class="landing-lead">Diseñado para empresas con sistemas de gestión ISO que necesitan saber exactamente qué normativa legal les aplica — sin bufetes, sin esperas, sin interpretaciones genéricas.</p>
+    </div>
+
+    <!-- Propuesta de valor -->
+    <div class="prop-grid">
+      <div class="prop-card">
+        <span class="prop-icon">⚖</span>
+        <div class="prop-title">Consultas legales al instante</div>
+        <p class="prop-desc">Pregunta en lenguaje natural. El agente responde con la ley exacta, el artículo aplicable y su relación con tu norma ISO — en segundos.</p>
+      </div>
+      <div class="prop-card">
+        <span class="prop-icon">📊</span>
+        <div class="prop-title">Revisión de matriz certificada</div>
+        <p class="prop-desc">Sube tu matriz de requisitos legales. Procesus la revisa artículo por artículo y emite un informe certificado listo para auditoría.</p>
+      </div>
+      <div class="prop-card">
+        <span class="prop-icon">🏢</span>
+        <div class="prop-title">Contextualizado a tu empresa</div>
+        <p class="prop-desc">El agente conoce tu rubro, normas ISO, alcance y sitios de trabajo. Cada respuesta es para tu organización, no para todas.</p>
+      </div>
+      <div class="prop-card">
+        <span class="prop-icon">📰</span>
+        <div class="prop-title">Noticias legales filtradas</div>
+        <p class="prop-desc">Actualizaciones del Diario Oficial y la BCN seleccionadas por relevancia para empresas ISO. Sin ruido, sin suscripciones adicionales.</p>
+      </div>
+    </div>
+
+    <!-- Quote -->
+    <div class="landing-quote">
+      <p>"La normativa chilena cambia constantemente. Una empresa certificada ISO necesita saber qué le aplica hoy — no el año pasado, no en términos genéricos."</p>
+      <cite>Cristián Cordero · Consultor ISO Senior · Procesus SpA</cite>
+    </div>
+
+    <!-- Cómo funciona -->
+    <div class="como-wrap">
+      <div class="como-left">
+        <h3>Tres pasos.<br>Sin fricción.</h3>
+        <p>NormaAI Legal está diseñado para que tu equipo opere sin depender de un abogado para cada consulta operacional del día a día.</p>
+        <div class="como-steps">
+          <div class="como-step">
+            <div class="como-num">1</div>
+            <div>
+              <div class="como-step-title">Configuras tu organización</div>
+              <div class="como-step-desc">Al primer acceso registras empresa, rubro, normas ISO y sitios de trabajo. Desde ese momento, todo responde en tu contexto.</div>
+            </div>
+          </div>
+          <div class="como-step">
+            <div class="como-num">2</div>
+            <div>
+              <div class="como-step-title">Consultas en lenguaje natural</div>
+              <div class="como-step-desc">Pregunta lo que necesitas. El agente cita la ley exacta, el artículo aplicable y cómo se relaciona con tu norma ISO.</div>
+            </div>
+          </div>
+          <div class="como-step">
+            <div class="como-num">3</div>
+            <div>
+              <div class="como-step-title">Recibes evidencia certificada</div>
+              <div class="como-step-desc">Sube tu matriz, Procesus la revisa y emite el informe con sello en 24-48 horas. Listo para cualquier auditoría.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="como-right">
+        <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:#3d4f6a;margin-bottom:.5rem;">La plataforma en números</div>
+        <div class="como-stat">
+          <span class="como-stat-icon">📚</span>
+          <div>
+            <div class="como-stat-num">27+</div>
+            <div class="como-stat-lbl">Normas ISO en base de conocimiento</div>
+          </div>
+        </div>
+        <div class="como-stat">
+          <span class="como-stat-icon">⚡</span>
+          <div>
+            <div class="como-stat-num">&lt; 30s</div>
+            <div class="como-stat-lbl">Tiempo de respuesta del agente</div>
+          </div>
+        </div>
+        <div class="como-stat">
+          <span class="como-stat-icon">📋</span>
+          <div>
+            <div class="como-stat-num">24-48h</div>
+            <div class="como-stat-lbl">Entrega de informe certificado</div>
+          </div>
+        </div>
+        <div class="como-stat">
+          <span class="como-stat-icon">🔒</span>
+          <div>
+            <div class="como-stat-num">100%</div>
+            <div class="como-stat-lbl">Datos aislados por cliente</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fuentes -->
+    <div class="fuentes">
+      <h3>Normativa conectada</h3>
+      <div class="fuentes-grid">
+        <span class="fuente-badge">BCN · Biblioteca del Congreso Nacional</span>
+        <span class="fuente-badge">Diario Oficial de Chile</span>
+        <span class="fuente-badge">ISO 9001:2015</span>
+        <span class="fuente-badge">ISO 14001:2015</span>
+        <span class="fuente-badge">ISO 45001:2018</span>
+        <span class="fuente-badge">ISO 27001:2022</span>
+        <span class="fuente-badge">ISO 37001:2016</span>
+        <span class="fuente-badge">ISO 22000:2018</span>
+        <span class="fuente-badge">ISO 37301:2021</span>
+        <span class="fuente-badge">Ley N°21.719 · Datos Personales</span>
+        <span class="fuente-badge">Ley N°16.744 · Accidentes del Trabajo</span>
+        <span class="fuente-badge">DS N°594 · Condiciones Sanitarias</span>
+      </div>
+    </div>
+
+    <!-- CTA Final -->
+    <div class="cta-final">
+      <h3>¿Tu empresa necesita este servicio?</h3>
+      <p>El acceso a NormaAI Legal es gestionado directamente por Procesus SpA. Conversemos sobre el plan adecuado para tu organización.</p>
+      <div class="cta-btns">
+        <a href="https://wa.me/56981571712?text=Hola%20Crist%C3%A1n%2C%20me%20interesa%20NormaAI%20Legal%20para%20mi%20empresa." target="_blank" class="btn-wa">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Hablar con Cristián
+        </a>
+        <a href="mailto:cristian@cristiancordero.cl" class="btn-mail">cristian@cristiancordero.cl</a>
+        <a href="/riesgo" class="btn-mail">Diagnóstico gratuito →</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="footer-logo">
+    <div class="footer-logo-icon">⚖</div>
+    <div>
+      <div style="font-size:.85rem;font-weight:600;">NormaAI Legal</div>
+      <div style="font-size:.62rem;color:var(--dorado);letter-spacing:.1em;text-transform:uppercase;">by Procesus SpA</div>
+    </div>
+  </div>
+  <div class="footer-links">
+    <a href="/privacidad">Política de privacidad</a>
+    <a href="/privacidad">Términos y condiciones</a>
+    <a href="/privacidad">Procedimiento ARCOP</a>
+    <a href="/riesgo">Diagnóstico gratuito</a>
+  </div>
+  <div class="footer-legal">RUT 78.200.508-1 · Chile · Ley N°21.719</div>
+</footer>
+
 <script>
-  // Redirigir si ya hay sesión activa
-  const token = localStorage.getItem('normaai_token');
-  if (token) window.location.href = '/dashboard';
+const token = localStorage.getItem('normaai_token');
+if (token) window.location.href = '/dashboard';
 
-  function validarAceptacion() {
-    const checkbox = document.getElementById('acepta-politica');
-    const wrap     = document.getElementById('acepta-wrap');
-    const errorEl  = document.getElementById('acepta-error');
-    if (!checkbox.checked) {
-      wrap.classList.add('error');
-      errorEl.style.display = 'block';
-      checkbox.focus();
-      return false;
-    }
-    wrap.classList.remove('error');
-    errorEl.style.display = 'none';
-    return true;
+function validarAceptacion() {
+  const checkbox = document.getElementById('acepta-politica');
+  const wrap = document.getElementById('acepta-wrap');
+  const errorEl = document.getElementById('acepta-error');
+  if (!checkbox.checked) {
+    wrap.classList.add('error');
+    errorEl.style.display = 'block';
+    checkbox.focus();
+    return false;
   }
+  wrap.classList.remove('error');
+  errorEl.style.display = 'none';
+  return true;
+}
 
-  // Quitar el borde rojo al marcar el checkbox
-  document.getElementById('acepta-politica').addEventListener('change', function() {
-    if (this.checked) {
-      document.getElementById('acepta-wrap').classList.remove('error');
-      document.getElementById('acepta-error').style.display = 'none';
-    }
-  });
-
-  async function login() {
-    const email    = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const btn      = document.getElementById('btn-login');
-    const errEl    = document.getElementById('error-msg');
-
-    errEl.style.display = 'none';
-
-    if (!email || !password) {
-      mostrarError('Por favor completa todos los campos.');
-      return;
-    }
-
-    // Validar aceptación de política
-    if (!validarAceptacion()) return;
-
-    btn.disabled = true;
-    btn.textContent = 'Ingresando...';
-
-    try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        mostrarError(data.error || 'Error al iniciar sesión.');
-        return;
-      }
-
-      localStorage.setItem('normaai_token', data.token);
-      localStorage.setItem('normaai_user', JSON.stringify(data.user));
-
-      if (data.user.rol === 'admin') {
-        window.location.href = '/admin';
-      } else {
-        window.location.href = '/dashboard';
-      }
-
-    } catch {
-      mostrarError('Error de conexión. Intenta nuevamente.');
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Ingresar a NormaAI';
-    }
+document.getElementById('acepta-politica').addEventListener('change', function() {
+  if (this.checked) {
+    document.getElementById('acepta-wrap').classList.remove('error');
+    document.getElementById('acepta-error').style.display = 'none';
   }
+});
 
-  function mostrarError(msg) {
-    const el = document.getElementById('error-msg');
-    el.textContent = msg;
-    el.style.display = 'block';
+async function login() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn = document.getElementById('btn-login');
+  const errEl = document.getElementById('error-msg');
+  errEl.style.display = 'none';
+  if (!email || !password) { mostrarError('Por favor completa todos los campos.'); return; }
+  if (!validarAceptacion()) return;
+  btn.disabled = true;
+  btn.textContent = 'Ingresando...';
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) { mostrarError(data.error || 'Error al iniciar sesión.'); return; }
+    localStorage.setItem('normaai_token', data.token);
+    localStorage.setItem('normaai_user', JSON.stringify(data.user));
+    window.location.href = data.user.rol === 'admin' ? '/admin' : '/dashboard';
+  } catch {
+    mostrarError('Error de conexión. Intenta nuevamente.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Ingresar a NormaAI';
   }
+}
 
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') login();
-  });
+function mostrarError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') login();
+});
 </script>
 </body>
 </html>
