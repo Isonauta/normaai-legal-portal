@@ -1347,8 +1347,7 @@ async function cargarPanelEvidencia(matrizId) {
     if (!data.informe) return;
 
     // Parsear artículos del informe markdown
-    var lineas = data.informe.split('
-');
+    var lineas = data.informe.split('\n');
     var articulos = [];
     var cuerpoActual = '';
     var articuloActual = null;
