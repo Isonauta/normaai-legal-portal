@@ -1274,3 +1274,153 @@ app.post('/api/agente-publico', async (req, res) => {
     res.status(500).json({ error: 'Error al generar diagnóstico' });
   }
 });
+
+// ══════════════════════════════════════════════════════════════
+//  FEATURE 2 — Alertas de vencimiento normativo
+// ══════════════════════════════════════════════════════════════
+app.get('/api/alertas', verificarToken, async (req, res) => {
+  try {
+    const alertas = [];
+    const hoy = new Date();
+
+    // 1. Matrices con más de 11 meses desde la última aprobada
+    const { data: matrices } = await supabase
+      .from('normaai_matrices')
+      .select('id, empresa, nombre_archivo, updated_at, estado, created_at')
+      .eq('user_id', req.user.id)
+      .in('estado', ['enviado', 'aprobado'])
+      .order('updated_at', { ascending: false })
+      .limit(1);
+
+    if (matrices && matrices.length > 0) {
+      const ultima = matrices[0];
+      const diasDesde = Math.floor((hoy - new Date(ultima.updated_at)) / (1000 * 60 * 60 * 24));
+      if (diasDesde >= 330) {
+        alertas.push({
+          tipo: 'vencimiento',
+          nivel: diasDesde >= 365 ? 'critico' : 'advertencia',
+          titulo: 'Matriz de requisitos próxima a vencer',
+          descripcion: `Tu última matriz revisada tiene ${diasDesde} días. Se recomienda revisión anual para mantener validez del certificado Procesus.`,
+          accion: 'Revisar matriz',
+          accion_vista: 'matriz',
+          fecha: ultima.updated_at,
+          icono: '📋'
+        });
+      }
+    } else if (!matrices || matrices.length === 0) {
+      // Nunca ha subido una matriz
+      alertas.push({
+        tipo: 'inicio',
+        nivel: 'info',
+        titulo: 'Sin matriz de cumplimiento revisada',
+        descripcion: 'Aún no has enviado tu primera matriz de requisitos legales. Es el primer paso para conocer tu nivel de cumplimiento normativo.',
+        accion: 'Subir mi primera matriz',
+        accion_vista: 'matriz',
+        icono: '📊'
+      });
+    }
+
+    // 2. Verificar si hay noticias legales recientes no vistas (últimos 7 días)
+    const { data: noticiasRecientes } = await supabase
+      .from('normaai_noticias')
+      .select('id, titulo, categoria, created_at')
+      .eq('publicada', true)
+      .gte('created_at', new Date(hoy - 7 * 24 * 60 * 60 * 1000).toISOString())
+      .order('created_at', { ascending: false })
+      .limit(3);
+
+    if (noticiasRecientes && noticiasRecientes.length > 0) {
+      alertas.push({
+        tipo: 'normativa',
+        nivel: 'info',
+        titulo: `${noticiasRecientes.length} actualizacion${noticiasRecientes.length > 1 ? 'es' : ''} legal${noticiasRecientes.length > 1 ? 'es' : ''} esta semana`,
+        descripcion: noticiasRecientes.map(function(n) { return n.titulo; }).slice(0, 2).join(' · '),
+        accion: 'Ver noticias',
+        accion_vista: 'noticias',
+        icono: '📰'
+      });
+    }
+
+    // 3. Perfil incompleto
+    const { data: perfil } = await supabase
+      .from('normaai_clientes')
+      .select('rubro, normas_iso, alcance, sitios, onboarding_completado')
+      .eq('user_id', req.user.id)
+      .single();
+
+    if (perfil && !perfil.onboarding_completado) {
+      alertas.push({
+        tipo: 'perfil',
+        nivel: 'advertencia',
+        titulo: 'Perfil de organización incompleto',
+        descripcion: 'Completa el perfil de tu organización para que el agente IA responda siempre en el contexto específico de tu empresa.',
+        accion: 'Completar perfil',
+        accion_vista: 'perfil',
+        icono: '👤'
+      });
+    }
+
+    res.json(alertas);
+  } catch (err) {
+    console.error('[alertas]', err.message);
+    res.status(500).json({ error: 'Error al cargar alertas' });
+  }
+});
+
+// ── Feature 1: Semáforo — resumen de última matriz ─────────────
+app.get('/api/semaforo', verificarToken, async (req, res) => {
+  try {
+    const { data: matrices } = await supabase
+      .from('normaai_matrices')
+      .select('id, empresa, nombre_archivo, estado, created_at, updated_at, informe_ia')
+      .eq('user_id', req.user.id)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (!matrices || matrices.length === 0) {
+      return res.json({ tiene_matrices: false });
+    }
+
+    // Última aprobada/enviada
+    const aprobada = matrices.find(function(m) { return m.estado === 'enviado' || m.estado === 'aprobado'; });
+    const pendiente = matrices.find(function(m) { return m.estado === 'pendiente' || m.estado === 'en_revision'; });
+
+    // Extraer % de cumplimiento del informe_ia si existe
+    let pct = null;
+    let nivel = null;
+    if (aprobada && aprobada.informe_ia) {
+      const matchPct = aprobada.informe_ia.match(/(\d{1,3}(?:\.\d)?)\s*%\s*(?:de\s*)?cumplimiento/i);
+      if (matchPct) pct = parseFloat(matchPct[1]);
+      const matchNivel = aprobada.informe_ia.match(/Nivel\s*(?:de\s*cumplimiento)?\s*[:\-–]?\s*(ALTO|MEDIO|BAJO)/i);
+      if (matchNivel) nivel = matchNivel[1];
+    }
+
+    const diasDesdeAprobacion = aprobada
+      ? Math.floor((new Date() - new Date(aprobada.updated_at)) / (1000 * 60 * 60 * 24))
+      : null;
+
+    res.json({
+      tiene_matrices: true,
+      total_matrices: matrices.length,
+      ultima_aprobada: aprobada ? {
+        id: aprobada.id,
+        empresa: aprobada.empresa,
+        nombre_archivo: aprobada.nombre_archivo,
+        fecha: aprobada.updated_at,
+        dias_desde: diasDesdeAprobacion,
+        pct_cumplimiento: pct,
+        nivel: nivel
+      } : null,
+      tiene_pendiente: !!pendiente,
+      pendiente: pendiente ? {
+        id: pendiente.id,
+        empresa: pendiente.empresa,
+        estado: pendiente.estado,
+        fecha: pendiente.created_at
+      } : null
+    });
+  } catch (err) {
+    console.error('[semaforo]', err.message);
+    res.status(500).json({ error: 'Error al cargar semáforo' });
+  }
+});
