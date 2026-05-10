@@ -559,12 +559,28 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
 const token = localStorage.getItem('normaai_token');
 if (!token) { window.location.href = '/login'; }
 const userStr = localStorage.getItem('normaai_user');
-const user = userStr ? JSON.parse(userStr) : {};
-const nombre = user.nombre || user.email || 'Usuario';
+var user = userStr ? JSON.parse(userStr) : {};
+var nombre = user.nombre || user.email || 'Usuario';
 
 document.getElementById('user-nombre').textContent = nombre;
 document.getElementById('user-email').textContent = user.email || '';
 document.getElementById('user-avatar').textContent = nombre.charAt(0).toUpperCase();
+
+// Si el perfil no está en localStorage, recargarlo desde el servidor
+if (!user.nombre && !user.email) {
+  fetch('/api/perfil', { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(p) {
+      if (!p) return;
+      user.nombre = p.nombre || '';
+      user.email = p.email || '';
+      nombre = user.nombre || user.email || 'Usuario';
+      localStorage.setItem('normaai_user', JSON.stringify(user));
+      document.getElementById('user-nombre').textContent = nombre;
+      document.getElementById('user-email').textContent = user.email || '';
+      document.getElementById('user-avatar').textContent = nombre.charAt(0).toUpperCase();
+    }).catch(function() {});
+}
 
 const fecha = new Date().toLocaleDateString('es-CL', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
 document.getElementById('topbar-fecha').textContent = fecha.charAt(0).toUpperCase() + fecha.slice(1);
