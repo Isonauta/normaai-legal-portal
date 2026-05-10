@@ -1235,9 +1235,6 @@ app.get('/privacidad', (req, res) =>
   res.sendFile(path.join(__dirname, 'public', 'privacidad.html'))
 );
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`NormaAI Legal Portal corriendo en puerto ${PORT}`));
-module.exports = app;
 
 // ── Ruta pública: Calculadora de riesgo ──────────────────────
 app.get('/riesgo', (req, res) =>
@@ -1424,3 +1421,7 @@ app.get('/api/semaforo', verificarToken, async (req, res) => {
     res.status(500).json({ error: 'Error al cargar semáforo' });
   }
 });
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`NormaAI Legal Portal corriendo en puerto ${PORT}`));
+module.exports = app;
