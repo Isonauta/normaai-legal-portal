@@ -156,6 +156,63 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
 .perfil-close{background:none;border:none;color:#8a96a8;font-size:1.2rem;cursor:pointer;}
 
 @media(max-width:768px){.sidebar{display:none;}.main{width:100%;}.view{padding:1.2rem;}.noticias-grid{grid-template-columns:1fr;}}
+
+/* ── FEATURE 1: SEMÁFORO ──────────────────────────────────── */
+.semaforo-wrap{display:grid;grid-template-columns:auto 1fr;gap:1.2rem;align-items:center;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1.2rem 1.5rem;margin-bottom:1.2rem;}
+.semaforo-gauge{position:relative;width:90px;height:90px;flex-shrink:0;}
+.semaforo-gauge svg{display:block;}
+.semaforo-pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.semaforo-pct-num{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;line-height:1;}
+.semaforo-pct-lbl{font-size:.55rem;color:#8a96a8;text-transform:uppercase;letter-spacing:.06em;}
+.semaforo-info{}
+.semaforo-nivel{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:.3rem;}
+.semaforo-desc{font-size:.8rem;color:#8a96a8;line-height:1.6;}
+.semaforo-meta{font-size:.72rem;color:#4a5568;margin-top:.4rem;}
+.semaforo-pendiente{display:flex;align-items:center;gap:.6rem;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:.6rem 1rem;margin-bottom:1.2rem;font-size:.82rem;color:#fbbf24;}
+.semaforo-sin-datos{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:1.5rem;text-align:center;margin-bottom:1.2rem;}
+
+/* ── FEATURE 2: ALERTAS ────────────────────────────────────── */
+.alertas-wrap{margin-bottom:1.5rem;}
+.alerta-item{display:flex;align-items:flex-start;gap:.8rem;padding:.85rem 1rem;border-radius:10px;margin-bottom:.6rem;cursor:pointer;transition:all .2s;border:1px solid transparent;}
+.alerta-item:hover{transform:translateX(3px);}
+.alerta-item.critico{background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.2);}
+.alerta-item.advertencia{background:rgba(245,158,11,0.07);border-color:rgba(245,158,11,0.18);}
+.alerta-item.info{background:rgba(26,108,248,0.07);border-color:rgba(26,108,248,0.15);}
+.alerta-icon{font-size:1.1rem;flex-shrink:0;margin-top:1px;}
+.alerta-body{flex:1;}
+.alerta-titulo{font-size:.85rem;font-weight:600;margin-bottom:.2rem;}
+.alerta-item.critico .alerta-titulo{color:#f87171;}
+.alerta-item.advertencia .alerta-titulo{color:#fbbf24;}
+.alerta-item.info .alerta-titulo{color:#93c5fd;}
+.alerta-desc{font-size:.77rem;color:#8a96a8;line-height:1.5;}
+.alerta-accion{font-size:.72rem;margin-top:.3rem;font-weight:600;}
+.alerta-item.critico .alerta-accion{color:#f87171;}
+.alerta-item.advertencia .alerta-accion{color:#fbbf24;}
+.alerta-item.info .alerta-accion{color:#60a5fa;}
+
+/* ── FEATURE 3: PANEL EVIDENCIA ────────────────────────────── */
+.evidencia-wrap{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;overflow:hidden;margin-top:1rem;}
+.evidencia-header{display:flex;align-items:center;justify-content:space-between;padding:.8rem 1.2rem;border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.02);}
+.evidencia-titulo{font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;color:#c9d8f0;}
+.evidencia-stats{display:flex;gap:.5rem;}
+.evidencia-stat{font-size:.68rem;padding:.2rem .55rem;border-radius:4px;font-weight:600;}
+.ev-cumple{background:rgba(16,185,129,0.15);color:#34d399;}
+.ev-brecha{background:rgba(239,68,68,0.15);color:#f87171;}
+.ev-sin{background:rgba(245,158,11,0.15);color:#fbbf24;}
+.evidencia-lista{max-height:320px;overflow-y:auto;}
+.evidencia-lista::-webkit-scrollbar{width:3px;}
+.evidencia-lista::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px;}
+.evidencia-row{display:flex;align-items:flex-start;gap:.7rem;padding:.65rem 1.2rem;border-bottom:1px solid rgba(255,255,255,0.03);font-size:.8rem;transition:background .15s;}
+.evidencia-row:hover{background:rgba(255,255,255,0.03);}
+.evidencia-row:last-child{border-bottom:none;}
+.ev-badge{width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:.65rem;flex-shrink:0;margin-top:1px;}
+.ev-badge.cumple{background:rgba(16,185,129,0.2);color:#34d399;}
+.ev-badge.brecha{background:rgba(239,68,68,0.2);color:#f87171;}
+.ev-badge.sin{background:rgba(245,158,11,0.2);color:#fbbf24;}
+.ev-art{font-size:.72rem;color:#4a5568;flex-shrink:0;width:40px;}
+.ev-desc{flex:1;color:#a0b0c8;line-height:1.5;}
+.ev-evidencia{font-size:.72rem;color:#4a5568;margin-top:.2rem;font-style:italic;}
+.ev-resp{font-size:.68rem;color:#3d4f6a;margin-top:.1rem;}
 </style>
 </head>
 <body>
@@ -386,7 +443,19 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
     </div>
 
     <!-- NOTICIAS -->
+    <!-- NOTICIAS -->
     <div class="view active" id="vista-noticias">
+      <!-- FEATURE 1+2: Semáforo y alertas -->
+      <div id="semaforo-alertas-wrap" style="max-width:900px;margin:0 auto 1.5rem;display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;">
+        <div>
+          <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:#3d4f6a;margin-bottom:.7rem;font-weight:600;">Estado de cumplimiento</div>
+          <div id="semaforo-content"><div style="color:#3d4f6a;font-size:.82rem;padding:.8rem;">Cargando...</div></div>
+        </div>
+        <div>
+          <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:#3d4f6a;margin-bottom:.7rem;font-weight:600;">Alertas activas</div>
+          <div id="alertas-content"><div style="color:#3d4f6a;font-size:.82rem;padding:.8rem;">Cargando...</div></div>
+        </div>
+      </div>
       <div id="noticias-content"></div>
     </div>
 
@@ -468,6 +537,12 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
             <input type="file" id="input-matriz" accept=".xlsx,.xls,.pdf,.doc,.docx" style="display:none" onchange="subirMatriz(this)">
           </div>
           <div id="resultado-matriz" style="margin-top:1rem;"></div>
+        </div>
+
+        <!-- FEATURE 3: Panel de evidencia -->
+        <div id="evidencia-panel-wrap" style="display:none;margin-bottom:1rem;">
+          <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:#3d4f6a;margin-bottom:.7rem;font-weight:600;">Panel de evidencia — última matriz aprobada</div>
+          <div id="evidencia-panel"></div>
         </div>
 
         <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1.5rem;">
@@ -1108,6 +1183,11 @@ async function cargarMisMatrices() {
     const estadoColor = { pendiente:'#c9a84c', en_revision:'#60a5fa', aprobado:'#4ade80', enviado:'#4ade80' };
     const estadoLabel = { pendiente:'⏳ Pendiente revisión', en_revision:'🔍 En revisión', aprobado:'✅ Aprobado', enviado:'✅ Informe disponible' };
     const listo = function(m) { return m.estado === 'enviado' || m.estado === 'aprobado'; };
+
+    // FEATURE 3: cargar panel de evidencia de la última matriz aprobada
+    var primeraAprobada = data.find(function(m) { return listo(m); });
+    if (primeraAprobada) cargarPanelEvidencia(primeraAprobada.id);
+
     cont.innerHTML = data.map(function(m) {
       return '<div style="padding:.8rem 0;border-bottom:1px solid rgba(255,255,255,0.05);">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;">' +
@@ -1156,6 +1236,151 @@ async function hacerLogout() {
 // ══════════════════════════════════════════════════════════════
 cargarNoticias();
 verificarOnboarding();
+cargarSemaforo();
+cargarAlertas();
+
+// ══════════════════════════════════════════════════════════════
+//  FEATURE 1 — Semáforo de cumplimiento
+// ══════════════════════════════════════════════════════════════
+async function cargarSemaforo() {
+  var cont = document.getElementById('semaforo-content');
+  if (!cont) return;
+  try {
+    var res = await fetch('/api/semaforo', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (res.status === 401) { hacerLogout(); return; }
+    var data = await res.json();
+
+    if (!data.tiene_matrices) {
+      cont.innerHTML = '<div class="semaforo-sin-datos"><div style="font-size:1.5rem;margin-bottom:.5rem;">📊</div><div style="font-size:.83rem;color:#8a96a8;line-height:1.6;">Aún no tienes matrices revisadas.<br><button onclick="mostrarVista(\'matriz\',document.querySelector(\'.nav-item[onclick*=matriz]\'))" style="background:none;border:none;color:#60a5fa;cursor:pointer;font-size:.83rem;font-family:DM Sans,sans-serif;padding:0;margin-top:.3rem;">→ Subir tu primera matriz</button></div></div>';
+      return;
+    }
+
+    if (data.tiene_pendiente && !data.ultima_aprobada) {
+      cont.innerHTML = '<div class="semaforo-pendiente">⏳ Tienes una matriz en revisión por Procesus. Recibirás el informe en 24-48 hrs hábiles.</div>';
+      return;
+    }
+
+    var aprobada = data.ultima_aprobada;
+    var pct = aprobada.pct_cumplimiento;
+    var nivel = aprobada.nivel || (pct >= 80 ? 'ALTO' : pct >= 50 ? 'MEDIO' : 'BAJO');
+    var color = pct !== null ? (pct >= 80 ? '#10b981' : pct >= 50 ? '#f59e0b' : '#ef4444') : '#8a96a8';
+    var emoji = pct !== null ? (pct >= 80 ? '🟢' : pct >= 50 ? '🟡' : '🔴') : '⚪';
+    var circum = (2 * Math.PI * 36).toFixed(1);
+    var offset = pct !== null ? (circum * (1 - pct / 100)).toFixed(1) : circum;
+    var diasTexto = aprobada.dias_desde !== null ? (aprobada.dias_desde + ' días') : '';
+    var vencimiento = aprobada.dias_desde >= 330 ? '<span style="color:#f59e0b;font-size:.7rem;">⚠ Próxima a vencer</span>' : (aprobada.dias_desde >= 365 ? '<span style="color:#f87171;font-size:.7rem;">🔴 Vencida — requiere revisión</span>' : '');
+
+    var gaugeHTML = pct !== null ? (
+      '<div class="semaforo-gauge"><svg width="90" height="90" viewBox="0 0 90 90"><circle cx="45" cy="45" r="36" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="7"/><circle cx="45" cy="45" r="36" fill="none" stroke="' + color + '" stroke-width="7" stroke-dasharray="' + circum + '" stroke-dashoffset="' + offset + '" stroke-linecap="round" transform="rotate(-90 45 45)"/></svg><div class="semaforo-pct"><span class="semaforo-pct-num" style="color:' + color + '">' + pct + '%</span><span class="semaforo-pct-lbl">cumplim.</span></div></div>'
+    ) : '<div style="font-size:2rem;width:90px;text-align:center;line-height:90px;">' + emoji + '</div>';
+
+    cont.innerHTML = '<div class="semaforo-wrap">' + gaugeHTML +
+      '<div class="semaforo-info"><div class="semaforo-nivel" style="color:' + color + '">' + emoji + ' Nivel ' + nivel + '</div><div class="semaforo-desc">' + aprobada.empresa + '</div><div class="semaforo-meta">Revisada hace ' + diasTexto + ' · ' + new Date(aprobada.fecha).toLocaleDateString('es-CL') + '</div>' + (vencimiento ? '<div style="margin-top:.3rem;">' + vencimiento + '</div>' : '') + '<button onclick="mostrarVista(\'matriz\',document.querySelector(\'.nav-item[onclick*=matriz]\'))" style="margin-top:.5rem;background:none;border:none;color:#60a5fa;cursor:pointer;font-size:.75rem;font-family:DM Sans,sans-serif;padding:0;">→ Ver detalles</button></div></div>';
+
+    if (data.tiene_pendiente) {
+      cont.innerHTML += '<div class="semaforo-pendiente" style="margin-top:.6rem;">⏳ Tienes una matriz adicional en revisión.</div>';
+    }
+  } catch(e) {
+    console.error('[semaforo]', e);
+    var cont2 = document.getElementById('semaforo-content');
+    if (cont2) cont2.innerHTML = '';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  FEATURE 2 — Alertas de vencimiento normativo
+// ══════════════════════════════════════════════════════════════
+async function cargarAlertas() {
+  var cont = document.getElementById('alertas-content');
+  if (!cont) return;
+  try {
+    var res = await fetch('/api/alertas', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (res.status === 401) return;
+    var alertas = await res.json();
+
+    if (!alertas || alertas.length === 0) {
+      cont.innerHTML = '<div style="padding:.8rem;font-size:.82rem;color:#3d4f6a;text-align:center;">✅ Sin alertas activas</div>';
+      return;
+    }
+
+    cont.innerHTML = '<div class="alertas-wrap">' + alertas.map(function(a) {
+      var accionOnclick = '';
+      if (a.accion_vista === 'perfil') accionOnclick = 'onclick="abrirPerfil()"';
+      else if (a.accion_vista) accionOnclick = 'onclick="mostrarVista(\'' + a.accion_vista + '\',document.querySelector(\'.nav-item[onclick*=' + a.accion_vista + ']\'))"';
+      return '<div class="alerta-item ' + a.nivel + '" ' + accionOnclick + '><span class="alerta-icon">' + a.icono + '</span><div class="alerta-body"><div class="alerta-titulo">' + a.titulo + '</div><div class="alerta-desc">' + a.descripcion + '</div><div class="alerta-accion">→ ' + a.accion + '</div></div></div>';
+    }).join('') + '</div>';
+  } catch(e) {
+    console.error('[alertas]', e);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  FEATURE 3 — Panel de evidencia por artículo
+// ══════════════════════════════════════════════════════════════
+async function cargarPanelEvidencia(matrizId) {
+  var wrap = document.getElementById('evidencia-panel-wrap');
+  var panel = document.getElementById('evidencia-panel');
+  if (!wrap || !panel) return;
+
+  try {
+    var res = await fetch('/api/matriz/' + matrizId + '/descargar', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!res.ok) return;
+    var data = await res.json();
+    if (!data.informe) return;
+
+    // Parsear artículos del informe markdown
+    var lineas = data.informe.split('
+');
+    var articulos = [];
+    var cuerpoActual = '';
+    var articuloActual = null;
+
+    lineas.forEach(function(linea) {
+      var trimL = linea.trim();
+      // Detectar cuerpo legal (## o ###)
+      if (trimL.match(/^#{2,3}\s+(?!RESUMEN|ESTADÍSTICAS|CUMPLIMIENTO|BRECHAS|VALIDEZ|CERTIFICADO|PROCESUS|INFORME)/i)) {
+        cuerpoActual = trimL.replace(/^#+\s+/, '').replace(/[🟢🟡🔴✅❌⚠️]/g,'').trim();
+      }
+      // Detectar artículo
+      var matchArt = trimL.match(/^[\*\-]?\s*(?:Art[íi]culo\s+|Art\.?\s+)(\w+)/i);
+      if (matchArt) {
+        if (articuloActual) articulos.push(articuloActual);
+        var cumpleMatch = trimL.match(/✅\s*Cumple|SI/i);
+        var noCumpleMatch = trimL.match(/❌\s*No cumple|NO/i);
+        var estado = cumpleMatch ? 'cumple' : noCumpleMatch ? 'brecha' : 'sin';
+        articuloActual = { art: matchArt[1], cuerpo: cuerpoActual, estado: estado, desc: '', evidencia: '' };
+      }
+      // Evidencia
+      if (articuloActual && trimL.match(/C[oó]mo se cumple|Evidencia/i)) {
+        var ev = linea.replace(/.*(?:Cómo se cumple|Evidencia)[:\-]?\s*/i, '').trim();
+        if (ev && ev !== 'No especificado') articuloActual.evidencia = ev;
+      }
+    });
+    if (articuloActual) articulos.push(articuloActual);
+
+    if (articulos.length === 0) {
+      wrap.style.display = 'none';
+      return;
+    }
+
+    var cumple = articulos.filter(function(a){ return a.estado==='cumple'; }).length;
+    var brecha = articulos.filter(function(a){ return a.estado==='brecha'; }).length;
+    var sin = articulos.filter(function(a){ return a.estado==='sin'; }).length;
+
+    var badgeMap = { cumple:'✓', brecha:'✗', sin:'⚠' };
+    var filasHTML = articulos.slice(0,50).map(function(a) {
+      return '<div class="evidencia-row"><div class="ev-badge ' + a.estado + '">' + badgeMap[a.estado] + '</div><div class="ev-art">Art. ' + a.art + '</div><div class="ev-desc"><div>' + (a.cuerpo || '').substring(0,40) + (a.cuerpo && a.cuerpo.length > 40 ? '…' : '') + '</div>' + (a.evidencia ? '<div class="ev-evidencia">' + a.evidencia.substring(0,80) + (a.evidencia.length > 80 ? '…' : '') + '</div>' : '') + '</div></div>';
+    }).join('');
+
+    panel.innerHTML = '<div class="evidencia-wrap"><div class="evidencia-header"><span class="evidencia-titulo">📋 ' + data.empresa + '</span><div class="evidencia-stats"><span class="evidencia-stat ev-cumple">✓ ' + cumple + '</span><span class="evidencia-stat ev-brecha">✗ ' + brecha + '</span><span class="evidencia-stat ev-sin">⚠ ' + sin + '</span></div></div><div class="evidencia-lista">' + filasHTML + '</div></div>';
+    wrap.style.display = 'block';
+
+  } catch(e) {
+    console.error('[evidencia]', e);
+  }
+}
 </script>
 </body>
 </html>
