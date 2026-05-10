@@ -33,10 +33,10 @@ html,body{font-family:'DM Sans',sans-serif;background:var(--azul);color:var(--bl
   background-size:48px 48px;}
 
 /* ── HERO SPLIT ── */
-.hero{position:relative;z-index:1;min-height:100vh;display:grid;grid-template-columns:1fr 1fr;align-items:center;}
+.hero{position:relative;z-index:1;min-height:100vh;display:grid;grid-template-columns:1fr 1fr;align-items:stretch;}
 
 /* Panel izquierdo */
-.panel-left{padding:5rem 4rem;border-right:1px solid var(--borde);display:flex;flex-direction:column;justify-content:center;min-height:100vh;}
+.panel-left{padding:5rem 4rem;border-right:1px solid var(--borde);display:flex;flex-direction:column;justify-content:center;min-height:100vh;position:sticky;top:0;height:100vh;}
 .logo{display:flex;align-items:center;gap:.75rem;margin-bottom:3.5rem;}
 .logo-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--acento),var(--acento-cl));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 0 20px rgba(26,108,248,0.4);}
 .logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;letter-spacing:-0.02em;}
@@ -50,7 +50,7 @@ html,body{font-family:'DM Sans',sans-serif;background:var(--azul);color:var(--bl
 .feature-dot{width:6px;height:6px;border-radius:50%;background:var(--acento);flex-shrink:0;box-shadow:0 0 8px rgba(26,108,248,0.6);}
 
 /* Panel derecho */
-.panel-right{padding:4rem;display:flex;align-items:center;justify-content:center;min-height:100vh;overflow-y:auto;}
+.panel-right{padding:4rem 4rem;display:flex;align-items:flex-start;justify-content:center;min-height:100vh;overflow-y:auto;padding-top:5rem;}
 .panel-right-inner{width:100%;max-width:420px;}
 
 /* LOGIN CARD */
