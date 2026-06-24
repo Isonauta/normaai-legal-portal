@@ -1236,42 +1236,6 @@ app.get('/privacidad', (req, res) =>
 );
 
 
-// ── Ruta pública: Calculadora de riesgo ──────────────────────
-app.get('/riesgo', (req, res) =>
-  res.sendFile(path.join(__dirname, 'public', 'riesgo.html'))
-);
-
-// ── Endpoint público: Agente para calculadora (sin auth) ─────
-app.post('/api/agente-publico', async (req, res) => {
-  const { mensaje } = req.body;
-  if (!mensaje) return res.status(400).json({ error: 'Mensaje requerido' });
-
-  // Rate limit simple por IP — máx 5 diagnósticos por hora por IP
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
-  const ahora = Date.now();
-  if (!global._riesgoRateLimit) global._riesgoRateLimit = {};
-  const rl = global._riesgoRateLimit;
-  if (!rl[ip]) rl[ip] = [];
-  rl[ip] = rl[ip].filter(function(t) { return ahora - t < 3600000; });
-  if (rl[ip].length >= 5) {
-    return res.status(429).json({ error: 'Límite de diagnósticos alcanzado. Intenta en una hora.' });
-  }
-  rl[ip].push(ahora);
-
-  try {
-    const respuesta = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1500,
-      system: 'Eres NormaAI, especialista en normativa legal chilena. Respondes ÚNICAMENTE con JSON válido, sin texto adicional ni bloques markdown.',
-      messages: [{ role: 'user', content: mensaje }]
-    });
-    res.json({ respuesta: respuesta.content[0].text });
-  } catch (err) {
-    console.error('[agente-publico]', err.message);
-    res.status(500).json({ error: 'Error al generar diagnóstico' });
-  }
-});
-
 // ══════════════════════════════════════════════════════════════
 //  FEATURE 2 — Alertas de vencimiento normativo
 // ══════════════════════════════════════════════════════════════
