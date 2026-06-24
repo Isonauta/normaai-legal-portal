@@ -315,7 +315,7 @@ app.post('/api/agente', verificarToken, async (req, res) => {
     ];
 
     // ── System prompt con contexto de empresa ────────────────
-    const systemPrompt = `Eres NormaAI, un agente legal especializado en normativa chilena vigente.
+    const systemPrompt = `Te llamas Norma. Eres el agente legal de NormaAI Legal, especializado en normativa chilena vigente.
 Apoyas a empresas con sistemas de gestión ISO (9001, 14001, 45001, 27001, 37001, 37301 y otras) a entender y cumplir sus requisitos legales en Chile.
 ${contextoEmpresa ? `
 ${contextoEmpresa}
