@@ -465,7 +465,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
         <div class="chat-header">
           <div class="agente-avatar">⚖</div>
           <div class="agente-info">
-            <h3 id="chat-titulo">NormaAI — Agente Legal</h3>
+            <h3 id="chat-titulo">Norma — tu agente legal</h3>
             <p id="chat-subtitulo">Especialista en normativa chilena · Conectado a BCN</p>
           </div>
           <div style="display:flex;align-items:center;gap:.5rem;margin-left:auto;">
@@ -476,7 +476,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
         <div class="messages" id="messages">
           <div class="msg agente">
             <div class="msg-avatar">⚖</div>
-            <div class="msg-bubble" id="msg-bienvenida">Hola, soy <strong>NormaAI</strong>, tu agente especializado en normativa legal chilena. Estoy conectado a la Biblioteca del Congreso Nacional para darte información actualizada.<br><br>¿En qué área normativa puedo ayudarte hoy?</div>
+            <div class="msg-bubble" id="msg-bienvenida">Hola, soy <strong>Norma</strong>, tu agente especializado en normativa legal chilena. Estoy conectado a la Biblioteca del Congreso Nacional para darte información actualizada.<br><br>¿En qué área normativa puedo ayudarte hoy?</div>
           </div>
         </div>
         <div class="chat-input-area">
@@ -752,7 +752,7 @@ function actualizarChatSubtitulo(empresa, rubro) {
     // Actualizar mensaje de bienvenida del agente
     var msgBienvenida = document.getElementById('msg-bienvenida');
     if (msgBienvenida) {
-      msgBienvenida.innerHTML = 'Hola, soy <strong>NormaAI</strong>, tu agente especializado en normativa legal chilena. Estoy configurado para responder siempre en el contexto de <strong>' + empresa + '</strong>.' +
+      msgBienvenida.innerHTML = 'Hola, soy <strong>Norma</strong>, tu agente especializado en normativa legal chilena. Estoy configurado para responder siempre en el contexto de <strong>' + empresa + '</strong>.' +
         (rubro ? ' Conozco tu rubro (' + rubro + ') y aplicaré la normativa sectorial correspondiente.' : '') +
         '<br><br>¿En qué área normativa puedo ayudarte hoy?';
     }
@@ -948,9 +948,9 @@ function nuevaConversacion() {
   document.getElementById('agente-file-input').value = '';
   document.getElementById('chat-input').placeholder = 'Escribe tu consulta legal aquí...';
   document.getElementById('chat-input').value = '';
-  document.getElementById('chat-titulo').textContent = 'NormaAI — Agente Legal';
+  document.getElementById('chat-titulo').textContent = 'Norma — tu agente legal';
   const messagesEl = document.getElementById('messages');
-  messagesEl.innerHTML = '<div class="msg agente"><div class="msg-avatar">⚖</div><div class="msg-bubble" id="msg-bienvenida">Hola, soy <strong>NormaAI</strong>, tu agente especializado en normativa legal chilena. ¿En qué área normativa puedo ayudarte hoy?</div></div>';
+  messagesEl.innerHTML = '<div class="msg agente"><div class="msg-avatar">⚖</div><div class="msg-bubble" id="msg-bienvenida">Hola, soy <strong>Norma</strong>, tu agente especializado en normativa legal chilena. ¿En qué área normativa puedo ayudarte hoy?</div></div>';
   document.getElementById('chat-input').focus();
 }
 
@@ -1133,7 +1133,7 @@ async function retomarConversacion(sesionId, btn) {
     });
     sesionActual = sesionId;
     document.getElementById('chat-titulo').textContent = 'NormaAI — Conversación retomada';
-    setTimeout(function() { document.getElementById('chat-titulo').textContent = 'NormaAI — Agente Legal'; }, 3000);
+    setTimeout(function() { document.getElementById('chat-titulo').textContent = 'Norma — tu agente legal'; }, 3000);
     messagesEl.scrollTop = messagesEl.scrollHeight;
     document.getElementById('chat-input').focus();
   } catch(e) {

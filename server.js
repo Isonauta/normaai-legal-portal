@@ -5,6 +5,7 @@ const path = require('path');
 const multer = require('multer');
 const nodemailer = require('nodemailer');
 const { Document, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, Packer } = require('docx');
+const { ejecutarScraperBCN } = require('./bcn-scraper');
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
@@ -231,6 +232,22 @@ app.get('/api/noticias', verificarToken, async (req, res) => {
   }
 });
 
+// ── Cron job: scraper diario del Diario Oficial (lunes-viernes) ──
+// Disparado por Vercel Cron (ver vercel.json). Protegido con CRON_SECRET:
+// Vercel agrega automáticamente "Authorization: Bearer <CRON_SECRET>" a la invocación.
+app.get('/api/cron/scraper-bcn', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+  try {
+    const resultado = await ejecutarScraperBCN();
+    res.json({ ok: true, ...resultado });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ══════════════════════════════════════════════════════════════
 //  AGENTE IA — Con contexto de empresa
 // ══════════════════════════════════════════════════════════════
@@ -315,7 +332,7 @@ app.post('/api/agente', verificarToken, async (req, res) => {
     ];
 
     // ── System prompt con contexto de empresa ────────────────
-    const systemPrompt = `Eres NormaAI, un agente legal especializado en normativa chilena vigente.
+    const systemPrompt = `Te llamas Norma. Eres el agente legal de NormaAI Legal, especializado en normativa chilena vigente.
 Apoyas a empresas con sistemas de gestión ISO (9001, 14001, 45001, 27001, 37001, 37301 y otras) a entender y cumplir sus requisitos legales en Chile.
 ${contextoEmpresa ? `
 ${contextoEmpresa}
@@ -1235,42 +1252,6 @@ app.get('/privacidad', (req, res) =>
   res.sendFile(path.join(__dirname, 'public', 'privacidad.html'))
 );
 
-
-// ── Ruta pública: Calculadora de riesgo ──────────────────────
-app.get('/riesgo', (req, res) =>
-  res.sendFile(path.join(__dirname, 'public', 'riesgo.html'))
-);
-
-// ── Endpoint público: Agente para calculadora (sin auth) ─────
-app.post('/api/agente-publico', async (req, res) => {
-  const { mensaje } = req.body;
-  if (!mensaje) return res.status(400).json({ error: 'Mensaje requerido' });
-
-  // Rate limit simple por IP — máx 5 diagnósticos por hora por IP
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
-  const ahora = Date.now();
-  if (!global._riesgoRateLimit) global._riesgoRateLimit = {};
-  const rl = global._riesgoRateLimit;
-  if (!rl[ip]) rl[ip] = [];
-  rl[ip] = rl[ip].filter(function(t) { return ahora - t < 3600000; });
-  if (rl[ip].length >= 5) {
-    return res.status(429).json({ error: 'Límite de diagnósticos alcanzado. Intenta en una hora.' });
-  }
-  rl[ip].push(ahora);
-
-  try {
-    const respuesta = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1500,
-      system: 'Eres NormaAI, especialista en normativa legal chilena. Respondes ÚNICAMENTE con JSON válido, sin texto adicional ni bloques markdown.',
-      messages: [{ role: 'user', content: mensaje }]
-    });
-    res.json({ respuesta: respuesta.content[0].text });
-  } catch (err) {
-    console.error('[agente-publico]', err.message);
-    res.status(500).json({ error: 'Error al generar diagnóstico' });
-  }
-});
 
 // ══════════════════════════════════════════════════════════════
 //  FEATURE 2 — Alertas de vencimiento normativo
