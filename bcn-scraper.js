@@ -186,23 +186,32 @@ async function insertarEnKB(normas) {
   }
 
   console.log(`\nResumen: ${insertadas} normas en KB, ${noticias} noticias creadas, ${omitidas} ya existían`);
-  return insertadas;
+  return { insertadas, noticias, omitidas };
+}
+
+async function ejecutarScraperBCN(fecha) {
+  fecha = fecha || fechaHoy();
+  const normas = await scrapearDiarioOficial(fecha);
+  if (normas.length === 0) {
+    return { fecha, encontradas: 0, insertadas: 0, noticias: 0, omitidas: 0 };
+  }
+  const resultado = await insertarEnKB(normas);
+  return { fecha, encontradas: normas.length, ...resultado };
 }
 
 async function ejecutar() {
   console.log('NormaAI BCN Scraper v1.0');
   const fecha = process.argv[2] || fechaHoy();
   console.log(`Fecha objetivo: ${fecha}`);
-  const normas = await scrapearDiarioOficial(fecha);
-  if (normas.length === 0) {
-    console.log('No se encontraron normas relevantes para esta fecha.');
-    process.exit(0);
-  }
-  await insertarEnKB(normas);
-  console.log('Proceso completado.');
+  const resultado = await ejecutarScraperBCN(fecha);
+  console.log('Proceso completado.', resultado);
 }
 
-ejecutar().catch(err => {
-  console.error('Error fatal:', err);
-  process.exit(1);
-});
+if (require.main === module) {
+  ejecutar().catch(err => {
+    console.error('Error fatal:', err);
+    process.exit(1);
+  });
+}
+
+module.exports = { ejecutarScraperBCN };

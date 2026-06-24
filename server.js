@@ -5,6 +5,7 @@ const path = require('path');
 const multer = require('multer');
 const nodemailer = require('nodemailer');
 const { Document, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, Packer } = require('docx');
+const { ejecutarScraperBCN } = require('./bcn-scraper');
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
@@ -228,6 +229,22 @@ app.get('/api/noticias', verificarToken, async (req, res) => {
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: 'Error al cargar noticias' });
+  }
+});
+
+// ── Cron job: scraper diario del Diario Oficial (lunes-viernes) ──
+// Disparado por Vercel Cron (ver vercel.json). Protegido con CRON_SECRET:
+// Vercel agrega automáticamente "Authorization: Bearer <CRON_SECRET>" a la invocación.
+app.get('/api/cron/scraper-bcn', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+  try {
+    const resultado = await ejecutarScraperBCN();
+    res.json({ ok: true, ...resultado });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
