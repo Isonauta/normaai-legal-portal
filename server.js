@@ -4,7 +4,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 const path = require('path');
 const multer = require('multer');
 const nodemailer = require('nodemailer');
-const { Document, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, Packer } = require('docx');
+const { Document, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, Packer, Header, Footer, PageNumber, ShadingType } = require('docx');
 const { ejecutarScraperBCN } = require('./bcn-scraper');
 
 const app = express();
@@ -78,7 +78,8 @@ app.post('/api/login', async (req, res) => {
         email: data.user.email,
         nombre: cliente.nombre,
         rol: cliente.rol || 'cliente',
-        onboarding_completado: cliente.onboarding_completado || false
+        onboarding_completado: cliente.onboarding_completado || false,
+        terminos_aceptados_en: cliente.terminos_aceptados_en || null
       }
     });
   } catch (err) {
@@ -131,6 +132,22 @@ app.post('/api/perfil/guardar', verificarToken, async (req, res) => {
   } catch (err) {
     console.error('[perfil/guardar]', err.message);
     res.status(500).json({ error: 'Error al guardar perfil' });
+  }
+});
+
+// ── Aceptar términos y condiciones (solo una vez) ─────────────
+app.post('/api/perfil/terminos', verificarToken, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('normaai_clientes')
+      .update({ terminos_aceptados_en: new Date().toISOString() })
+      .eq('user_id', req.user.id)
+      .is('terminos_aceptados_en', null);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[perfil/terminos]', err.message);
+    res.status(500).json({ error: 'Error al guardar aceptación' });
   }
 });
 
@@ -639,6 +656,7 @@ ${cliente?.rubro ? `- Rubro: ${cliente.rubro}` : ''}
 ${cliente?.trabajadores ? `- Trabajadores: ${cliente.trabajadores}` : ''}`;
 
     let informeIA = '';
+    let informeJson = null;
     try {
       if (['xlsx', 'xls'].includes(ext)) {
         const datosExcel = leerExcel(archivo.buffer);
@@ -733,6 +751,51 @@ Usa formato Markdown con encabezados ##, tablas y listas. Sé exhaustivo.`
         });
         informeIA = mensajeIA.content[0].text;
 
+        // Build structured JSON for DEKRA Word generator (no extra Claude call)
+        const folioJson = `NormaAI-${Date.now().toString(36).toUpperCase().slice(-8)}`;
+        informeJson = {
+          folio: folioJson,
+          nivel: parseFloat(pctCumplimiento) >= 80 ? 'ALTO' : parseFloat(pctCumplimiento) >= 50 ? 'MEDIO' : 'BAJO',
+          porcentaje: parseFloat(pctCumplimiento),
+          empresa,
+          estadisticas: { cuerpos: totalCuerpos, total: totalRequisitos, cumplen, no_cumplen: noCumplen, sin_verificar: parcial },
+          cuerpos_legales: datosExcel.map(hoja => {
+            const hC = hoja.articulos.filter(a => ['SI','SÍ','X','TRUE'].includes(a.cumple.toUpperCase())).length;
+            const hNC = hoja.articulos.filter(a => ['NO','FALSE'].includes(a.cumple.toUpperCase())).length;
+            const hSD = hoja.articulos.length - hC - hNC;
+            return {
+              nombre: hoja.cuerpoLegal,
+              porcentaje: parseFloat(hoja.articulos.length > 0 ? ((hC / hoja.articulos.length) * 100).toFixed(1) : '0.0'),
+              conformes: hC, no_cumplen: hNC, sin_verificar: hSD,
+              articulos: hoja.articulos.map(a => {
+                const cu = a.cumple.toUpperCase();
+                return {
+                  articulo: a.art || 'N/A',
+                  estado: ['SI','SÍ','X','TRUE'].includes(cu) ? 'SI' : ['NO','FALSE'].includes(cu) ? 'NO' : 'PENDIENTE',
+                  responsable: a.responsable || '',
+                  requisito: a.desc || '',
+                  evidencia: a.como && a.como.trim() ? a.como.trim() : 'No especificado — requiere documentar evidencia',
+                  observacion: ''
+                };
+              })
+            };
+          }),
+          resumen_texto: '',
+          recomendaciones: []
+        };
+        // Extract summary and recommendations from Claude's Markdown output
+        const rMatch = informeIA.match(/## 1\. RESUMEN EJECUTIVO\n+([\s\S]*?)(?=\n## 2\.|\n---)/);
+        if (rMatch) informeJson.resumen_texto = rMatch[1].trim().substring(0, 2000);
+        const recMatch = informeIA.match(/## 4\. BRECHAS[\s\S]*?\n+([\s\S]*?)(?=\n## 5\.|\n---)/);
+        if (recMatch) {
+          informeJson.recomendaciones = recMatch[1].trim()
+            .split('\n')
+            .filter(l => l.trim().startsWith('- ') || l.trim().startsWith('* ') || /^\d+\./.test(l.trim()))
+            .map(l => l.replace(/^[-*\d.]\s+/, '').trim())
+            .filter(l => l.length > 10)
+            .slice(0, 10);
+        }
+
       } else if (ext === 'pdf') {
         const archivoBase64 = archivo.buffer.toString('base64');
         const mensajeIA = await anthropic.messages.create({
@@ -774,6 +837,14 @@ Usa formato Markdown con encabezados ##, tablas y listas. Sé exhaustivo.`
       .single();
 
     if (error) throw error;
+
+    // Persist structured JSON for the DEKRA Word generator (requires migration-v5)
+    if (informeJson && matriz?.id) {
+      supabase.from('normaai_matrices')
+        .update({ informe_json: informeJson })
+        .eq('id', matriz.id)
+        .then(({ error: e }) => { if (e) console.error('[informe_json]', e.message); });
+    }
 
     try {
       const transporter = crearTransporter();
@@ -1082,8 +1153,232 @@ app.get('/api/admin/matrices/:id', verificarAdmin, async (req, res) => {
   }
 });
 
-// ── Generar Word ──────────────────────────────────────────────
+// ── Generar Word desde JSON estructurado (formato DEKRA) ──────
+function generarWordDesdeJSON(json, matriz, fechaEmision) {
+  const folio = json.folio || `NormaAI-${(matriz.id || '').substring(0, 8).toUpperCase()}`;
+  const empresa = json.empresa || matriz.empresa || 'Empresa';
+  const nivel = json.nivel || 'MEDIO';
+  const pct = json.porcentaje || 0;
+  const stats = json.estadisticas || {};
+  const cuerpos = json.cuerpos_legales || [];
+
+  const CN = '1E3A5F', CB = '1E6FC8', CD = '0F2A4A';
+  const CG = '15803D', CR = 'B91C1C', CO = 'B45309';
+  const CGR = '64748B', CLG = 'F1F5F9', CW = 'FFFFFF';
+
+  const borde = (c = 'D1D5DB') => ({ style: BorderStyle.SINGLE, size: 4, color: c });
+  const bords = (c = 'D1D5DB') => ({ top: borde(c), bottom: borde(c), left: borde(c), right: borde(c) });
+
+  function celda(texto, { fill, textColor = '374151', bold = false, size = 18, width, borders: b, italics = false, align = AlignmentType.LEFT } = {}) {
+    return new TableCell({
+      width: width != null ? { size: width, type: WidthType.DXA } : undefined,
+      shading: fill ? { fill, type: ShadingType.CLEAR } : undefined,
+      margins: { top: 80, bottom: 80, left: 150, right: 150 },
+      borders: b || bords(),
+      children: [new Paragraph({ alignment: align, children: [new TextRun({ text: String(texto ?? '—'), bold, color: textColor, size, italics })] })]
+    });
+  }
+
+  function celdaH(texto, width) {
+    return celda(texto, { fill: CN, textColor: CW, bold: true, size: 18, width, borders: bords(CN) });
+  }
+
+  function tarjetaArticulo(art) {
+    const estadoMap = { SI: { texto: '✔  Cumple', color: CG }, NO: { texto: '✗  No cumple', color: CR }, PENDIENTE: { texto: '⚠  Sin verificar', color: CO }, NO_APLICA: { texto: '—  No aplica', color: CGR } };
+    const ec = estadoMap[art.estado] || estadoMap.PENDIENTE;
+    const LW = 2400, VW = 6626;
+    const fila = (label, valor, vColor, isObs = false) => new TableRow({
+      children: [
+        new TableCell({
+          width: { size: LW, type: WidthType.DXA },
+          shading: { fill: isObs ? '581C87' : CN, type: ShadingType.CLEAR },
+          margins: { top: 70, bottom: 70, left: 150, right: 100 },
+          borders: bords(isObs ? '4C1D95' : CN),
+          children: [new Paragraph({ children: [new TextRun({ text: label, bold: true, color: CW, size: 16 })] })]
+        }),
+        new TableCell({
+          width: { size: VW, type: WidthType.DXA },
+          margins: { top: 70, bottom: 70, left: 150, right: 150 },
+          borders: bords(),
+          children: [new Paragraph({ children: [new TextRun({ text: String(valor || '—'), size: 17, color: vColor || '374151' })] })]
+        })
+      ]
+    });
+    const filas = [fila('Artículo', art.articulo), fila('Estado', ec.texto, ec.color)];
+    if (art.responsable) filas.push(fila('Responsable', art.responsable));
+    if (art.requisito) filas.push(fila('Requisito Legal', art.requisito));
+    filas.push(fila('Evidencia / Cumplimiento', art.evidencia || 'No especificado — requiere documentar'));
+    if (art.observacion) filas.push(fila('Observación', art.observacion, '92400E', true));
+    return new Table({ width: { size: 9026, type: WidthType.DXA }, columnWidths: [LW, VW], rows: filas });
+  }
+
+  // ── Portada ────────────────────────────────────────────────────
+  const portada = [
+    new Paragraph({ spacing: { before: 3600 } }),
+    new Paragraph({ children: [new TextRun({ text: 'PROCESUS', bold: true, size: 64, color: CD })], alignment: AlignmentType.CENTER, spacing: { after: 60 } }),
+    new Paragraph({ children: [new TextRun({ text: 'NormaAI Legal', size: 36, color: CB })], alignment: AlignmentType.CENTER, spacing: { after: 480 } }),
+    new Paragraph({ children: [new TextRun({ text: '─'.repeat(45), color: 'CBD5E1' })], alignment: AlignmentType.CENTER, spacing: { after: 480 } }),
+    new Paragraph({ children: [new TextRun({ text: 'INFORME DE CUMPLIMIENTO NORMATIVO', bold: true, size: 40, color: CD })], alignment: AlignmentType.CENTER, spacing: { after: 400 } }),
+    new Paragraph({ children: [new TextRun({ text: empresa, bold: true, size: 32, color: CB })], alignment: AlignmentType.CENTER, spacing: { after: 400 } }),
+    new Paragraph({ children: [new TextRun({ text: `Folio: ${folio}`, size: 22, color: CGR })], alignment: AlignmentType.CENTER, spacing: { after: 120 } }),
+    new Paragraph({ children: [new TextRun({ text: `Fecha de emisión: ${fechaEmision}`, size: 22, color: CGR })], alignment: AlignmentType.CENTER, spacing: { after: 120 } }),
+    new Paragraph({ children: [new TextRun({ text: `Archivo: ${matriz.nombre_archivo || ''}`, size: 20, color: CGR })], alignment: AlignmentType.CENTER, spacing: { after: 480 } }),
+    new Paragraph({ children: [new TextRun({ text: 'legal.normaai.cl', size: 22, color: CB })], alignment: AlignmentType.CENTER }),
+  ];
+
+  // ── Contenido ─────────────────────────────────────────────────
+  const ct = [];
+
+  // 1. Resumen Ejecutivo
+  ct.push(new Paragraph({ children: [new TextRun({ text: '1. RESUMEN EJECUTIVO', bold: true, size: 28, color: CD })], heading: HeadingLevel.HEADING_1, spacing: { before: 200, after: 200 } }));
+  const resumen = json.resumen_texto ||
+    `La empresa ${empresa} presenta un nivel de cumplimiento normativo ${nivel.toLowerCase()}, alcanzando un ${pct}% de los requisitos legales en estado conforme. ` +
+    `Del total de ${stats.total || 0} requisitos distribuidos en ${stats.cuerpos || cuerpos.length} cuerpos legales, ` +
+    `${stats.cumplen || 0} se encuentran conformes, ${stats.no_cumplen || 0} no cumplen y ${stats.sin_verificar || 0} están pendientes de verificación.`;
+  ct.push(new Paragraph({ children: [new TextRun({ text: resumen, size: 20, color: '374151' })], spacing: { after: 300 } }));
+
+  // 2. Estadísticas
+  ct.push(new Paragraph({ children: [new TextRun({ text: '2. ESTADÍSTICAS DE CUMPLIMIENTO', bold: true, size: 28, color: CD })], heading: HeadingLevel.HEADING_1, spacing: { before: 300, after: 200 } }));
+  const nivelColor = nivel === 'ALTO' ? CG : nivel === 'MEDIO' ? CO : CR;
+  const statsRows = [
+    ['Cuerpos Legales Analizados', String(stats.cuerpos || cuerpos.length), CGR],
+    ['Total Requisitos Evaluados', String(stats.total || 0), CGR],
+    ['✔  Conformes (Cumplen)', String(stats.cumplen || 0), CG],
+    ['✗  No Conformes (No cumplen)', String(stats.no_cumplen || 0), (stats.no_cumplen || 0) > 0 ? CR : CGR],
+    ['⚠  Sin Verificar', String(stats.sin_verificar || 0), (stats.sin_verificar || 0) > 0 ? CO : CGR],
+    ['Porcentaje de Cumplimiento', `${pct}%`, nivelColor],
+    ['Nivel de Cumplimiento', nivel, nivelColor],
+  ];
+  ct.push(new Table({
+    width: { size: 9026, type: WidthType.DXA }, columnWidths: [5800, 3226],
+    rows: [
+      new TableRow({ children: [celdaH('Métrica', 5800), celdaH('Valor', 3226)], tableHeader: true }),
+      ...statsRows.map(([m, v, vc], i) => new TableRow({ children: [
+        celda(m, { fill: i % 2 === 0 ? CLG : CW, width: 5800, size: 18 }),
+        celda(v, { fill: i % 2 === 0 ? CLG : CW, width: 3226, size: 18, bold: i >= 5, textColor: vc, align: AlignmentType.CENTER })
+      ]}))
+    ]
+  }));
+  ct.push(new Paragraph({ spacing: { after: 300 } }));
+
+  // 3. Cumplimiento por cuerpo legal
+  ct.push(new Paragraph({ children: [new TextRun({ text: '3. CUMPLIMIENTO POR CUERPO LEGAL', bold: true, size: 28, color: CD })], heading: HeadingLevel.HEADING_1, spacing: { before: 300, after: 200 } }));
+  const [WN, WC2, WNC, WSV, WPCT] = [4300, 1126, 1100, 1100, 1400];
+  ct.push(new Table({
+    width: { size: 9026, type: WidthType.DXA }, columnWidths: [WN, WC2, WNC, WSV, WPCT],
+    rows: [
+      new TableRow({ children: [celdaH('Cuerpo Legal', WN), celdaH('✔', WC2), celdaH('✗', WNC), celdaH('⚠', WSV), celdaH('Cumple %', WPCT)], tableHeader: true }),
+      ...cuerpos.map((c, i) => {
+        const pc = c.porcentaje >= 80 ? CG : c.porcentaje >= 50 ? CO : CR;
+        const f = i % 2 === 0 ? CLG : CW;
+        return new TableRow({ children: [
+          celda(c.nombre, { fill: f, width: WN, size: 17 }),
+          celda(String(c.conformes || 0), { fill: f, width: WC2, size: 18, textColor: CG, align: AlignmentType.CENTER }),
+          celda(String(c.no_cumplen || 0), { fill: f, width: WNC, size: 18, textColor: (c.no_cumplen || 0) > 0 ? CR : '374151', align: AlignmentType.CENTER }),
+          celda(String(c.sin_verificar || 0), { fill: f, width: WSV, size: 18, textColor: (c.sin_verificar || 0) > 0 ? CO : '374151', align: AlignmentType.CENTER }),
+          celda(`${c.porcentaje}%`, { fill: f, width: WPCT, size: 18, bold: true, textColor: pc, align: AlignmentType.CENTER })
+        ]});
+      })
+    ]
+  }));
+  ct.push(new Paragraph({ spacing: { after: 360 } }));
+
+  // Tarjetas por artículo, agrupadas por cuerpo legal
+  cuerpos.forEach((cuerpo, ci) => {
+    const sem = (cuerpo.no_cumplen || 0) > 0 ? '🔴 NO CUMPLE' : (cuerpo.sin_verificar || 0) > 0 ? '🟡 PARCIAL' : '🟢 CUMPLE';
+    ct.push(new Paragraph({ children: [new TextRun({ text: `3.${ci + 1}  ${cuerpo.nombre}`, bold: true, size: 24, color: CB })], spacing: { before: 400, after: 100 } }));
+    ct.push(new Paragraph({ children: [new TextRun({ text: `${sem}  ·  ${cuerpo.conformes} conformes  ·  ${cuerpo.no_cumplen} no cumplen  ·  ${cuerpo.sin_verificar} sin verificar  ·  ${cuerpo.porcentaje}%`, size: 17, color: CGR })], spacing: { after: 200 } }));
+    (cuerpo.articulos || []).forEach(art => {
+      ct.push(tarjetaArticulo(art));
+      ct.push(new Paragraph({ spacing: { after: 150 } }));
+    });
+  });
+
+  // 4. Recomendaciones
+  if (json.recomendaciones && json.recomendaciones.length > 0) {
+    ct.push(new Paragraph({ children: [new TextRun({ text: '4. BRECHAS Y RECOMENDACIONES PRIORITARIAS', bold: true, size: 28, color: CD })], heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 } }));
+    json.recomendaciones.forEach((rec, i) => {
+      ct.push(new Paragraph({ children: [new TextRun({ text: `${i + 1}. ${rec}`, size: 20, color: '374151' })], spacing: { after: 120 } }));
+    });
+    ct.push(new Paragraph({ spacing: { after: 200 } }));
+  }
+
+  // 5. Validez auditoría
+  ct.push(new Paragraph({ children: [new TextRun({ text: '5. VALIDEZ PARA AUDITORÍA ISO', bold: true, size: 28, color: CD })], heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 } }));
+  ct.push(new Paragraph({ children: [new TextRun({ text: pct >= 80
+    ? 'La matriz está en condiciones de ser presentada en una auditoría ISO. Se recomienda documentar las evidencias de los artículos marcados como "Sin verificar" antes de la fecha de auditoría.'
+    : 'La matriz requiere trabajo adicional antes de una auditoría ISO. Se deben abordar las brechas identificadas y documentar todas las evidencias pendientes antes del proceso de certificación.',
+    size: 20, color: '374151' })], spacing: { after: 300 } }));
+
+  // Certificado
+  ct.push(new Paragraph({ spacing: { before: 400 } }));
+  ct.push(new Table({
+    width: { size: 9026, type: WidthType.DXA }, columnWidths: [9026],
+    rows: [new TableRow({ children: [new TableCell({
+      shading: { fill: 'EFF6FF', type: ShadingType.CLEAR },
+      margins: { top: 250, bottom: 250, left: 350, right: 350 },
+      borders: bords(CB),
+      children: [
+        new Paragraph({ children: [new TextRun({ text: 'CERTIFICADO DE REVISIÓN — PROCESUS', bold: true, size: 22, color: CD })], spacing: { after: 140 } }),
+        new Paragraph({ children: [new TextRun({ text: `Procesus — NormaAI Legal certifica que la Matriz de Requisitos Legales de ${empresa} fue revisada el ${fechaEmision} por consultores especializados en normativa chilena, contrastada con el Diario Oficial de la República de Chile vigente a la misma fecha y verificada según los estándares de los sistemas de gestión ISO aplicables.`, size: 18, color: '374151' })], spacing: { after: 130 } }),
+        new Paragraph({ children: [new TextRun({ text: `Folio: ${folio}  ·  Válido por 12 meses  ·  ${fechaEmision}`, size: 16, color: CGR, italics: true })], spacing: { after: 100 } }),
+        new Paragraph({ children: [new TextRun({ text: 'Procesus — NormaAI Legal  ·  legal.normaai.cl  ·  contacto@normaai.cl', size: 16, color: CB })] })
+      ]
+    })]     // close TableCell props, new TableCell(), children: [] of TableRow
+  })]       // close TableRow props, new TableRow(), rows: []
+}));
+
+  // ── Armar documento con dos secciones ─────────────────────────
+  const doc = new Document({
+    sections: [
+      {
+        properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } },
+        children: portada
+      },
+      {
+        properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 1200, right: 1440, bottom: 1200, left: 1440 } } },
+        headers: {
+          default: new Header({ children: [new Paragraph({
+            children: [
+              new TextRun({ text: 'PROCESUS — NormaAI Legal  |  Informe de Cumplimiento Normativo  —  ', size: 16, color: CGR }),
+              new TextRun({ text: empresa, size: 16, color: CGR, bold: true })
+            ],
+            border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: CB } }
+          })] })
+        },
+        footers: {
+          default: new Footer({ children: [new Paragraph({
+            children: [
+              new TextRun({ text: `Folio: ${folio}  ·  Válido por 12 meses  ·  Pág. `, size: 16, color: CGR }),
+              new TextRun({ children: [PageNumber.CURRENT], size: 16, color: CGR }),
+              new TextRun({ text: ' / ', size: 16, color: CGR }),
+              new TextRun({ children: [PageNumber.TOTAL_PAGES], size: 16, color: CGR })
+            ],
+            alignment: AlignmentType.CENTER,
+            border: { top: { style: BorderStyle.SINGLE, size: 4, color: 'E2E8F0' } }
+          })] })
+        },
+        children: ct
+      }
+    ]
+  });
+  return Packer.toBuffer(doc);
+}
+
+// ── Generar Word (dispatcher: JSON → DEKRA, fallback → Markdown) ─
 function generarWordBuffer(matriz, fechaEmision) {
+  if (matriz.informe_json) {
+    try {
+      const json = typeof matriz.informe_json === 'string'
+        ? JSON.parse(matriz.informe_json)
+        : matriz.informe_json;
+      return generarWordDesdeJSON(json, matriz, fechaEmision);
+    } catch (e) {
+      console.error('[generarWordBuffer] JSON parse fallback:', e.message);
+    }
+  }
+
+  // Fallback: Markdown line-by-line (matrices antiguas o PDF)
   const lineas = (matriz.informe_ia || '').split('\n');
   const children = [];
   children.push(new Paragraph({ children: [new TextRun({ text: 'PROCESUS — NormaAI Legal', bold: true, size: 32, color: '0f2a4a' })], alignment: AlignmentType.CENTER, spacing: { after: 200 } }));
@@ -1093,7 +1388,6 @@ function generarWordBuffer(matriz, fechaEmision) {
   children.push(new Paragraph({ children: [new TextRun({ text: `Fecha de emisión: ${fechaEmision}`, size: 20, color: '64748b' })], alignment: AlignmentType.CENTER, spacing: { after: 100 } }));
   children.push(new Paragraph({ children: [new TextRun({ text: `Folio: NormaAI-${matriz.id.substring(0,8).toUpperCase()}`, size: 18, color: '94a3b8' })], alignment: AlignmentType.CENTER, spacing: { after: 400 } }));
   children.push(new Paragraph({ children: [new TextRun({ text: '─'.repeat(60), color: 'e2e8f0' })], spacing: { after: 400 } }));
-
   for (const linea of lineas) {
     const trim = linea.trim();
     if (!trim) { children.push(new Paragraph({ spacing: { after: 100 } })); continue; }
@@ -1113,13 +1407,11 @@ function generarWordBuffer(matriz, fechaEmision) {
       children.push(new Paragraph({ children: runs, spacing: { after: 120 } }));
     }
   }
-
   children.push(new Paragraph({ children: [new TextRun({ text: '' })], spacing: { before: 400 } }));
-  children.push(new Paragraph({ children: [new TextRun({ text: '🏆 CERTIFICADO DE REVISIÓN — PROCESUS', bold: true, size: 24, color: '15803d' })], spacing: { before: 200, after: 200 } }));
+  children.push(new Paragraph({ children: [new TextRun({ text: 'CERTIFICADO DE REVISIÓN — PROCESUS', bold: true, size: 24, color: '15803d' })], spacing: { before: 200, after: 200 } }));
   children.push(new Paragraph({ children: [new TextRun({ text: `Procesus — NormaAI Legal certifica que la Matriz de Requisitos Legales de ${matriz.empresa} fue revisada el ${fechaEmision} por consultores especializados en normativa chilena, contrastada con el Diario Oficial de la República de Chile vigente a la misma fecha y verificada según los estándares de los sistemas de gestión ISO aplicables.`, size: 20, color: '166534' })], spacing: { after: 150 } }));
   children.push(new Paragraph({ children: [new TextRun({ text: `Este certificado es válido por 12 meses desde su emisión. Folio: NormaAI-${matriz.id.substring(0,8).toUpperCase()}`, size: 18, color: '64748b', italics: true })], spacing: { after: 200 } }));
   children.push(new Paragraph({ children: [new TextRun({ text: 'Procesus — NormaAI Legal · legal.normaai.cl · contacto@normaai.cl', size: 18, color: '94a3b8' })], alignment: AlignmentType.CENTER, spacing: { before: 400 } }));
-
   const doc = new Document({
     numbering: { config: [{ reference: 'default-numbering', levels: [{ level: 0, format: 'decimal', text: '%1.', alignment: AlignmentType.LEFT }] }] },
     sections: [{ properties: {}, children }]

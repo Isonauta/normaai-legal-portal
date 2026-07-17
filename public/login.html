@@ -536,6 +536,14 @@ html,body{font-family:'DM Sans',sans-serif;background:var(--azul);color:var(--bl
 const token = localStorage.getItem('normaai_token');
 if (token) window.location.href = '/dashboard';
 
+// Ocultar checkbox si este navegador ya registró la aceptación
+if (localStorage.getItem('normaai_terminos_ok') === 'true') {
+  document.addEventListener('DOMContentLoaded', () => {
+    const wrap = document.getElementById('acepta-wrap');
+    if (wrap) wrap.style.display = 'none';
+  });
+}
+
 function abrirLogin() {
   document.getElementById('modal-login').classList.add('open');
   setTimeout(() => document.getElementById('email').focus(), 50);
@@ -583,7 +591,6 @@ async function login() {
   const errEl = document.getElementById('error-msg');
   errEl.style.display = 'none';
   if (!email || !password) { mostrarError('Por favor completa todos los campos.'); return; }
-  if (!validarAceptacion()) return;
   btn.disabled = true;
   btn.textContent = 'Ingresando...';
   try {
@@ -594,6 +601,18 @@ async function login() {
     });
     const data = await res.json();
     if (!res.ok) { mostrarError(data.error || 'Error al iniciar sesión.'); return; }
+
+    // Si el usuario aún no ha aceptado los términos, validar el checkbox
+    if (!data.user.terminos_aceptados_en) {
+      if (!validarAceptacion()) return;
+      // Guardar la aceptación en la BD (fire-and-forget)
+      fetch('/api/perfil/terminos', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${data.token}` }
+      }).catch(() => {});
+    }
+
+    localStorage.setItem('normaai_terminos_ok', 'true');
     localStorage.setItem('normaai_token', data.token);
     localStorage.setItem('normaai_user', JSON.stringify(data.user));
     window.location.href = data.user.rol === 'admin' ? '/admin' : '/dashboard';
