@@ -533,6 +533,12 @@ html,body{font-family:'DM Sans',sans-serif;background:var(--azul);color:var(--bl
 </div>
 
 <script>
+// Redirigir si hay token de recuperación de contraseña en el hash
+const _hash = new URLSearchParams(window.location.hash.substring(1));
+if (_hash.get('type') === 'recovery' && _hash.get('access_token')) {
+  window.location.href = '/reset-password' + window.location.hash;
+}
+
 const token = localStorage.getItem('normaai_token');
 if (token) window.location.href = '/dashboard';
 

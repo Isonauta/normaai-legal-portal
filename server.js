@@ -16,6 +16,15 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.ht
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.get('/reset-password', (req, res) => res.sendFile(path.join(__dirname, 'public', 'reset-password.html')));
+
+// Configuración pública para el cliente (anon key es segura de exponer)
+app.get('/api/config', (req, res) => {
+  res.json({
+    supabase_url: process.env.SUPABASE_URL,
+    supabase_anon_key: process.env.SUPABASE_ANON_KEY
+  });
+});
 
 // ── Clientes de servicios ──────────────────────────────────────
 const supabase = createClient(
