@@ -383,7 +383,7 @@ INSTRUCCIONES:
 
     const respuesta = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 800,
+      max_tokens: 1200,
       system: systemPrompt,
       messages: mensajes,
     });
