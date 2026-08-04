@@ -387,7 +387,7 @@ INSTRUCCIONES:
 - Fuente de normativa: ${contexto_bcn}${contexto_kb}`;
 
     const respuesta = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-5',
       max_tokens: 1500,
       system: systemPrompt,
       messages: mensajes,
@@ -697,7 +697,7 @@ ${cliente?.trabajadores ? `- Trabajadores: ${cliente.trabajadores}` : ''}`;
         }).join('\n\n');
 
         const mensajeIA = await anthropic.messages.create({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-5',
           max_tokens: 8000,
           messages: [{
             role: 'user',
@@ -808,7 +808,7 @@ Usa formato Markdown con encabezados ##, tablas y listas. Sé exhaustivo.`
       } else if (ext === 'pdf') {
         const archivoBase64 = archivo.buffer.toString('base64');
         const mensajeIA = await anthropic.messages.create({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-5',
           max_tokens: 8000,
           messages: [{
             role: 'user',
