@@ -281,24 +281,23 @@ app.post('/api/agente', verificarToken, async (req, res) => {
   const { mensaje, historial = [], documento } = req.body;
   if (!mensaje) return res.status(400).json({ error: 'Mensaje requerido' });
 
-  const mesActual = new Date().toISOString().slice(0, 7);
-  const { data: uso } = await supabase
-    .from('uso_agente')
-    .select('consultas')
-    .eq('user_id', req.user.id)
-    .eq('mes', mesActual)
-    .single();
-
-  const consultasUsadas = uso?.consultas || 0;
-  const LIMITE_MENSUAL = parseInt(process.env.LIMITE_CONSULTAS_MES || '100');
-
-  if (consultasUsadas >= LIMITE_MENSUAL) {
-    return res.status(429).json({
-      error: `Has alcanzado el límite de ${LIMITE_MENSUAL} consultas este mes. Contáctanos en contacto@normaai.cl`
-    });
-  }
-
   try {
+    const mesActual = new Date().toISOString().slice(0, 7);
+    const { data: uso } = await supabase
+      .from('uso_agente')
+      .select('consultas')
+      .eq('user_id', req.user.id)
+      .eq('mes', mesActual)
+      .single();
+
+    const consultasUsadas = uso?.consultas || 0;
+    const LIMITE_MENSUAL = parseInt(process.env.LIMITE_CONSULTAS_MES || '100');
+
+    if (consultasUsadas >= LIMITE_MENSUAL) {
+      return res.status(429).json({
+        error: `Has alcanzado el límite de ${LIMITE_MENSUAL} consultas este mes. Contáctanos en contacto@normaai.cl`
+      });
+    }
     // ── Obtener contexto de la empresa ───────────────────────
     const contextoEmpresa = await obtenerContextoEmpresa(req.user.id);
 

@@ -1091,7 +1091,7 @@ async function enviarMensaje() {
     });
     quitarTyping(typingId);
     const data = await res.json();
-    if (!res.ok) { agregarMensaje('agente', '⚠️ ' + (data.error || 'Error al procesar.')); return; }
+    if (!res.ok) { agregarMensaje('agente', '⚠️ ' + (data.error || 'Error al procesar.') + (data.debug ? ' — ' + data.debug : '')); return; }
     agregarMensaje('agente', data.respuesta);
     historial.push({ rol: 'assistant', contenido: data.respuesta });
     consultasUsadas = data.consultas_usadas || consultasUsadas + 1;
