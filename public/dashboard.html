@@ -1484,6 +1484,8 @@ async function cargarRequisitos() {
     _requisitosData = await res.json();
     renderRequisitos(_requisitosData);
     renderReqStats(_requisitosData);
+    const primerNoCumple = _requisitosData.find(r => r.cumple === 'NO');
+    if (primerNoCumple) setTimeout(() => toggleDetalle(primerNoCumple.id), 100);
   } catch(e) {
     lista.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Error al cargar requisitos</h3></div>';
   }
@@ -1581,6 +1583,9 @@ function renderRequisitos(data) {
                 '<input class="add-plan-input" id="plan-input-' + r.id + '" placeholder="Describir acción correctiva…" onkeydown="if(event.key===\'Enter\')agregarPlan(\'' + r.id + '\')">' +
                 '<button class="add-plan-btn" onclick="agregarPlan(\'' + r.id + '\')">+ Agregar plan</button>' +
               '</div>' +
+              '<div class="planes-titulo" style="margin-top:1.2rem;">DOCUMENTOS DE EVIDENCIA</div>' +
+              '<div style="font-size:.78rem;color:#3d4f6a;padding:.4rem 0 .7rem;">Sin documentos vinculados.</div>' +
+              '<button class="add-plan-btn" style="background:rgba(255,255,255,0.04);border:1px dashed rgba(255,255,255,0.1);color:#64748b;" onclick="alert(\'La vinculación de documentos SharePoint y Drive estará disponible en la próxima versión.\')">📎 Vincular documento (SharePoint / Drive)</button>' +
             '</div>' +
           '</div>';
         }).join('') +
