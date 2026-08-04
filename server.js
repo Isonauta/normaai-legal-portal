@@ -1708,6 +1708,16 @@ app.get('/api/semaforo', verificarToken, async (req, res) => {
 //  GESTIÓN VIVA — Requisitos y Planes de Acción
 // ══════════════════════════════════════════════════════════════
 
+// GET /api/debug-modelos — lista modelos disponibles (temporal)
+app.get('/api/debug-modelos', async (req, res) => {
+  try {
+    const modelos = await anthropic.models.list();
+    res.json({ ok: true, modelos: modelos.data.map(m => m.id) });
+  } catch(err) {
+    res.json({ ok: false, error: err.message, key_prefix: (process.env.ANTHROPIC_API_KEY || '').slice(0,20) });
+  }
+});
+
 // GET /api/requisitos — lista requisitos del cliente autenticado
 app.get('/api/requisitos', verificarToken, async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
