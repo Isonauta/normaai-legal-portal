@@ -1710,6 +1710,7 @@ app.get('/api/semaforo', verificarToken, async (req, res) => {
 
 // GET /api/requisitos — lista requisitos del cliente autenticado
 app.get('/api/requisitos', verificarToken, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
   try {
     const { data: reqs, error } = await supabase
       .from('normaai_requisitos')

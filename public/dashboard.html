@@ -1478,8 +1478,9 @@ async function cargarRequisitos() {
   const lista = document.getElementById('req-lista');
   lista.innerHTML = '<div class="loading-state"><div class="spinner"></div><span>Cargando requisitos…</span></div>';
   try {
-    const res = await fetch('/api/requisitos', { headers: { Authorization: 'Bearer ' + token } });
+    const res = await fetch('/api/requisitos', { cache: 'no-store', headers: { Authorization: 'Bearer ' + token } });
     if (res.status === 401) { hacerLogout(); return; }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     _requisitosData = await res.json();
     renderRequisitos(_requisitosData);
     renderReqStats(_requisitosData);
