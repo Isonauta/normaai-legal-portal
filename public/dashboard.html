@@ -20,7 +20,7 @@
   --ov08:rgba(255,255,255,0.08);--ov10:rgba(255,255,255,0.1);
 }
 :root[data-theme="light"]{
-  --azul:#f2f4f8;--azul-med:#ffffff;--blanco:#0a1628;--gris:#5b6b82;
+  --azul:#f2f4f8;--azul-med:#ffffff;--blanco:#0a1628;--gris:#46536a;
   --bg-page:#eef1f6;--bg-modal:#ffffff;--topbar-bg:rgba(255,255,255,0.85);
   --text-3:#94a3b8;--text-4:#b8c2d4;--text-strong:#1e3a5f;
   --ov02:rgba(10,22,40,0.04);--ov03:rgba(10,22,40,0.05);--ov04:rgba(10,22,40,0.06);
@@ -224,7 +224,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg-page)
 .ev-badge.brecha{background:rgba(239,68,68,0.2);color:#f87171;}
 .ev-badge.sin{background:rgba(245,158,11,0.2);color:#fbbf24;}
 .ev-art{font-size:.72rem;color:var(--text-3);flex-shrink:0;width:40px;}
-.ev-desc{flex:1;color:#a0b0c8;line-height:1.5;}
+.ev-desc{flex:1;color:var(--gris);line-height:1.5;}
 .ev-evidencia{font-size:.72rem;color:var(--text-3);margin-top:.2rem;font-style:italic;}
 .ev-resp{font-size:.68rem;color:var(--text-4);margin-top:.1rem;}
 
@@ -245,8 +245,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg-page)
 .req-fila:hover{background:var(--ov02);}
 .req-fila-main{display:grid;grid-template-columns:90px 110px 1fr 130px;gap:.6rem;align-items:center;padding:.65rem 1rem;cursor:pointer;}
 .req-art{font-size:.78rem;color:#60a5fa;font-weight:600;}
-.req-desc{font-size:.8rem;color:#a0b0c8;line-height:1.4;}
-.req-resp{font-size:.75rem;color:#64748b;}
+.req-desc{font-size:.8rem;color:var(--gris);line-height:1.4;}
+.req-resp{font-size:.75rem;color:var(--gris);}
 .req-estado-badge{display:inline-flex;align-items:center;gap:.3rem;font-size:.75rem;font-weight:600;padding:.25rem .65rem;border-radius:20px;cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap;}
 .req-estado-badge.SI{background:rgba(34,197,94,.15);color:#4ade80;border-color:rgba(34,197,94,.3);}
 .req-estado-badge.NO{background:rgba(239,68,68,.15);color:#f87171;border-color:rgba(239,68,68,.3);}
@@ -259,9 +259,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg-page)
 .req-input:focus{outline:none;border-color:#1a6cf8;}
 .req-guardar-btn{background:#1a6cf8;color:#fff;border:none;border-radius:6px;padding:.4rem .9rem;font-size:.8rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .req-guardar-btn:hover{background:#3d84fa;}
-.planes-titulo{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:#64748b;margin-bottom:.6rem;margin-top:.6rem;}
+.planes-titulo{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gris);margin-bottom:.6rem;margin-top:.6rem;}
 .plan-fila{display:flex;align-items:center;gap:.6rem;padding:.4rem .6rem;background:var(--ov03);border-radius:6px;margin-bottom:.4rem;}
-.plan-accion{flex:1;font-size:.8rem;color:#c8d6e8;}
+.plan-accion{flex:1;font-size:.8rem;color:var(--text-strong);}
 .plan-estado-sel{background:var(--ov06);border:1px solid var(--ov10);border-radius:5px;color:var(--text-strong);padding:.2rem .4rem;font-size:.75rem;font-family:'DM Sans',sans-serif;cursor:pointer;}
 .plan-del-btn{background:none;border:none;color:var(--text-3);cursor:pointer;font-size:.85rem;padding:.1rem .3rem;}
 .plan-del-btn:hover{color:#f87171;}
@@ -277,7 +277,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg-page)
 .agenda-resumen{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin-bottom:1.5rem;}
 .agenda-stat{background:var(--ov03);border:1px solid var(--ov07);border-radius:10px;padding:1rem;text-align:center;}
 .agenda-stat-num{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:700;}
-.agenda-stat-lbl{font-size:.72rem;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-top:.2rem;}
+.agenda-stat-lbl{font-size:.72rem;color:var(--gris);text-transform:uppercase;letter-spacing:.08em;margin-top:.2rem;}
 .agenda-cal{background:var(--ov02);border:1px solid var(--ov07);border-radius:12px;overflow:hidden;}
 .cal-header{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.2rem;border-bottom:1px solid var(--ov06);}
 .cal-nav{background:none;border:none;color:var(--gris);font-size:1.1rem;cursor:pointer;padding:.2rem .5rem;border-radius:5px;}
@@ -299,7 +299,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg-page)
 .agenda-lista-item:hover{background:var(--ov02);}
 .agenda-fecha-col{min-width:72px;text-align:center;background:var(--ov04);border-radius:8px;padding:.4rem;}
 .agenda-fecha-dia{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:700;line-height:1;}
-.agenda-fecha-mes{font-size:.65rem;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-top:.15rem;}
+.agenda-fecha-mes{font-size:.65rem;color:var(--gris);text-transform:uppercase;letter-spacing:.07em;margin-top:.15rem;}
 .agenda-dias-badge{font-size:.65rem;margin-top:.3rem;padding:.1rem .3rem;border-radius:4px;}
 .agenda-info{flex:1;min-width:0;}
 .agenda-accion{font-size:.85rem;color:var(--text-strong);margin-bottom:.25rem;line-height:1.4;}
@@ -1647,9 +1647,9 @@ function renderRequisitos(data) {
             '</div>' +
             '<div class="req-detalle" id="det-' + r.id + '">' +
               '<div class="req-detalle-fields">' +
-                '<div><label style="font-size:.72rem;color:#64748b;display:block;margin-bottom:.3rem;">RESPONSABLE</label>' +
+                '<div><label style="font-size:.72rem;color:var(--gris);display:block;margin-bottom:.3rem;">RESPONSABLE</label>' +
                 '<input class="req-input" id="resp-' + r.id + '" value="' + (r.responsable || '') + '" placeholder="Nombre responsable"></div>' +
-                '<div><label style="font-size:.72rem;color:#64748b;display:block;margin-bottom:.3rem;">FORMA DE CUMPLIMIENTO</label>' +
+                '<div><label style="font-size:.72rem;color:var(--gris);display:block;margin-bottom:.3rem;">FORMA DE CUMPLIMIENTO</label>' +
                 '<input class="req-input" id="forma-' + r.id + '" value="' + (r.forma_cumplimiento || '') + '" placeholder="Cómo se cumple / evidencia"></div>' +
               '</div>' +
               '<button class="req-guardar-btn" onclick="guardarRequisito(\'' + r.id + '\')">Guardar cambios</button>' +
@@ -1661,7 +1661,7 @@ function renderRequisitos(data) {
               '</div>' +
               '<div class="planes-titulo" style="margin-top:1.2rem;">DOCUMENTOS DE EVIDENCIA</div>' +
               '<div style="font-size:.78rem;color:var(--text-4);padding:.4rem 0 .7rem;">Sin documentos vinculados.</div>' +
-              '<button class="add-plan-btn" style="background:var(--ov04);border:1px dashed var(--ov10);color:#64748b;" onclick="alert(\'La vinculación de documentos SharePoint y Drive estará disponible en la próxima versión.\')">📎 Vincular documento (SharePoint / Drive)</button>' +
+              '<button class="add-plan-btn" style="background:var(--ov04);border:1px dashed var(--ov10);color:var(--gris);" onclick="alert(\'La vinculación de documentos SharePoint y Drive estará disponible en la próxima versión.\')">📎 Vincular documento (SharePoint / Drive)</button>' +
             '</div>' +
           '</div>';
         }).join('') +
@@ -1846,7 +1846,7 @@ function renderCalendario() {
     const esHoy = d===hoy.getDate() && _agendaMes===hoy.getMonth() && _agendaAnio===hoy.getFullYear();
     const numHTML = esHoy
       ? '<div class="cal-daynum"><span class="cal-daynum hoy">'+d+'</span></div>'
-      : '<div class="cal-daynum" style="color:#64748b">'+d+'</div>';
+      : '<div class="cal-daynum" style="color:var(--gris)">'+d+'</div>';
     const dots = (porFecha[d]||[]).slice(0,3).map(p =>
       '<div class="cal-dot '+p.estado+'" title="'+p.accion+'">'+p.estado.charAt(0)+' '+((p.normaai_requisitos&&p.normaai_requisitos.articulo)||'Plan')+'</div>'
     ).join('');
