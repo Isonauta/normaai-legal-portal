@@ -1704,6 +1704,98 @@ app.get('/api/semaforo', verificarToken, async (req, res) => {
   }
 });
 
+// ══════════════════════════════════════════════════════════════
+//  GESTIÓN VIVA — Requisitos y Planes de Acción
+// ══════════════════════════════════════════════════════════════
+
+// GET /api/requisitos — lista requisitos del cliente autenticado
+app.get('/api/requisitos', verificarToken, async (req, res) => {
+  try {
+    const { data: reqs, error } = await supabase
+      .from('normaai_requisitos')
+      .select('*, normaai_planes_accion(*)')
+      .eq('user_id', req.user.id)
+      .order('pais').order('cuerpo_legal').order('orden');
+    if (error) throw error;
+    res.json(reqs || []);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/requisitos/:id — actualiza cumple, responsable, forma_cumplimiento
+app.patch('/api/requisitos/:id', verificarToken, async (req, res) => {
+  const campos = ['cumple', 'responsable', 'forma_cumplimiento'];
+  const update = {};
+  campos.forEach(c => { if (req.body[c] !== undefined) update[c] = req.body[c]; });
+  update.updated_at = new Date().toISOString();
+  try {
+    const { data, error } = await supabase
+      .from('normaai_requisitos')
+      .update(update)
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id)
+      .select().single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/requisitos/:id/planes — agrega plan de acción
+app.post('/api/requisitos/:id/planes', verificarToken, async (req, res) => {
+  const { accion, responsable, fecha_limite } = req.body;
+  if (!accion) return res.status(400).json({ error: 'La acción es requerida' });
+  try {
+    const { data, error } = await supabase
+      .from('normaai_planes_accion')
+      .insert({ requisito_id: req.params.id, user_id: req.user.id, accion, responsable: responsable || null, fecha_limite: fecha_limite || null })
+      .select().single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/planes/:id — actualiza estado de un plan
+app.patch('/api/planes/:id', verificarToken, async (req, res) => {
+  const { estado, accion, responsable, fecha_limite } = req.body;
+  const update = { updated_at: new Date().toISOString() };
+  if (estado) update.estado = estado;
+  if (accion) update.accion = accion;
+  if (responsable !== undefined) update.responsable = responsable;
+  if (fecha_limite !== undefined) update.fecha_limite = fecha_limite;
+  try {
+    const { data, error } = await supabase
+      .from('normaai_planes_accion')
+      .update(update)
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id)
+      .select().single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/planes/:id — elimina un plan de acción
+app.delete('/api/planes/:id', verificarToken, async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('normaai_planes_accion')
+      .delete()
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`NormaAI Legal Portal corriendo en puerto ${PORT}`));
 module.exports = app;

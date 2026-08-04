@@ -213,6 +213,49 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
 .ev-desc{flex:1;color:#a0b0c8;line-height:1.5;}
 .ev-evidencia{font-size:.72rem;color:#4a5568;margin-top:.2rem;font-style:italic;}
 .ev-resp{font-size:.68rem;color:#3d4f6a;margin-top:.1rem;}
+
+/* ── Gestión Viva: Mis Requisitos ────────────────────── */
+.req-stat-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:.9rem 1rem;text-align:center;}
+.req-stat-num{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:700;line-height:1;}
+.req-stat-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:#8a96a8;margin-top:.3rem;}
+.req-grupo{margin-bottom:1.2rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;overflow:hidden;}
+.req-grupo-header{display:flex;align-items:center;gap:.8rem;padding:.75rem 1rem;background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer;user-select:none;}
+.req-grupo-titulo{font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;flex:1;}
+.req-grupo-badges{display:flex;gap:.4rem;flex-wrap:wrap;}
+.req-badge-mini{font-size:.7rem;padding:.15rem .5rem;border-radius:20px;font-weight:600;}
+.req-badge-mini.si{background:rgba(34,197,94,.2);color:#4ade80;}
+.req-badge-mini.no{background:rgba(239,68,68,.2);color:#f87171;}
+.req-badge-mini.pend{background:rgba(245,158,11,.2);color:#fbbf24;}
+.req-fila{border-bottom:1px solid rgba(255,255,255,0.04);transition:background .15s;}
+.req-fila:last-child{border-bottom:none;}
+.req-fila:hover{background:rgba(255,255,255,0.02);}
+.req-fila-main{display:grid;grid-template-columns:90px 110px 1fr 130px;gap:.6rem;align-items:center;padding:.65rem 1rem;cursor:pointer;}
+.req-art{font-size:.78rem;color:#60a5fa;font-weight:600;}
+.req-desc{font-size:.8rem;color:#a0b0c8;line-height:1.4;}
+.req-resp{font-size:.75rem;color:#64748b;}
+.req-estado-badge{display:inline-flex;align-items:center;gap:.3rem;font-size:.75rem;font-weight:600;padding:.25rem .65rem;border-radius:20px;cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap;}
+.req-estado-badge.SI{background:rgba(34,197,94,.15);color:#4ade80;border-color:rgba(34,197,94,.3);}
+.req-estado-badge.NO{background:rgba(239,68,68,.15);color:#f87171;border-color:rgba(239,68,68,.3);}
+.req-estado-badge.PENDIENTE{background:rgba(245,158,11,.15);color:#fbbf24;border-color:rgba(245,158,11,.3);}
+.req-estado-badge.NO_APLICA{background:rgba(100,116,139,.15);color:#94a3b8;border-color:rgba(100,116,139,.3);}
+.req-detalle{display:none;padding:1rem;background:rgba(26,108,248,0.03);border-top:1px solid rgba(26,108,248,0.08);}
+.req-detalle.open{display:block;}
+.req-detalle-fields{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:1rem;}
+.req-input{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#e2e8f0;padding:.45rem .7rem;font-size:.82rem;font-family:'DM Sans',sans-serif;}
+.req-input:focus{outline:none;border-color:#1a6cf8;}
+.req-guardar-btn{background:#1a6cf8;color:#fff;border:none;border-radius:6px;padding:.4rem .9rem;font-size:.8rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.req-guardar-btn:hover{background:#3d84fa;}
+.planes-titulo{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:#64748b;margin-bottom:.6rem;margin-top:.6rem;}
+.plan-fila{display:flex;align-items:center;gap:.6rem;padding:.4rem .6rem;background:rgba(255,255,255,0.03);border-radius:6px;margin-bottom:.4rem;}
+.plan-accion{flex:1;font-size:.8rem;color:#c8d6e8;}
+.plan-estado-sel{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:5px;color:#e2e8f0;padding:.2rem .4rem;font-size:.75rem;font-family:'DM Sans',sans-serif;cursor:pointer;}
+.plan-del-btn{background:none;border:none;color:#4a5568;cursor:pointer;font-size:.85rem;padding:.1rem .3rem;}
+.plan-del-btn:hover{color:#f87171;}
+.add-plan-form{display:flex;gap:.5rem;margin-top:.6rem;align-items:center;}
+.add-plan-input{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#e2e8f0;padding:.4rem .7rem;font-size:.8rem;font-family:'DM Sans',sans-serif;}
+.add-plan-input:focus{outline:none;border-color:#1a6cf8;}
+.add-plan-btn{background:rgba(26,108,248,0.2);color:#60a5fa;border:1px solid rgba(26,108,248,0.3);border-radius:6px;padding:.4rem .8rem;font-size:.8rem;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;}
+.add-plan-btn:hover{background:rgba(26,108,248,0.35);}
 </style>
 </head>
 <body>
@@ -417,6 +460,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
     </div>
     <div class="nav-section" style="margin-top:1rem">
       <div class="nav-label">Recursos</div>
+      <button class="nav-item" onclick="mostrarVista('requisitos',this)"><span class="nav-icon">⚖️</span> Mis Requisitos</button>
       <button class="nav-item" onclick="mostrarVista('matriz',this)"><span class="nav-icon">📊</span> Revisar tu Matriz</button>
       <button class="nav-item" onclick="mostrarVista('videos',this)"><span class="nav-icon">🎥</span> Videos</button>
     </div>
@@ -495,6 +539,32 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
     <!-- HISTORIAL -->
     <div class="view" id="vista-historial">
       <div id="historial-content"><div class="loading-state"><div class="spinner"></div><span>Cargando historial...</span></div></div>
+    </div>
+
+    <!-- REQUISITOS -->
+    <div class="view" id="vista-requisitos">
+      <!-- Stats bar -->
+      <div id="req-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin-bottom:1.2rem;max-width:900px;margin-left:auto;margin-right:auto;"></div>
+      <!-- Filtros -->
+      <div style="max-width:900px;margin:0 auto 1rem;display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;">
+        <select id="req-filtro-pais" onchange="filtrarRequisitos()" style="background:#0d2144;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#e2e8f0;padding:.4rem .7rem;font-size:.82rem;font-family:'DM Sans',sans-serif;cursor:pointer;">
+          <option value="">🌎 Todos los países</option>
+          <option value="CL">🇨🇱 Chile</option>
+          <option value="PE">🇵🇪 Perú</option>
+        </select>
+        <select id="req-filtro-estado" onchange="filtrarRequisitos()" style="background:#0d2144;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#e2e8f0;padding:.4rem .7rem;font-size:.82rem;font-family:'DM Sans',sans-serif;cursor:pointer;">
+          <option value="">📋 Todos los estados</option>
+          <option value="SI">✔ Cumple</option>
+          <option value="NO">✗ No cumple</option>
+          <option value="PENDIENTE">⚠ Pendiente</option>
+          <option value="NO_APLICA">— No aplica</option>
+        </select>
+        <input id="req-buscar" oninput="filtrarRequisitos()" placeholder="🔍 Buscar artículo o descripción…" style="background:#0d2144;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#e2e8f0;padding:.4rem .8rem;font-size:.82rem;font-family:'DM Sans',sans-serif;flex:1;min-width:180px;" />
+      </div>
+      <!-- Lista de requisitos -->
+      <div id="req-lista" style="max-width:900px;margin:0 auto;">
+        <div class="loading-state"><div class="spinner"></div><span>Cargando requisitos…</span></div>
+      </div>
     </div>
 
     <!-- VIDEOS -->
@@ -867,7 +937,8 @@ const titulos = {
   agente: 'Agente IA — Consulta Normativa',
   historial: 'Historial de Consultas',
   matriz: 'Revisar tu Matriz Legal',
-  videos: 'Videos y Capacitación'
+  videos: 'Videos y Capacitación',
+  requisitos: 'Mis Requisitos'
 };
 
 function mostrarVista(nombre_vista, el) {
@@ -880,6 +951,7 @@ function mostrarVista(nombre_vista, el) {
   if (nombre_vista === 'historial') cargarHistorial();
   if (nombre_vista === 'videos') cargarVideos();
   if (nombre_vista === 'matriz') cargarMisMatrices();
+  if (nombre_vista === 'requisitos') cargarRequisitos();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1395,6 +1467,223 @@ async function cargarPanelEvidencia(matrizId) {
   } catch(e) {
     console.error('[evidencia]', e);
   }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  GESTIÓN VIVA — Mis Requisitos
+// ══════════════════════════════════════════════════════════════
+let _requisitosData = [];
+
+async function cargarRequisitos() {
+  const lista = document.getElementById('req-lista');
+  lista.innerHTML = '<div class="loading-state"><div class="spinner"></div><span>Cargando requisitos…</span></div>';
+  try {
+    const res = await fetch('/api/requisitos', { headers: { Authorization: 'Bearer ' + token } });
+    if (res.status === 401) { hacerLogout(); return; }
+    _requisitosData = await res.json();
+    renderRequisitos(_requisitosData);
+    renderReqStats(_requisitosData);
+  } catch(e) {
+    lista.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Error al cargar requisitos</h3></div>';
+  }
+}
+
+function renderReqStats(data) {
+  const total = data.length;
+  const si = data.filter(r => r.cumple === 'SI').length;
+  const no = data.filter(r => r.cumple === 'NO').length;
+  const pend = data.filter(r => r.cumple === 'PENDIENTE').length;
+  const pct = total > 0 ? Math.round((si / total) * 100) : 0;
+  const nivelColor = pct >= 80 ? '#4ade80' : pct >= 50 ? '#fbbf24' : '#f87171';
+  document.getElementById('req-stats').innerHTML =
+    '<div class="req-stat-card"><div class="req-stat-num" style="color:#60a5fa">' + total + '</div><div class="req-stat-label">Total requisitos</div></div>' +
+    '<div class="req-stat-card"><div class="req-stat-num" style="color:' + nivelColor + '">' + pct + '%</div><div class="req-stat-label">Cumplimiento</div></div>' +
+    '<div class="req-stat-card"><div class="req-stat-num" style="color:#4ade80">' + si + '</div><div class="req-stat-label">✔ Conformes</div></div>' +
+    '<div class="req-stat-card"><div class="req-stat-num" style="color:#f87171">' + no + '</div><div class="req-stat-label">✗ No cumplen</div></div>';
+}
+
+function filtrarRequisitos() {
+  const pais = document.getElementById('req-filtro-pais').value;
+  const estado = document.getElementById('req-filtro-estado').value;
+  const buscar = (document.getElementById('req-buscar').value || '').toLowerCase();
+  const filtrado = _requisitosData.filter(r => {
+    if (pais && r.pais !== pais) return false;
+    if (estado && r.cumple !== estado) return false;
+    if (buscar && !(r.articulo || '').toLowerCase().includes(buscar) && !(r.descripcion || '').toLowerCase().includes(buscar) && !(r.cuerpo_legal || '').toLowerCase().includes(buscar)) return false;
+    return true;
+  });
+  renderRequisitos(filtrado);
+  renderReqStats(filtrado);
+}
+
+function renderRequisitos(data) {
+  const lista = document.getElementById('req-lista');
+  if (!data.length) {
+    lista.innerHTML = '<div class="empty-state"><div class="icon">⚖️</div><h3>Sin requisitos cargados</h3><p>Los requisitos se generan automáticamente al procesar tu matriz.</p></div>';
+    return;
+  }
+  // Agrupar por país + cuerpo_legal
+  const grupos = {};
+  data.forEach(r => {
+    const key = (r.pais || 'CL') + '|' + r.cuerpo_legal;
+    if (!grupos[key]) grupos[key] = { pais: r.pais || 'CL', nombre: r.cuerpo_legal, items: [] };
+    grupos[key].items.push(r);
+  });
+
+  const estadoMap = {
+    SI:       { icon: '✔', label: 'Cumple',      css: 'SI' },
+    NO:       { icon: '✗', label: 'No cumple',   css: 'NO' },
+    PENDIENTE:{ icon: '⚠', label: 'Pendiente',   css: 'PENDIENTE' },
+    NO_APLICA:{ icon: '—', label: 'No aplica',   css: 'NO_APLICA' }
+  };
+  const bandera = { CL: '🇨🇱', PE: '🇵🇪', AR: '🇦🇷', CO: '🇨🇴' };
+
+  lista.innerHTML = Object.values(grupos).map(g => {
+    const si = g.items.filter(r => r.cumple === 'SI').length;
+    const no = g.items.filter(r => r.cumple === 'NO').length;
+    const pend = g.items.filter(r => r.cumple === 'PENDIENTE').length;
+    const gid = 'g-' + btoa(g.nombre).replace(/[^a-zA-Z0-9]/g,'').slice(0,12);
+
+    return '<div class="req-grupo">' +
+      '<div class="req-grupo-header" onclick="toggleGrupo(\'' + gid + '\')">' +
+        '<span>' + (bandera[g.pais] || '🌎') + '</span>' +
+        '<span class="req-grupo-titulo">' + g.nombre + '</span>' +
+        '<span class="req-grupo-badges">' +
+          (si > 0 ? '<span class="req-badge-mini si">✔ ' + si + '</span>' : '') +
+          (no > 0 ? '<span class="req-badge-mini no">✗ ' + no + '</span>' : '') +
+          (pend > 0 ? '<span class="req-badge-mini pend">⚠ ' + pend + '</span>' : '') +
+        '</span>' +
+        '<span style="color:#4a5568;font-size:.85rem;">▾</span>' +
+      '</div>' +
+      '<div id="' + gid + '">' +
+        g.items.map(r => {
+          const e = estadoMap[r.cumple] || estadoMap.PENDIENTE;
+          const nplanes = (r.normaai_planes_accion || []).length;
+          return '<div class="req-fila" id="fila-' + r.id + '">' +
+            '<div class="req-fila-main" onclick="toggleDetalle(\'' + r.id + '\')">' +
+              '<span class="req-art">' + (r.articulo || '—') + '</span>' +
+              '<span class="req-estado-badge ' + e.css + '" onclick="event.stopPropagation();ciclarEstado(\'' + r.id + '\')">' + e.icon + ' ' + e.label + '</span>' +
+              '<span class="req-desc">' + (r.descripcion || '') + '</span>' +
+              '<span class="req-resp">' + (r.responsable || '<span style="color:#3d4f6a">Sin responsable</span>') + (nplanes > 0 ? ' <span style="color:#60a5fa;font-size:.7rem;">· ' + nplanes + ' plan' + (nplanes > 1 ? 'es' : '') + '</span>' : '') + '</span>' +
+            '</div>' +
+            '<div class="req-detalle" id="det-' + r.id + '">' +
+              '<div class="req-detalle-fields">' +
+                '<div><label style="font-size:.72rem;color:#64748b;display:block;margin-bottom:.3rem;">RESPONSABLE</label>' +
+                '<input class="req-input" id="resp-' + r.id + '" value="' + (r.responsable || '') + '" placeholder="Nombre responsable"></div>' +
+                '<div><label style="font-size:.72rem;color:#64748b;display:block;margin-bottom:.3rem;">FORMA DE CUMPLIMIENTO</label>' +
+                '<input class="req-input" id="forma-' + r.id + '" value="' + (r.forma_cumplimiento || '') + '" placeholder="Cómo se cumple / evidencia"></div>' +
+              '</div>' +
+              '<button class="req-guardar-btn" onclick="guardarRequisito(\'' + r.id + '\')">Guardar cambios</button>' +
+              '<div class="planes-titulo" style="margin-top:1rem">PLANES DE ACCIÓN</div>' +
+              '<div id="planes-' + r.id + '">' + renderPlanes(r.normaai_planes_accion || [], r.id) + '</div>' +
+              '<div class="add-plan-form">' +
+                '<input class="add-plan-input" id="plan-input-' + r.id + '" placeholder="Describir acción correctiva…" onkeydown="if(event.key===\'Enter\')agregarPlan(\'' + r.id + '\')">' +
+                '<button class="add-plan-btn" onclick="agregarPlan(\'' + r.id + '\')">+ Agregar plan</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+        }).join('') +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderPlanes(planes, reqId) {
+  if (!planes.length) return '<div style="font-size:.78rem;color:#3d4f6a;padding:.3rem 0;">Sin planes de acción aún.</div>';
+  const estadosSel = ['ABIERTO','EN_CURSO','CERRADO','VENCIDO'];
+  return planes.map(p =>
+    '<div class="plan-fila" id="plan-fila-' + p.id + '">' +
+      '<span class="plan-accion">' + p.accion + (p.responsable ? ' <span style="color:#4a5568;">· ' + p.responsable + '</span>' : '') + (p.fecha_limite ? ' <span style="color:#4a5568;">· ' + p.fecha_limite + '</span>' : '') + '</span>' +
+      '<select class="plan-estado-sel" onchange="cambiarEstadoPlan(\'' + p.id + '\',this.value)">' +
+        estadosSel.map(s => '<option value="' + s + '"' + (p.estado === s ? ' selected' : '') + '>' + s + '</option>').join('') +
+      '</select>' +
+      '<button class="plan-del-btn" onclick="eliminarPlan(\'' + p.id + '\',\'' + reqId + '\')">✕</button>' +
+    '</div>'
+  ).join('');
+}
+
+function toggleGrupo(gid) {
+  const el = document.getElementById(gid);
+  el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+
+function toggleDetalle(reqId) {
+  const det = document.getElementById('det-' + reqId);
+  det.classList.toggle('open');
+}
+
+const _estadoCiclo = ['PENDIENTE','SI','NO','NO_APLICA'];
+async function ciclarEstado(reqId) {
+  const req = _requisitosData.find(r => r.id === reqId);
+  if (!req) return;
+  const idx = _estadoCiclo.indexOf(req.cumple);
+  const nuevo = _estadoCiclo[(idx + 1) % _estadoCiclo.length];
+  try {
+    const res = await fetch('/api/requisitos/' + reqId, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ cumple: nuevo })
+    });
+    if (!res.ok) throw new Error();
+    req.cumple = nuevo;
+    filtrarRequisitos();
+  } catch(e) { alert('Error al actualizar estado'); }
+}
+
+async function guardarRequisito(reqId) {
+  const responsable = document.getElementById('resp-' + reqId).value;
+  const forma_cumplimiento = document.getElementById('forma-' + reqId).value;
+  try {
+    const res = await fetch('/api/requisitos/' + reqId, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ responsable, forma_cumplimiento })
+    });
+    if (!res.ok) throw new Error();
+    const req = _requisitosData.find(r => r.id === reqId);
+    if (req) { req.responsable = responsable; req.forma_cumplimiento = forma_cumplimiento; }
+    const btn = document.querySelector('#det-' + reqId + ' .req-guardar-btn');
+    if (btn) { btn.textContent = '✔ Guardado'; setTimeout(() => { btn.textContent = 'Guardar cambios'; }, 1500); }
+  } catch(e) { alert('Error al guardar'); }
+}
+
+async function agregarPlan(reqId) {
+  const input = document.getElementById('plan-input-' + reqId);
+  const accion = (input.value || '').trim();
+  if (!accion) return;
+  try {
+    const res = await fetch('/api/requisitos/' + reqId + '/planes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ accion })
+    });
+    if (!res.ok) throw new Error();
+    const plan = await res.json();
+    const req = _requisitosData.find(r => r.id === reqId);
+    if (req) { req.normaai_planes_accion = [...(req.normaai_planes_accion || []), plan]; }
+    document.getElementById('planes-' + reqId).innerHTML = renderPlanes(req.normaai_planes_accion, reqId);
+    input.value = '';
+  } catch(e) { alert('Error al agregar plan'); }
+}
+
+async function cambiarEstadoPlan(planId, estado) {
+  try {
+    await fetch('/api/planes/' + planId, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ estado })
+    });
+  } catch(e) { console.error('Error al cambiar estado plan'); }
+}
+
+async function eliminarPlan(planId, reqId) {
+  if (!confirm('¿Eliminar este plan de acción?')) return;
+  try {
+    await fetch('/api/planes/' + planId, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } });
+    const req = _requisitosData.find(r => r.id === reqId);
+    if (req) req.normaai_planes_accion = (req.normaai_planes_accion || []).filter(p => p.id !== planId);
+    document.getElementById('planes-' + reqId).innerHTML = renderPlanes(req ? req.normaai_planes_accion : [], reqId);
+  } catch(e) { alert('Error al eliminar plan'); }
 }
 </script>
 </body>
