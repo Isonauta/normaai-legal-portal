@@ -256,6 +256,42 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
 .add-plan-input:focus{outline:none;border-color:#1a6cf8;}
 .add-plan-btn{background:rgba(26,108,248,0.2);color:#60a5fa;border:1px solid rgba(26,108,248,0.3);border-radius:6px;padding:.4rem .8rem;font-size:.8rem;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;}
 .add-plan-btn:hover{background:rgba(26,108,248,0.35);}
+/* ── Agenda ─────────────────────────────────────────────── */
+.agenda-tabs{display:flex;gap:.5rem;margin-bottom:1.5rem;border-bottom:1px solid rgba(255,255,255,0.07);padding-bottom:.5rem;}
+.agenda-tab{background:none;border:none;color:#8a96a8;font-size:.88rem;font-family:'DM Sans',sans-serif;padding:.4rem .9rem;cursor:pointer;border-radius:6px;transition:all .15s;}
+.agenda-tab.active{background:rgba(26,108,248,0.15);color:#60a5fa;}
+.agenda-resumen{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin-bottom:1.5rem;}
+.agenda-stat{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:1rem;text-align:center;}
+.agenda-stat-num{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:700;}
+.agenda-stat-lbl{font-size:.72rem;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-top:.2rem;}
+.agenda-cal{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:12px;overflow:hidden;}
+.cal-header{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.2rem;border-bottom:1px solid rgba(255,255,255,0.06);}
+.cal-nav{background:none;border:none;color:#8a96a8;font-size:1.1rem;cursor:pointer;padding:.2rem .5rem;border-radius:5px;}
+.cal-nav:hover{background:rgba(255,255,255,0.06);color:#fff;}
+.cal-mes{font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);}
+.cal-dow{text-align:center;font-size:.7rem;color:#4a5568;text-transform:uppercase;letter-spacing:.07em;padding:.6rem 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.cal-day{min-height:60px;padding:.4rem;border-right:1px solid rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.03);position:relative;}
+.cal-day:nth-child(7n){border-right:none;}
+.cal-daynum{font-size:.75rem;color:#4a5568;margin-bottom:.2rem;}
+.cal-daynum.hoy{background:#1a6cf8;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-weight:700;}
+.cal-dot{font-size:.68rem;padding:.1rem .35rem;border-radius:4px;margin-bottom:.15rem;cursor:pointer;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+.cal-dot.ABIERTO{background:rgba(251,191,36,0.18);color:#fbbf24;}
+.cal-dot.EN_CURSO{background:rgba(96,165,250,0.18);color:#60a5fa;}
+.cal-dot.CERRADO{background:rgba(74,222,128,0.18);color:#4ade80;}
+.cal-dot.VENCIDO{background:rgba(248,113,113,0.18);color:#f87171;}
+.agenda-lista-item{display:flex;align-items:flex-start;gap:1rem;padding:.9rem 1rem;border-bottom:1px solid rgba(255,255,255,0.04);transition:background .15s;}
+.agenda-lista-item:last-child{border-bottom:none;}
+.agenda-lista-item:hover{background:rgba(255,255,255,0.02);}
+.agenda-fecha-col{min-width:72px;text-align:center;background:rgba(255,255,255,0.04);border-radius:8px;padding:.4rem;}
+.agenda-fecha-dia{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:700;line-height:1;}
+.agenda-fecha-mes{font-size:.65rem;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-top:.15rem;}
+.agenda-dias-badge{font-size:.65rem;margin-top:.3rem;padding:.1rem .3rem;border-radius:4px;}
+.agenda-info{flex:1;min-width:0;}
+.agenda-accion{font-size:.85rem;color:#c9d8f0;margin-bottom:.25rem;line-height:1.4;}
+.agenda-meta{font-size:.75rem;color:#4a5568;display:flex;flex-wrap:wrap;gap:.4rem;}
+.agenda-pais{font-size:.75rem;}
+.agenda-estado-badge{font-size:.72rem;padding:.15rem .5rem;border-radius:5px;font-weight:600;white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -461,6 +497,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
     <div class="nav-section" style="margin-top:1rem">
       <div class="nav-label">Recursos</div>
       <button class="nav-item" onclick="mostrarVista('requisitos',this)"><span class="nav-icon">⚖️</span> Mis Requisitos</button>
+      <button class="nav-item" onclick="mostrarVista('agenda',this)"><span class="nav-icon">📅</span> Agenda</button>
       <button class="nav-item" onclick="mostrarVista('matriz',this)"><span class="nav-icon">📊</span> Revisar tu Matriz</button>
       <button class="nav-item" onclick="mostrarVista('videos',this)"><span class="nav-icon">🎥</span> Videos</button>
     </div>
@@ -565,6 +602,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:#0e1520;color:
       <div id="req-lista" style="max-width:900px;margin:0 auto;">
         <div class="loading-state"><div class="spinner"></div><span>Cargando requisitos…</span></div>
       </div>
+    </div>
+
+    <!-- AGENDA -->
+    <div class="view" id="vista-agenda">
+      <div id="agenda-content" style="max-width:860px;margin:0 auto;"></div>
     </div>
 
     <!-- VIDEOS -->
@@ -938,7 +980,8 @@ const titulos = {
   historial: 'Historial de Consultas',
   matriz: 'Revisar tu Matriz Legal',
   videos: 'Videos y Capacitación',
-  requisitos: 'Mis Requisitos'
+  requisitos: 'Mis Requisitos',
+  agenda: 'Agenda de Vencimientos'
 };
 
 function mostrarVista(nombre_vista, el) {
@@ -952,6 +995,7 @@ function mostrarVista(nombre_vista, el) {
   if (nombre_vista === 'videos') cargarVideos();
   if (nombre_vista === 'matriz') cargarMisMatrices();
   if (nombre_vista === 'requisitos') cargarRequisitos();
+  if (nombre_vista === 'agenda') cargarAgenda();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1690,6 +1734,147 @@ async function eliminarPlan(planId, reqId) {
     if (req) req.normaai_planes_accion = (req.normaai_planes_accion || []).filter(p => p.id !== planId);
     document.getElementById('planes-' + reqId).innerHTML = renderPlanes(req ? req.normaai_planes_accion : [], reqId);
   } catch(e) { alert('Error al eliminar plan'); }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  AGENDA DE VENCIMIENTOS
+// ══════════════════════════════════════════════════════════════
+let _agendaData = [];
+let _agendaTab = 'calendario';
+let _agendaMes = new Date().getMonth();
+let _agendaAnio = new Date().getFullYear();
+
+async function cargarAgenda() {
+  const cont = document.getElementById('agenda-content');
+  cont.innerHTML = '<div class="loading-state"><div class="spinner"></div><span>Cargando agenda…</span></div>';
+  try {
+    const res = await fetch('/api/planes/agenda', { headers: { Authorization: 'Bearer ' + token } });
+    if (!res.ok) throw new Error();
+    _agendaData = await res.json();
+    renderAgenda();
+  } catch(e) {
+    cont.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h3>Error al cargar agenda</h3></div>';
+  }
+}
+
+function renderAgenda() {
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const abiertos  = _agendaData.filter(p => p.estado === 'ABIERTO').length;
+  const enCurso   = _agendaData.filter(p => p.estado === 'EN_CURSO').length;
+  const cerrados  = _agendaData.filter(p => p.estado === 'CERRADO').length;
+  const vencidos  = _agendaData.filter(p => { const f = new Date(p.fecha_limite+'T00:00:00'); return f < hoy && p.estado !== 'CERRADO'; }).length;
+
+  const resumenHTML =
+    '<div class="agenda-resumen">' +
+      '<div class="agenda-stat"><div class="agenda-stat-num" style="color:#fbbf24">' + abiertos + '</div><div class="agenda-stat-lbl">Abierto</div></div>' +
+      '<div class="agenda-stat"><div class="agenda-stat-num" style="color:#60a5fa">' + enCurso + '</div><div class="agenda-stat-lbl">En curso</div></div>' +
+      '<div class="agenda-stat"><div class="agenda-stat-num" style="color:#4ade80">' + cerrados + '</div><div class="agenda-stat-lbl">Cerrado</div></div>' +
+      '<div class="agenda-stat"><div class="agenda-stat-num" style="color:#f87171">' + vencidos + '</div><div class="agenda-stat-lbl">Vencido</div></div>' +
+    '</div>';
+
+  const tabsHTML =
+    '<div class="agenda-tabs">' +
+      '<button class="agenda-tab' + (_agendaTab==='calendario'?' active':'') + '" onclick="switchAgendaTab(\'calendario\')">📅 Calendario</button>' +
+      '<button class="agenda-tab' + (_agendaTab==='lista'?' active':'') + '" onclick="switchAgendaTab(\'lista\')">📋 Lista</button>' +
+      '<span style="margin-left:auto;font-size:.78rem;color:#4a5568;align-self:center;">' + _agendaData.length + ' planes con fecha</span>' +
+    '</div>';
+
+  const bodyHTML = _agendaTab === 'calendario' ? renderCalendario() : renderLista();
+
+  document.getElementById('agenda-content').innerHTML = resumenHTML + tabsHTML + bodyHTML;
+}
+
+function switchAgendaTab(tab) { _agendaTab = tab; renderAgenda(); }
+
+function renderCalendario() {
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const hoy = new Date();
+  const primerDia = new Date(_agendaAnio, _agendaMes, 1).getDay();
+  const diasMes = new Date(_agendaAnio, _agendaMes + 1, 0).getDate();
+
+  // Mapear planes por fecha
+  const porFecha = {};
+  _agendaData.forEach(p => {
+    if (!p.fecha_limite) return;
+    const key = p.fecha_limite.slice(0,10);
+    const [y,m,d] = key.split('-').map(Number);
+    if (y === _agendaAnio && m-1 === _agendaMes) {
+      if (!porFecha[d]) porFecha[d] = [];
+      porFecha[d].push(p);
+    }
+  });
+
+  const dows = ['Lu','Ma','Mi','Ju','Vi','Sá','Do'];
+  let grid = '<div class="cal-grid">' + dows.map(d => '<div class="cal-dow">'+d+'</div>').join('');
+
+  const offset = primerDia === 0 ? 6 : primerDia - 1;
+  for (let i=0; i<offset; i++) grid += '<div class="cal-day"></div>';
+
+  for (let d=1; d<=diasMes; d++) {
+    const esHoy = d===hoy.getDate() && _agendaMes===hoy.getMonth() && _agendaAnio===hoy.getFullYear();
+    const numHTML = esHoy
+      ? '<div class="cal-daynum"><span class="cal-daynum hoy">'+d+'</span></div>'
+      : '<div class="cal-daynum" style="color:#64748b">'+d+'</div>';
+    const dots = (porFecha[d]||[]).slice(0,3).map(p =>
+      '<div class="cal-dot '+p.estado+'" title="'+p.accion+'">'+p.estado.charAt(0)+' '+((p.normaai_requisitos&&p.normaai_requisitos.articulo)||'Plan')+'</div>'
+    ).join('');
+    grid += '<div class="cal-day">'+numHTML+dots+'</div>';
+  }
+  grid += '</div>';
+
+  return '<div class="agenda-cal">' +
+    '<div class="cal-header">' +
+      '<button class="cal-nav" onclick="cambiarMes(-1)">◀</button>' +
+      '<span class="cal-mes">' + meses[_agendaMes] + ' ' + _agendaAnio + '</span>' +
+      '<button class="cal-nav" onclick="cambiarMes(1)">▶</button>' +
+    '</div>' +
+    grid +
+  '</div>';
+}
+
+function cambiarMes(dir) {
+  _agendaMes += dir;
+  if (_agendaMes < 0) { _agendaMes = 11; _agendaAnio--; }
+  if (_agendaMes > 11) { _agendaMes = 0; _agendaAnio++; }
+  renderAgenda();
+}
+
+function renderLista() {
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const estadoColor = { ABIERTO:'color:#fbbf24;background:rgba(251,191,36,.12)', EN_CURSO:'color:#60a5fa;background:rgba(96,165,250,.12)', CERRADO:'color:#4ade80;background:rgba(74,222,128,.12)', VENCIDO:'color:#f87171;background:rgba(248,113,113,.12)' };
+  const mesesCorto = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const paisFlag = { CL:'🇨🇱', PE:'🇵🇪', AR:'🇦🇷' };
+
+  if (!_agendaData.length) return '<div class="empty-state"><div class="icon">📅</div><h3>Sin planes con fecha límite</h3></div>';
+
+  const items = _agendaData.map(p => {
+    const f = new Date(p.fecha_limite+'T00:00:00');
+    const dias = Math.round((f-hoy)/(1000*60*60*24));
+    const diasTxt = dias < 0 ? 'Vencido hace '+(Math.abs(dias))+' d' : dias === 0 ? 'Hoy' : 'en '+dias+' días';
+    const diasColor = dias < 0 ? '#f87171' : dias <= 7 ? '#fbbf24' : '#4ade80';
+    const est = (dias < 0 && p.estado !== 'CERRADO') ? 'VENCIDO' : p.estado;
+    const pais = p.normaai_requisitos?.pais || 'CL';
+    const articulo = p.normaai_requisitos?.articulo || '';
+    const cuerpo = (p.normaai_requisitos?.cuerpo_legal || '').split('—')[0].trim();
+
+    return '<div class="agenda-lista-item">' +
+      '<div class="agenda-fecha-col">' +
+        '<div class="agenda-fecha-dia">' + f.getDate() + '</div>' +
+        '<div class="agenda-fecha-mes">' + mesesCorto[f.getMonth()] + ' ' + f.getFullYear() + '</div>' +
+        '<div class="agenda-dias-badge" style="' + diasColor.replace('#','background:rgba(') + ',0.12);color:' + diasColor + '">' + diasTxt + '</div>' +
+      '</div>' +
+      '<div class="agenda-info">' +
+        '<div class="agenda-accion">' + p.accion + '</div>' +
+        '<div class="agenda-meta">' +
+          '<span class="agenda-pais">' + (paisFlag[pais]||'🌎') + ' ' + articulo + (cuerpo ? ' · '+cuerpo : '') + '</span>' +
+          (p.responsable ? '<span>· ' + p.responsable + '</span>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="agenda-estado-badge" style="' + (estadoColor[est]||estadoColor.ABIERTO) + '">' + est.replace('_',' ') + '</div>' +
+    '</div>';
+  }).join('');
+
+  return '<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:12px;overflow:hidden;">' + items + '</div>';
 }
 </script>
 </body>

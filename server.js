@@ -1792,6 +1792,22 @@ app.delete('/api/planes/:id', verificarToken, async (req, res) => {
   }
 });
 
+// GET /api/planes/agenda — todos los planes con fecha_limite para el calendario
+app.get('/api/planes/agenda', verificarToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('normaai_planes_accion')
+      .select('id, accion, responsable, fecha_limite, estado, requisito_id, normaai_requisitos(articulo, cuerpo_legal, pais)')
+      .eq('user_id', req.user.id)
+      .not('fecha_limite', 'is', null)
+      .order('fecha_limite', { ascending: true });
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`NormaAI Legal Portal corriendo en puerto ${PORT}`));
 module.exports = app;
