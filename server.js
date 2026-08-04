@@ -387,7 +387,7 @@ INSTRUCCIONES:
 - Fuente de normativa: ${contexto_bcn}${contexto_kb}`;
 
     const respuesta = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-latest',
+      model: 'claude-sonnet-5',
       max_tokens: 1500,
       system: systemPrompt,
       messages: mensajes,
@@ -697,7 +697,7 @@ ${cliente?.trabajadores ? `- Trabajadores: ${cliente.trabajadores}` : ''}`;
         }).join('\n\n');
 
         const mensajeIA = await anthropic.messages.create({
-          model: 'claude-3-5-sonnet-latest',
+          model: 'claude-sonnet-5',
           max_tokens: 8000,
           messages: [{
             role: 'user',
@@ -808,7 +808,7 @@ Usa formato Markdown con encabezados ##, tablas y listas. Sé exhaustivo.`
       } else if (ext === 'pdf') {
         const archivoBase64 = archivo.buffer.toString('base64');
         const mensajeIA = await anthropic.messages.create({
-          model: 'claude-3-5-sonnet-latest',
+          model: 'claude-sonnet-5',
           max_tokens: 8000,
           messages: [{
             role: 'user',
@@ -1707,16 +1707,6 @@ app.get('/api/semaforo', verificarToken, async (req, res) => {
 // ══════════════════════════════════════════════════════════════
 //  GESTIÓN VIVA — Requisitos y Planes de Acción
 // ══════════════════════════════════════════════════════════════
-
-// GET /api/debug-modelos — lista modelos disponibles (temporal)
-app.get('/api/debug-modelos', async (req, res) => {
-  try {
-    const modelos = await anthropic.models.list();
-    res.json({ ok: true, modelos: modelos.data.map(m => m.id) });
-  } catch(err) {
-    res.json({ ok: false, error: err.message, key_prefix: (process.env.ANTHROPIC_API_KEY || '').slice(0,20) });
-  }
-});
 
 // GET /api/requisitos — lista requisitos del cliente autenticado
 app.get('/api/requisitos', verificarToken, async (req, res) => {
