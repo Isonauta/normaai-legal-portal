@@ -1543,7 +1543,7 @@ function renderRequisitos(data) {
     const si = g.items.filter(r => r.cumple === 'SI').length;
     const no = g.items.filter(r => r.cumple === 'NO').length;
     const pend = g.items.filter(r => r.cumple === 'PENDIENTE').length;
-    const gid = 'g-' + btoa(g.nombre).replace(/[^a-zA-Z0-9]/g,'').slice(0,12);
+    const gid = 'g-' + btoa(unescape(encodeURIComponent(g.nombre))).replace(/[^a-zA-Z0-9]/g,'').slice(0,12);
 
     return '<div class="req-grupo">' +
       '<div class="req-grupo-header" onclick="toggleGrupo(\'' + gid + '\')">' +
