@@ -417,7 +417,7 @@ INSTRUCCIONES:
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Error al procesar consulta' });
+    res.status(500).json({ error: 'Error al procesar consulta', debug: err?.message || String(err) });
   }
 });
 
