@@ -283,12 +283,10 @@ app.post('/api/agente', verificarToken, async (req, res) => {
 
   try {
     const mesActual = new Date().toISOString().slice(0, 7);
-    const { data: uso } = await supabase
-      .from('uso_agente')
-      .select('consultas')
-      .eq('user_id', req.user.id)
-      .eq('mes', mesActual)
-      .single();
+    const [{ data: uso }, contextoEmpresa] = await Promise.all([
+      supabase.from('uso_agente').select('consultas').eq('user_id', req.user.id).eq('mes', mesActual).single(),
+      obtenerContextoEmpresa(req.user.id)
+    ]);
 
     const consultasUsadas = uso?.consultas || 0;
     const LIMITE_MENSUAL = parseInt(process.env.LIMITE_CONSULTAS_MES || '100');
@@ -298,8 +296,6 @@ app.post('/api/agente', verificarToken, async (req, res) => {
         error: `Has alcanzado el límite de ${LIMITE_MENSUAL} consultas este mes. Contáctanos en contacto@normaai.cl`
       });
     }
-    // ── Obtener contexto de la empresa ───────────────────────
-    const contextoEmpresa = await obtenerContextoEmpresa(req.user.id);
 
     // ── RAG: base de conocimiento por norma detectada ────────
     let contexto_bcn = 'Biblioteca del Congreso Nacional de Chile: bcn.cl/leychile';
@@ -386,8 +382,8 @@ INSTRUCCIONES:
 - Fuente de normativa: ${contexto_bcn}${contexto_kb}`;
 
     const respuesta = await anthropic.messages.create({
-      model: 'claude-sonnet-5',
-      max_tokens: 1500,
+      model: 'claude-sonnet-4-6',
+      max_tokens: 800,
       system: systemPrompt,
       messages: mensajes,
     });
