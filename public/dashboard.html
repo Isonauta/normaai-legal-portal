@@ -1259,11 +1259,9 @@ async function cargarSesion(sesionId) {
     const msgs = await res.json();
     const msgsHtml = msgs.map(function(m) {
       const esUser = m.rol === 'user';
-      return '<div style="display:flex;gap:.75rem;' + (esUser ? 'flex-direction:row-reverse;' : '') + '">' +
-        '<div style="width:28px;height:28px;border-radius:50%;background:' + (esUser ? 'linear-gradient(135deg,#c9a84c,#e8c56a)' : 'linear-gradient(135deg,#1a6cf8,#3d84fa)') + ';display:flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0;color:' + (esUser ? '#0a1628' : '#fff') + ';">' +
-        (esUser ? nombre.charAt(0).toUpperCase() : '⚖') + '</div>' +
-        '<div style="max-width:75%;padding:.8rem 1rem;border-radius:10px;font-size:.85rem;line-height:1.65;background:' + (esUser ? 'rgba(26,108,248,0.2)' : 'var(--ov04)') + ';border:1px solid ' + (esUser ? 'rgba(26,108,248,0.25)' : 'var(--ov07)') + ';">' +
-        formatearTexto(m.contenido) + '</div></div>';
+      return '<div class="msg ' + (esUser ? 'user' : 'agente') + '">' +
+        '<div class="msg-avatar">' + (esUser ? nombre.charAt(0).toUpperCase() : '⚖') + '</div>' +
+        '<div class="msg-bubble">' + formatearTexto(m.contenido) + '</div></div>';
     }).join('');
     cont.innerHTML = '<div style="max-width:750px;margin:0 auto;">' +
       '<div style="display:flex;gap:.5rem;margin-bottom:1rem;">' +
