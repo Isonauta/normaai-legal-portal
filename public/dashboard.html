@@ -86,9 +86,21 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg-page)
 .msg-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;margin-top:2px;}
 .msg.agente .msg-avatar{background:linear-gradient(135deg,var(--acento),var(--acento-cl));}
 .msg.user .msg-avatar{background:linear-gradient(135deg,var(--dorado),#e8c56a);color:var(--azul);font-weight:700;}
-.msg-bubble{max-width:75%;padding:.85rem 1.1rem;border-radius:14px;font-size:.88rem;line-height:1.65;}
+.msg-bubble{max-width:75%;padding:.85rem 1.1rem;border-radius:14px;font-size:.88rem;line-height:1.65;overflow-wrap:break-word;}
 .msg.agente .msg-bubble{background:var(--ov05);border:1px solid var(--ov08);border-radius:4px 14px 14px 14px;}
 .msg.user .msg-bubble{background:linear-gradient(135deg,rgba(26,108,248,0.3),rgba(61,132,250,0.2));border:1px solid rgba(26,108,248,0.25);border-radius:14px 4px 14px 14px;}
+.msg-bubble p{margin-bottom:.6rem;}
+.msg-bubble p:last-child{margin-bottom:0;}
+.msg-bubble ul,.msg-bubble ol{margin:.4rem 0 .6rem 1.25rem;}
+.msg-bubble li{margin-bottom:.3rem;}
+.msg-bubble h1,.msg-bubble h2,.msg-bubble h3,.msg-bubble h4{font-family:'Syne',sans-serif;font-size:1em;margin:.8rem 0 .4rem;}
+.msg-bubble h1:first-child,.msg-bubble h2:first-child,.msg-bubble h3:first-child{margin-top:0;}
+.msg-bubble strong{color:var(--blanco);}
+.msg-bubble code{background:var(--ov06);padding:.15rem .4rem;border-radius:4px;font-size:.85em;}
+.msg-bubble a{color:var(--acento-cl);}
+.msg-bubble table{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-collapse:collapse;margin:.75rem 0;font-size:.82rem;}
+.msg-bubble th,.msg-bubble td{padding:.5rem .7rem;border:1px solid var(--ov08);text-align:left;vertical-align:top;white-space:normal;}
+.msg-bubble th{background:var(--ov06);font-weight:700;font-family:'Syne',sans-serif;white-space:nowrap;}
 .typing{display:flex;gap:4px;align-items:center;padding:.85rem 1.1rem;}
 .typing span{width:6px;height:6px;background:var(--acento-cl);border-radius:50%;animation:bounce 1.2s infinite;}
 .typing span:nth-child(2){animation-delay:.2s;}
