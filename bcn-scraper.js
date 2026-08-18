@@ -97,7 +97,19 @@ async function scrapearDiarioOficial(fecha) {
       if (texto.length < 15 || vistas.has(texto)) return;
       vistas.add(texto);
       if (esRelevante(texto)) {
-        normas.push({ titulo: texto.substring(0, 300), url: url, fecha });
+        // Buscar el link real del documento dentro de la misma fila; si no hay
+        // uno, no asignar la URL genérica de la edición (induce a error: llevaría
+        // a la portada del día, no a la noticia).
+        const hrefFila = $(el).closest('tr').find('a[href]').first().attr('href')
+          || $(el).find('a[href]').first().attr('href');
+        const urlFila = hrefFila
+          ? (hrefFila.startsWith('http')
+              ? hrefFila
+              : hrefFila.startsWith('/')
+                ? `https://www.diariooficial.interior.gob.cl${hrefFila}`
+                : `https://www.diariooficial.interior.gob.cl/${hrefFila}`)
+          : null;
+        normas.push({ titulo: texto.substring(0, 300), url: urlFila, fecha });
       }
     });
 
