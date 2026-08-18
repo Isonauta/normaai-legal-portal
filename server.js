@@ -36,6 +36,20 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+// Pricing oficial Anthropic (USD por millón de tokens) — mantener sincronizado
+// con el modelo usado en /api/agente. Cache write ≈1.25x input, cache read ≈0.1x input.
+const PRECIO_AGENTE = { modelo: 'claude-sonnet-4-6', inputPorMTok: 3.00, outputPorMTok: 15.00 };
+function calcularCostoUsd(usage) {
+  if (!usage) return 0;
+  const { input_tokens = 0, output_tokens = 0, cache_creation_input_tokens = 0, cache_read_input_tokens = 0 } = usage;
+  const costo =
+    (input_tokens / 1e6) * PRECIO_AGENTE.inputPorMTok +
+    (output_tokens / 1e6) * PRECIO_AGENTE.outputPorMTok +
+    (cache_creation_input_tokens / 1e6) * PRECIO_AGENTE.inputPorMTok * 1.25 +
+    (cache_read_input_tokens / 1e6) * PRECIO_AGENTE.inputPorMTok * 0.1;
+  return Math.round(costo * 1e6) / 1e6;
+}
+
 // ── Multer ────────────────────────────────────────────────────
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -284,11 +298,14 @@ app.post('/api/agente', verificarToken, async (req, res) => {
   try {
     const mesActual = new Date().toISOString().slice(0, 7);
     const [{ data: uso }, contextoEmpresa] = await Promise.all([
-      supabase.from('uso_agente').select('consultas').eq('user_id', req.user.id).eq('mes', mesActual).single(),
+      supabase.from('uso_agente').select('consultas, tokens_input, tokens_output, costo_usd').eq('user_id', req.user.id).eq('mes', mesActual).single(),
       obtenerContextoEmpresa(req.user.id)
     ]);
 
     const consultasUsadas = uso?.consultas || 0;
+    const tokensInputAcum = uso?.tokens_input || 0;
+    const tokensOutputAcum = uso?.tokens_output || 0;
+    const costoAcum = uso?.costo_usd || 0;
     const LIMITE_MENSUAL = parseInt(process.env.LIMITE_CONSULTAS_MES || '100');
 
     if (consultasUsadas >= LIMITE_MENSUAL) {
@@ -382,18 +399,25 @@ INSTRUCCIONES:
 - Fuente de normativa: ${contexto_bcn}${contexto_kb}`;
 
     const respuesta = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: PRECIO_AGENTE.modelo,
       max_tokens: 1200,
-      system: systemPrompt,
+      // Bloque cacheable: el prompt es corto hoy (queda bajo el mínimo de ~1024
+      // tokens que exige el cache de Anthropic, así que no cachea todavía), pero
+      // queda listo para cuando crezca (más contexto de empresa, más RAG, etc.)
+      system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
       messages: mensajes,
     });
 
     const textoRespuesta = respuesta.content[0].text;
+    const costoConsulta = calcularCostoUsd(respuesta.usage);
 
     await supabase.from('uso_agente').upsert({
       user_id: req.user.id,
       mes: mesActual,
       consultas: consultasUsadas + 1,
+      tokens_input: tokensInputAcum + (respuesta.usage?.input_tokens || 0),
+      tokens_output: tokensOutputAcum + (respuesta.usage?.output_tokens || 0),
+      costo_usd: Math.round((costoAcum + costoConsulta) * 1e6) / 1e6,
       updated_at: new Date().toISOString()
     }, { onConflict: 'user_id,mes' });
 
@@ -1125,7 +1149,7 @@ app.post('/api/admin/noticias/eliminar', verificarAdmin, async (req, res) => {
 
 // ── Admin: Uso agente ─────────────────────────────────────────
 app.get('/api/admin/uso', verificarAdmin, async (req, res) => {
-  const { data: uso } = await supabase.from('normaai_uso_agente').select('*').order('updated_at', { ascending: false });
+  const { data: uso } = await supabase.from('uso_agente').select('*').order('updated_at', { ascending: false });
   const { data: clientes } = await supabase.from('normaai_clientes').select('user_id, email, nombre');
   const clienteMap = {};
   (clientes || []).forEach(c => { clienteMap[c.user_id] = c.email; });

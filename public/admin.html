@@ -596,11 +596,12 @@ async function cargarUso() {
   const data = await apiGet('/api/admin/uso');
   if (!data) return;
   if (!data.length) { cont.innerHTML = '<div class="empty">Sin registros de uso aún.</div>'; return; }
-  cont.innerHTML = '<table><thead><tr><th>Usuario</th><th>Mes</th><th>Consultas</th><th>% del límite</th></tr></thead><tbody>' +
+  cont.innerHTML = '<table><thead><tr><th>Usuario</th><th>Mes</th><th>Consultas</th><th>% del límite</th><th>Costo estimado</th></tr></thead><tbody>' +
     data.map(function(u) {
       const pct = Math.min(100, Math.round(u.consultas / 100 * 100));
       const color = pct > 80 ? 'badge-rojo' : pct > 50 ? 'badge-amarillo' : 'badge-verde';
-      return '<tr><td>' + u.email + '</td><td>' + u.mes + '</td><td><span class="badge badge-azul">' + u.consultas + '</span></td><td><span class="badge ' + color + '">' + pct + '%</span></td></tr>';
+      const costo = u.costo_usd ? 'US$ ' + Number(u.costo_usd).toFixed(4) : '—';
+      return '<tr><td>' + u.email + '</td><td>' + u.mes + '</td><td><span class="badge badge-azul">' + u.consultas + '</span></td><td><span class="badge ' + color + '">' + pct + '%</span></td><td>' + costo + '</td></tr>';
     }).join('') + '</tbody></table>';
 }
 
