@@ -46,7 +46,9 @@ BEGIN
 
 UPDATE normaai_clientes
 SET rubro  = 'Comercialización, venta y servicio técnico de equipos de perforación y excavación de roca, herramientas y accesorios, repuestos y consumibles para minería e infraestructura',
-    sitios = 'Customer Center Antofagasta, Customer Center Copiapó, Customer Center Santiago (Conchalí)'
+    normas_iso = 'ISO 9001, ISO 14001, ISO 45001',
+    sitios = 'Customer Center Antofagasta, Customer Center Copiapó, Customer Center Santiago (Conchalí)',
+    onboarding_completado = true
 WHERE user_id = v_uid;
 
 -- ════════════════════════════════════════════════════════════
