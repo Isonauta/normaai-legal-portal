@@ -121,9 +121,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg-page)
 .empty-state h3{font-family:'Syne',sans-serif;font-size:1rem;margin-bottom:.5rem;color:var(--text-strong);}
 .sesion-card{background:var(--ov03);border:1px solid var(--ov07);border-radius:10px;padding:1rem 1.2rem;cursor:pointer;transition:all .2s;margin-bottom:.8rem;}
 .sesion-card:hover{background:rgba(26,108,248,0.08);border-color:rgba(26,108,248,0.3);}
-.drop-zone{background:var(--ov03);border:2px dashed var(--ov10);border-radius:12px;padding:2rem;text-align:center;cursor:pointer;transition:all .2s;}
-.drop-zone:hover{border-color:var(--acento);background:rgba(26,108,248,0.05);}
-.info-box{background:rgba(26,108,248,0.08);border:1px solid rgba(26,108,248,0.2);border-radius:12px;padding:1.2rem 1.5rem;margin-bottom:1.5rem;}
 
 /* ── ONBOARDING MODAL ─────────────────────────────────────── */
 .ob-overlay{position:fixed;inset:0;z-index:9999;background:rgba(5,10,20,0.92);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:1rem;}
@@ -646,40 +643,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg-page)
     <!-- MATRIZ -->
     <div class="view" id="vista-matriz">
       <div style="max-width:700px;margin:0 auto;">
-        <div class="info-box">
-          <div style="font-family:Syne,sans-serif;font-weight:700;font-size:1rem;margin-bottom:.4rem;">📊 Revisión de Matriz de Requisitos Legales</div>
-          <div style="font-size:.83rem;color:var(--gris);line-height:1.6;">
-            Sube tu matriz y nuestro equipo la revisará. Recibirás un <strong style="color:var(--text-strong);">informe certificado con sello Procesus</strong> en tu correo en 24-48 horas hábiles.<br>
-            <strong style="color:#fcd34d;">⚠️ Este servicio incluye revisión humana. El resultado no es inmediato.</strong>
-          </div>
-        </div>
-        <div style="background:var(--ov03);border:1px solid var(--ov08);border-radius:12px;padding:1.5rem;margin-bottom:1rem;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;">
-            <div style="font-size:.88rem;font-weight:600;color:var(--text-strong);">Datos de tu empresa <span style="color:#f87171;font-size:.75rem;font-weight:400;">* Obligatorios</span></div>
-            <button onclick="abrirPerfil()" style="font-size:.72rem;color:#60a5fa;background:rgba(26,108,248,0.1);border:1px solid rgba(26,108,248,0.25);border-radius:6px;padding:.25rem .6rem;cursor:pointer;font-family:'DM Sans',sans-serif;">✏ Editar perfil</button>
-          </div>
-
-          <label style="display:block;font-size:.78rem;color:var(--gris);margin-bottom:.3rem;">Nombre de la empresa *</label>
-          <input type="text" id="nombre-empresa-matriz" placeholder="Ej: Minera Los Andes S.A." style="width:100%;padding:.7rem 1rem;background:var(--ov05);border:1px solid var(--ov10);border-radius:8px;color:var(--blanco);font-size:.85rem;margin-bottom:1rem;box-sizing:border-box;outline:none;">
-
-          <label style="display:block;font-size:.78rem;color:var(--gris);margin-bottom:.3rem;">Normas ISO *</label>
-          <input type="text" id="normas-iso-matriz" placeholder="Ej: ISO 9001, ISO 14001, ISO 45001" style="width:100%;padding:.7rem 1rem;background:var(--ov05);border:1px solid var(--ov10);border-radius:8px;color:var(--blanco);font-size:.85rem;margin-bottom:1rem;box-sizing:border-box;outline:none;">
-
-          <label style="display:block;font-size:.78rem;color:var(--gris);margin-bottom:.3rem;">Alcance del sistema de gestión *</label>
-          <textarea id="alcance-sistema-matriz" rows="2" style="width:100%;padding:.7rem 1rem;background:var(--ov05);border:1px solid var(--ov10);border-radius:8px;color:var(--blanco);font-size:.85rem;margin-bottom:1rem;box-sizing:border-box;outline:none;resize:vertical;font-family:inherit;" placeholder="Ej: Diseño, producción y comercialización de equipos industriales"></textarea>
-
-          <label style="display:block;font-size:.78rem;color:var(--gris);margin-bottom:.3rem;">Sitios o lugares de trabajo *</label>
-          <input type="text" id="sitios-trabajo-matriz" placeholder="Ej: Planta Santiago, Oficina Valparaíso, Faena Norte" style="width:100%;padding:.7rem 1rem;background:var(--ov05);border:1px solid var(--ov10);border-radius:8px;color:var(--blanco);font-size:.85rem;margin-bottom:1.2rem;box-sizing:border-box;outline:none;">
-
-          <div class="drop-zone" onclick="document.getElementById('input-matriz').click()">
-            <div style="font-size:2rem;margin-bottom:.5rem;">📁</div>
-            <div style="font-size:.9rem;color:var(--gris);">Haz click para seleccionar tu matriz</div>
-            <div style="font-size:.75rem;color:var(--text-3);margin-top:.3rem;">Excel (.xlsx, .xls) · PDF · Word (.docx) — Máximo 10MB</div>
-            <input type="file" id="input-matriz" accept=".xlsx,.xls,.pdf,.doc,.docx" style="display:none" onchange="subirMatriz(this)">
-          </div>
-          <div id="resultado-matriz" style="margin-top:1rem;"></div>
-        </div>
-
         <!-- FEATURE 3: Panel de evidencia -->
         <div id="evidencia-panel-wrap" style="display:none;margin-bottom:1rem;">
           <div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text-4);margin-bottom:.7rem;font-weight:600;">Panel de evidencia — última matriz aprobada</div>
@@ -879,7 +842,6 @@ async function obGuardar() {
       localStorage.setItem('normaai_user', JSON.stringify(u));
       // Cerrar modal y pre-rellenar formulario de matriz
       document.getElementById('ob-overlay').style.display = 'none';
-      preRellenarMatriz(body);
       actualizarChatSubtitulo(body.empresa, body.rubro);
     } else {
       btn.disabled = false;
@@ -892,13 +854,6 @@ async function obGuardar() {
     btn.textContent = '✓ Guardar y comenzar';
   }
   obGuardando = false;
-}
-
-function preRellenarMatriz(perfil) {
-  if (perfil.empresa) document.getElementById('nombre-empresa-matriz').value = perfil.empresa;
-  if (perfil.normas_iso) document.getElementById('normas-iso-matriz').value = perfil.normas_iso;
-  if (perfil.alcance) document.getElementById('alcance-sistema-matriz').value = perfil.alcance;
-  if (perfil.sitios) document.getElementById('sitios-trabajo-matriz').value = perfil.sitios;
 }
 
 function actualizarChatSubtitulo(empresa, rubro) {
@@ -928,7 +883,6 @@ async function verificarOnboarding() {
     if (res.status === 401) { hacerLogout(); return; }
     var perfil = await res.json();
     if (perfil.onboarding_completado) {
-      preRellenarMatriz(perfil);
       actualizarChatSubtitulo(perfil.empresa, perfil.rubro);
     } else {
       // Mostrar onboarding
@@ -947,7 +901,6 @@ async function cargarPerfilSilencioso() {
     var res = await fetch('/api/perfil', { headers: { 'Authorization': 'Bearer ' + token } });
     if (!res.ok) return;
     var perfil = await res.json();
-    preRellenarMatriz(perfil);
     actualizarChatSubtitulo(perfil.empresa, perfil.rubro);
   } catch(e) {}
 }
@@ -997,7 +950,6 @@ async function guardarPerfil() {
     if (res.ok) {
       msg.style.color = '#4ade80';
       msg.textContent = '✅ Perfil actualizado correctamente.';
-      preRellenarMatriz(body);
       actualizarChatSubtitulo(body.empresa, body.rubro);
       setTimeout(cerrarPerfil, 1800);
     } else {
@@ -1303,47 +1255,6 @@ async function retomarConversacion(sesionId, btn) {
 // ══════════════════════════════════════════════════════════════
 //  MATRIZ
 // ══════════════════════════════════════════════════════════════
-async function subirMatriz(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const resultado = document.getElementById('resultado-matriz');
-  const empresa = document.getElementById('nombre-empresa-matriz').value.trim();
-  const normasIso = document.getElementById('normas-iso-matriz').value.trim();
-  const alcance = document.getElementById('alcance-sistema-matriz').value.trim();
-  const sitios = document.getElementById('sitios-trabajo-matriz').value.trim();
-
-  if (!empresa || !normasIso || !alcance || !sitios) {
-    resultado.innerHTML = '<div style="color:#fcd34d;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.2);border-radius:8px;padding:1rem;font-size:.85rem;">⚠️ Por favor completa todos los campos obligatorios antes de subir tu matriz.</div>';
-    input.value = ''; return;
-  }
-
-  resultado.innerHTML = '<div style="color:var(--gris);font-size:.85rem;padding:.8rem;background:var(--ov03);border-radius:8px;">⏳ Subiendo matriz, por favor espera...</div>';
-  const formData = new FormData();
-  formData.append('archivo', file);
-  formData.append('nombre_empresa', empresa);
-  formData.append('normas_iso', normasIso);
-  formData.append('alcance_sistema', alcance);
-  formData.append('sitios_trabajo', sitios);
-  try {
-    const res = await fetch('/api/matriz/subir', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token },
-      body: formData
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      const esLimite = res.status === 429;
-      resultado.innerHTML = '<div style="color:' + (esLimite ? '#fcd34d' : '#f87171') + ';background:' + (esLimite ? 'rgba(251,191,36,0.1)' : 'rgba(220,38,38,0.1)') + ';border-radius:8px;padding:1rem;">' + (esLimite ? '🔒' : '⚠️') + ' ' + (data.error || 'Error al subir') + '</div>';
-    } else {
-      resultado.innerHTML = '<div style="color:#4ade80;background:rgba(22,163,74,0.1);border-radius:8px;padding:1rem;">✅ ' + data.mensaje + '</div>';
-      input.value = '';
-      cargarMisMatrices();
-    }
-  } catch(e) {
-    resultado.innerHTML = '<div style="color:#f87171;padding:.8rem;">Error de conexión. Intenta nuevamente.</div>';
-  }
-}
-
 async function cargarMisMatrices() {
   const cont = document.getElementById('matrices-contenido');
   if (!cont) return;
