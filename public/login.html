@@ -1007,23 +1007,27 @@ function validarAceptacion() {
   const checkbox = document.getElementById('acepta-politica');
   const wrap = document.getElementById('acepta-wrap');
   const errorEl = document.getElementById('acepta-error');
+  if (!checkbox) return true;
   if (!checkbox.checked) {
-    wrap.classList.add('error');
-    errorEl.style.display = 'block';
+    if (wrap) wrap.classList.add('error');
+    if (errorEl) errorEl.style.display = 'block';
     checkbox.focus();
     return false;
   }
-  wrap.classList.remove('error');
-  errorEl.style.display = 'none';
+  if (wrap) wrap.classList.remove('error');
+  if (errorEl) errorEl.style.display = 'none';
   return true;
 }
 
-document.getElementById('acepta-politica').addEventListener('change', function() {
-  if (this.checked) {
-    document.getElementById('acepta-wrap').classList.remove('error');
-    document.getElementById('acepta-error').style.display = 'none';
-  }
-});
+const aceptaPoliticaEl = document.getElementById('acepta-politica');
+if (aceptaPoliticaEl) {
+  aceptaPoliticaEl.addEventListener('change', function() {
+    if (this.checked) {
+      document.getElementById('acepta-wrap').classList.remove('error');
+      document.getElementById('acepta-error').style.display = 'none';
+    }
+  });
+}
 
 async function login() {
   const email = document.getElementById('email').value.trim();
