@@ -40,7 +40,7 @@
 
 DO $$
 DECLARE
-  v_uid UUID := 'DEMO_USER_ID_AQUI'::UUID;  -- <- REEMPLAZAR
+  v_uid UUID := 'c928409f-d7c4-4d17-bb70-baa0466d5bad'::UUID;
   v_emp TEXT := 'Epiroc Chile';
 BEGIN
 
