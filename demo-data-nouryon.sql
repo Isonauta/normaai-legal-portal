@@ -22,9 +22,10 @@
 --        · Rubro: Producción de clorato de sodio y soluciones de
 --          blanqueo de pulpa de celulosa para la industria forestal
 --          (marca Eka de Nouryon)
---        · Normas ISO: 9001, 14001, 45001 (supuesto estándar para una
---          planta química de este tipo — no confirmado específicamente
---          para el sitio de Talcahuano; ajustar si Nouryon lo precisa)
+--        · Normas ISO: Sustentabilidad y Prevención de Riesgos, más
+--          ISO 50001 (Gestión de la Energía) — no se habla de los
+--          sistemas por su número (9001/14001/45001) sino por el área
+--          que cubren, a pedido del cliente.
 --        · Sitios de trabajo: Planta Eka Chile — Av. Rocoto 2911,
 --          Talcahuano, Región del Biobío
 --   3. Copia el UUID del usuario desde auth.users y reemplaza
@@ -39,7 +40,7 @@ BEGIN
 
 UPDATE normaai_clientes
 SET rubro  = 'Producción de clorato de sodio y soluciones de blanqueo de pulpa de celulosa para la industria forestal (marca Eka de Nouryon)',
-    normas_iso = 'ISO 9001, ISO 14001, ISO 45001',
+    normas_iso = 'Sustentabilidad y Prevención de Riesgos, ISO 50001 (Gestión de la Energía)',
     sitios = 'Planta Eka Chile — Av. Rocoto 2911, Talcahuano, Región del Biobío',
     onboarding_completado = true
 WHERE user_id = v_uid;
@@ -115,6 +116,13 @@ INSERT INTO normaai_requisitos (user_id, empresa, pais, cuerpo_legal, articulo, 
 
 (v_uid, v_emp, 'CL', 'Ley 20.920 — Ley REP (Responsabilidad Extendida del Productor)', 'Envases y embalajes industriales',
  'Como generador de envases industriales (tambores, IBC, estanques retornables) para el despacho de clorato de sodio, la planta debe evaluar su inscripción en el Registro de Productores REP.',
- 'PENDIENTE', 'Gerencia Ambiental', 'Evaluación de aplicabilidad en curso con asesoría externa.', 150);
+ 'PENDIENTE', 'Gerencia Ambiental', 'Evaluación de aplicabilidad en curso con asesoría externa.', 150),
+
+-- ════════════════════════════════════════════════════════════
+-- GESTIÓN DE LA ENERGÍA — Ley 21.305 (Eficiencia Energética)
+-- ════════════════════════════════════════════════════════════
+(v_uid, v_emp, 'CL', 'Ley N°21.305 — Eficiencia Energética', 'Art. 6° — Sistema de Gestión de la Energía para Grandes Consumidores',
+ 'El proceso electroquímico de producción de clorato de sodio es intensivo en energía; si la planta califica como Gran Consumidor de Energía, debe reportar su consumo a la Agencia de Sostenibilidad Energética e implementar un sistema de gestión de la energía.',
+ 'PENDIENTE', 'Gerencia de Operaciones', 'Evaluación de umbral de Gran Consumidor en curso; levantamiento de línea base energética iniciado.', 160);
 
 END $$;
