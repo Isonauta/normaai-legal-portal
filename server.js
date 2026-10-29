@@ -10,13 +10,23 @@ const { ejecutarScraperBCN } = require('./bcn-scraper');
 const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+  }
+}));
 
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
-app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
-app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
-app.get('/reset-password', (req, res) => res.sendFile(path.join(__dirname, 'public', 'reset-password.html')));
+function sinCache(res) {
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+}
+
+app.get('/', (req, res) => { sinCache(res); res.sendFile(path.join(__dirname, 'public', 'login.html')); });
+app.get('/login', (req, res) => { sinCache(res); res.sendFile(path.join(__dirname, 'public', 'login.html')); });
+app.get('/dashboard', (req, res) => { sinCache(res); res.sendFile(path.join(__dirname, 'public', 'dashboard.html')); });
+app.get('/admin', (req, res) => { sinCache(res); res.sendFile(path.join(__dirname, 'public', 'admin.html')); });
+app.get('/reset-password', (req, res) => { sinCache(res); res.sendFile(path.join(__dirname, 'public', 'reset-password.html')); });
 
 // Configuración pública para el cliente (anon key es segura de exponer)
 app.get('/api/config', (req, res) => {
