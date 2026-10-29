@@ -8,7 +8,7 @@
 
 DO $$
 DECLARE
-  v_uid UUID := 'DEMO_USER_ID_AQUI'::UUID;  -- <- REEMPLAZAR
+  v_uid UUID := '0b01f343-4f50-4da8-a80e-5c7473ba6ad3'::UUID;
 BEGIN
 
 INSERT INTO normaai_planes_accion (requisito_id, user_id, accion, responsable, fecha_limite, estado)
