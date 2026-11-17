@@ -249,6 +249,10 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg-page)
 .req-badge-mini.si{background:rgba(34,197,94,.2);color:#4ade80;}
 .req-badge-mini.no{background:rgba(239,68,68,.2);color:#f87171;}
 .req-badge-mini.pend{background:rgba(245,158,11,.2);color:#fbbf24;}
+.req-ambito{margin-bottom:1.6rem;}
+.req-ambito-header{display:flex;align-items:center;gap:.8rem;padding:.9rem 1.1rem;background:var(--ov05);border:1px solid var(--ov08);border-radius:12px;margin-bottom:.7rem;cursor:pointer;user-select:none;}
+.req-ambito-titulo{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;flex:1;color:var(--text-strong);}
+.req-ambito-badges{display:flex;gap:.4rem;flex-wrap:wrap;}
 .req-fila{border-bottom:1px solid var(--ov04);transition:background .15s;}
 .req-fila:last-child{border-bottom:none;}
 .req-fila:hover{background:var(--ov02);}
@@ -621,6 +625,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg-page)
           <option value="NO">✗ No cumple</option>
           <option value="PENDIENTE">⚠ Pendiente</option>
           <option value="NO_APLICA">— No aplica</option>
+        </select>
+        <select id="req-filtro-ambito" onchange="filtrarRequisitos()" style="background:var(--azul-med);border:1px solid var(--ov10);border-radius:6px;color:var(--text-strong);padding:.4rem .7rem;font-size:.82rem;font-family:'DM Sans',sans-serif;cursor:pointer;">
+          <option value="">🗂️ Todos los ámbitos</option>
         </select>
         <input id="req-buscar" oninput="filtrarRequisitos()" placeholder="🔍 Buscar artículo o descripción…" style="background:var(--azul-med);border:1px solid var(--ov10);border-radius:6px;color:var(--text-strong);padding:.4rem .8rem;font-size:.82rem;font-family:'DM Sans',sans-serif;flex:1;min-width:180px;" />
       </div>
@@ -1479,6 +1486,7 @@ async function cargarRequisitos() {
     if (res.status === 401) { hacerLogout(); return; }
     if (!res.ok) throw new Error('HTTP ' + res.status);
     _requisitosData = await res.json();
+    poblarFiltroAmbito(_requisitosData);
     renderRequisitos(_requisitosData);
     renderReqStats(_requisitosData);
     const primerNoCumple = _requisitosData.find(r => r.cumple === 'NO');
@@ -1502,13 +1510,24 @@ function renderReqStats(data) {
     '<div class="req-stat-card"><div class="req-stat-num" style="color:#f87171">' + no + '</div><div class="req-stat-label">✗ No cumplen</div></div>';
 }
 
+function poblarFiltroAmbito(data) {
+  const sel = document.getElementById('req-filtro-ambito');
+  const actual = sel.value;
+  const ambitos = [...new Set(data.map(r => r.ambito).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">🗂️ Todos los ámbitos</option>' +
+    ambitos.map(a => '<option value="' + a.replace(/"/g,'&quot;') + '">' + a + '</option>').join('');
+  if (ambitos.includes(actual)) sel.value = actual;
+}
+
 function filtrarRequisitos() {
   const pais = document.getElementById('req-filtro-pais').value;
   const estado = document.getElementById('req-filtro-estado').value;
+  const ambito = document.getElementById('req-filtro-ambito').value;
   const buscar = (document.getElementById('req-buscar').value || '').toLowerCase();
   const filtrado = _requisitosData.filter(r => {
     if (pais && r.pais !== pais) return false;
     if (estado && r.cumple !== estado) return false;
+    if (ambito && (r.ambito || '') !== ambito) return false;
     if (buscar && !(r.articulo || '').toLowerCase().includes(buscar) && !(r.descripcion || '').toLowerCase().includes(buscar) && !(r.cuerpo_legal || '').toLowerCase().includes(buscar)) return false;
     return true;
   });
@@ -1516,12 +1535,51 @@ function filtrarRequisitos() {
   renderReqStats(filtrado);
 }
 
+const _estadoMapReq = {
+  SI:       { icon: '✔', label: 'Cumple',      css: 'SI' },
+  NO:       { icon: '✗', label: 'No cumple',   css: 'NO' },
+  PENDIENTE:{ icon: '⚠', label: 'Pendiente',   css: 'PENDIENTE' },
+  NO_APLICA:{ icon: '—', label: 'No aplica',   css: 'NO_APLICA' }
+};
+const _banderaReq = { CL: '🇨🇱', PE: '🇵🇪', AR: '🇦🇷', CO: '🇨🇴' };
+
 function renderRequisitos(data) {
   const lista = document.getElementById('req-lista');
   if (!data.length) {
     lista.innerHTML = '<div class="empty-state"><div class="icon">⚖️</div><h3>Sin requisitos cargados</h3><p>Los requisitos se generan automáticamente al procesar tu matriz.</p></div>';
     return;
   }
+  // Agrupar primero por ámbito de compliance, y dentro de cada ámbito por país + cuerpo_legal
+  const ambitos = {};
+  data.forEach(r => {
+    const amb = r.ambito || 'Sin ámbito';
+    if (!ambitos[amb]) ambitos[amb] = [];
+    ambitos[amb].push(r);
+  });
+  const nombresAmbito = Object.keys(ambitos).sort((a, b) => a === 'Sin ámbito' ? 1 : b === 'Sin ámbito' ? -1 : a.localeCompare(b));
+
+  lista.innerHTML = nombresAmbito.map(amb => {
+    const items = ambitos[amb];
+    const si = items.filter(r => r.cumple === 'SI').length;
+    const no = items.filter(r => r.cumple === 'NO').length;
+    const pend = items.filter(r => r.cumple === 'PENDIENTE').length;
+    const aid = 'amb-' + btoa(unescape(encodeURIComponent(amb))).replace(/[^a-zA-Z0-9]/g,'').slice(0,12);
+    return '<div class="req-ambito">' +
+      '<div class="req-ambito-header" onclick="toggleGrupo(\'' + aid + '\')">' +
+        '<span class="req-ambito-titulo">🗂️ ' + amb + '</span>' +
+        '<span class="req-ambito-badges">' +
+          (si > 0 ? '<span class="req-badge-mini si">✔ ' + si + '</span>' : '') +
+          (no > 0 ? '<span class="req-badge-mini no">✗ ' + no + '</span>' : '') +
+          (pend > 0 ? '<span class="req-badge-mini pend">⚠ ' + pend + '</span>' : '') +
+        '</span>' +
+        '<span style="color:var(--text-3);font-size:.85rem;">▾</span>' +
+      '</div>' +
+      '<div id="' + aid + '">' + renderCuerposLegales(items) + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderCuerposLegales(data) {
   // Agrupar por país + cuerpo_legal
   const grupos = {};
   data.forEach(r => {
@@ -1530,15 +1588,10 @@ function renderRequisitos(data) {
     grupos[key].items.push(r);
   });
 
-  const estadoMap = {
-    SI:       { icon: '✔', label: 'Cumple',      css: 'SI' },
-    NO:       { icon: '✗', label: 'No cumple',   css: 'NO' },
-    PENDIENTE:{ icon: '⚠', label: 'Pendiente',   css: 'PENDIENTE' },
-    NO_APLICA:{ icon: '—', label: 'No aplica',   css: 'NO_APLICA' }
-  };
-  const bandera = { CL: '🇨🇱', PE: '🇵🇪', AR: '🇦🇷', CO: '🇨🇴' };
+  const estadoMap = _estadoMapReq;
+  const bandera = _banderaReq;
 
-  lista.innerHTML = Object.values(grupos).map(g => {
+  return Object.values(grupos).map(g => {
     const si = g.items.filter(r => r.cumple === 'SI').length;
     const no = g.items.filter(r => r.cumple === 'NO').length;
     const pend = g.items.filter(r => r.cumple === 'PENDIENTE').length;
