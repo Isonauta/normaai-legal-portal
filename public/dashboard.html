@@ -1508,7 +1508,8 @@ function renderReqStats(data) {
 function poblarFiltroAmbito(data) {
   const sel = document.getElementById('req-filtro-ambito');
   const actual = sel.value;
-  const ambitos = [...new Set(data.map(r => r.ambito).filter(Boolean))].sort();
+  const extra = [...new Set(data.map(r => r.ambito).filter(a => a && !AMBITOS_COMPLIANCE.includes(a)))].sort();
+  const ambitos = AMBITOS_COMPLIANCE.concat(extra);
   sel.innerHTML = '<option value="">🗂️ Todos los ámbitos</option>' +
     ambitos.map(a => '<option value="' + a.replace(/"/g,'&quot;') + '">' + a + '</option>').join('');
   if (ambitos.includes(actual)) sel.value = actual;
@@ -1536,20 +1537,38 @@ const _estadoMapReq = {
 };
 const _banderaReq = { CL: '🇨🇱', PE: '🇵🇪', AR: '🇦🇷', CO: '🇨🇴' };
 
+const AMBITOS_COMPLIANCE = ['Laboral', 'Seguridad', 'Medio Ambiente', 'Penal', 'Tributario', 'Internacional', 'Financiero', 'Tecnológico'];
+
 function renderRequisitos(data) {
   const lista = document.getElementById('req-lista');
   if (!data.length) {
     lista.innerHTML = '<div class="empty-state"><div class="icon">⚖️</div><h3>Sin requisitos cargados</h3><p>Los requisitos se generan automáticamente al procesar tu matriz.</p></div>';
     return;
   }
-  // Agrupar primero por ámbito de compliance, y dentro de cada ámbito por país + cuerpo_legal
+  // Agrupar primero por ámbito de compliance, y dentro de cada ámbito por país + cuerpo_legal.
+  // Siempre se muestran los 8 ámbitos de compliance (aunque alguno esté vacío), más cualquier
+  // ámbito adicional que traiga la matriz del cliente, y "Sin ámbito" al final si corresponde.
   const ambitos = {};
+  AMBITOS_COMPLIANCE.forEach(a => { ambitos[a] = []; });
+  let haySinAmbito = false;
   data.forEach(r => {
-    const amb = r.ambito || 'Sin ámbito';
-    if (!ambitos[amb]) ambitos[amb] = [];
-    ambitos[amb].push(r);
+    const amb = r.ambito;
+    if (!amb) { haySinAmbito = true; }
+    const key = amb || 'Sin ámbito';
+    if (!ambitos[key]) ambitos[key] = [];
+    ambitos[key].push(r);
   });
-  const nombresAmbito = Object.keys(ambitos).sort((a, b) => a === 'Sin ámbito' ? 1 : b === 'Sin ámbito' ? -1 : a.localeCompare(b));
+  if (haySinAmbito && !ambitos['Sin ámbito']) ambitos['Sin ámbito'] = [];
+
+  const nombresAmbito = Object.keys(ambitos).filter(amb => amb !== 'Sin ámbito' || haySinAmbito).sort((a, b) => {
+    const ia = AMBITOS_COMPLIANCE.indexOf(a), ib = AMBITOS_COMPLIANCE.indexOf(b);
+    if (a === 'Sin ámbito') return 1;
+    if (b === 'Sin ámbito') return -1;
+    if (ia === -1 && ib === -1) return a.localeCompare(b);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
 
   lista.innerHTML = nombresAmbito.map(amb => {
     const items = ambitos[amb];
@@ -1557,6 +1576,9 @@ function renderRequisitos(data) {
     const no = items.filter(r => r.cumple === 'NO').length;
     const pend = items.filter(r => r.cumple === 'PENDIENTE').length;
     const aid = 'amb-' + btoa(unescape(encodeURIComponent(amb))).replace(/[^a-zA-Z0-9]/g,'').slice(0,12);
+    const contenido = items.length
+      ? renderCuerposLegales(items)
+      : '<div style="padding:1rem 1.2rem;color:var(--text-4);font-size:.8rem;">Sin requisitos registrados en este ámbito.</div>';
     return '<div class="req-ambito">' +
       '<div class="req-ambito-header" onclick="toggleGrupo(\'' + aid + '\')">' +
         '<span class="req-ambito-titulo">🗂️ ' + amb + '</span>' +
@@ -1564,10 +1586,11 @@ function renderRequisitos(data) {
           (si > 0 ? '<span class="req-badge-mini si">✔ ' + si + '</span>' : '') +
           (no > 0 ? '<span class="req-badge-mini no">✗ ' + no + '</span>' : '') +
           (pend > 0 ? '<span class="req-badge-mini pend">⚠ ' + pend + '</span>' : '') +
+          (items.length === 0 ? '<span class="req-badge-mini" style="background:var(--ov06);color:var(--text-4);">Sin datos</span>' : '') +
         '</span>' +
         '<span style="color:var(--text-3);font-size:.85rem;">▾</span>' +
       '</div>' +
-      '<div id="' + aid + '">' + renderCuerposLegales(items) + '</div>' +
+      '<div id="' + aid + '" style="display:none;">' + contenido + '</div>' +
     '</div>';
   }).join('');
 }
