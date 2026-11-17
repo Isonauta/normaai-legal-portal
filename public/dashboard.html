@@ -614,11 +614,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg-page)
       <div id="req-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin-bottom:1.2rem;max-width:900px;margin-left:auto;margin-right:auto;"></div>
       <!-- Filtros -->
       <div style="max-width:900px;margin:0 auto 1rem;display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;">
-        <select id="req-filtro-pais" onchange="filtrarRequisitos()" style="background:var(--azul-med);border:1px solid var(--ov10);border-radius:6px;color:var(--text-strong);padding:.4rem .7rem;font-size:.82rem;font-family:'DM Sans',sans-serif;cursor:pointer;">
-          <option value="">🌎 Todos los países</option>
-          <option value="CL">🇨🇱 Chile</option>
-          <option value="PE">🇵🇪 Perú</option>
-        </select>
         <select id="req-filtro-estado" onchange="filtrarRequisitos()" style="background:var(--azul-med);border:1px solid var(--ov10);border-radius:6px;color:var(--text-strong);padding:.4rem .7rem;font-size:.82rem;font-family:'DM Sans',sans-serif;cursor:pointer;">
           <option value="">📋 Todos los estados</option>
           <option value="SI">✔ Cumple</option>
@@ -1520,12 +1515,10 @@ function poblarFiltroAmbito(data) {
 }
 
 function filtrarRequisitos() {
-  const pais = document.getElementById('req-filtro-pais').value;
   const estado = document.getElementById('req-filtro-estado').value;
   const ambito = document.getElementById('req-filtro-ambito').value;
   const buscar = (document.getElementById('req-buscar').value || '').toLowerCase();
   const filtrado = _requisitosData.filter(r => {
-    if (pais && r.pais !== pais) return false;
     if (estado && r.cumple !== estado) return false;
     if (ambito && (r.ambito || '') !== ambito) return false;
     if (buscar && !(r.articulo || '').toLowerCase().includes(buscar) && !(r.descripcion || '').toLowerCase().includes(buscar) && !(r.cuerpo_legal || '').toLowerCase().includes(buscar)) return false;
